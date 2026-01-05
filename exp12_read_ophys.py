@@ -63,7 +63,7 @@ def main():
         dim_x = series.data.shape[1]
         dim_y = series.data.shape[2]
 
-        with h5py.File(output_filepath, "a") as f:
+        with h5py.File(output_filepath, "w") as f:
             for usecase, spans in ucs.items():
                 span_t = spans["span_t"]
                 span_x = spans["span_x"]
