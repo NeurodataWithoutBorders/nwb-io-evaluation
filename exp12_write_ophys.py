@@ -51,15 +51,15 @@ def process_config(
     assert len(params) == 5, f"Config line {config_number} requires exactly 5 parameters, got {len(params)}"
 
     # Set chunk sizes
-    if params[0] == "None":
+    if params[0].lower() == "none":
         chunksizes = None
-    elif params[0] == "True":
+    elif params[0].lower() == "true":
         chunksizes = True
     else:
         chunksizes = tuple(map(int, params[0].split(",")))
 
     # Set compression algo or filter id
-    if params[2] == "NA":
+    if params[2].lower() == "na":
         compr = str(params[1])
     else:
         compr = int(params[2])
