@@ -125,8 +125,7 @@ def process_config(
         nwbfile.acquisition.pop(series_name)
         nwbfile.add_acquisition(new_2pseries)
 
-        output_nwb_prefix = f"exp12_{output_label}_Config"
-        output_filepath = f"{output_dir}/{output_nwb_prefix}{config_number}.nwb"
+        output_filepath = f"{output_dir}/exp12_{output_label}_Config{config_number:03d}.nwb"
 
         start_time_write = time.time_ns()
         with pynwb.NWBHDF5IO(output_filepath, "w", manager=io.manager) as export_io:
@@ -159,9 +158,8 @@ def main() -> None:
     output_dir = sys.argv[5]
     config_file = sys.argv[6]
 
-    output_stats_prefix = f"stats_exp12_{output_label}_Config"
+    stats_filepath = f"{output_dir}/stats_exp12_{output_label}_Config{config_number:03d}.txt"
     header = "configNo n_timestamps t_target_write(s) filesize(Gb) total_t(s)\n"
-    stats_filepath = f"{output_dir}/{output_stats_prefix}{config_number}.txt"
 
     start_tot_time = time.time_ns()
 
