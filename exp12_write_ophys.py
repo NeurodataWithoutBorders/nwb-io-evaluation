@@ -16,11 +16,6 @@ from hdmf.data_utils import GenericDataChunkIterator
 import pynwb
 
 
-def time_ms(t2_ns: int, t1_ns: int) -> float:
-    """Compute time difference in seconds given two timestamps in nanoseconds."""
-    return (t2_ns - t1_ns) / 1e9
-
-
 class H5DatasetDataChunkIterator(GenericDataChunkIterator):
     """A data chunk iterator that reads chunks over the 0th dimension of an HDF5 dataset up to a max length."""
 
@@ -127,17 +122,17 @@ def process_config(
 
         output_filepath = f"{output_dir}/exp12_{output_label}_Config{config_number:03d}.nwb"
 
-        start_time_write = time.time_ns()
+        start_time_write = time.perf_counter_ns()
         with pynwb.NWBHDF5IO(output_filepath, "w", manager=io.manager) as export_io:
             export_io.export(io, nwbfile)
-        end_time_write = time.time_ns()
-        net_time_write_ms = time_ms(end_time_write, start_time_write)
+        end_time_write = time.perf_counter_ns()
+        net_time_write_s = (end_time_write - start_time_write) / 1e9
 
-    stats = f"{config_number} {max_timestamps} {net_time_write_ms:.4f} "
+    stats = f"{config_number} {max_timestamps} {net_time_write_s:.4f} "
 
     try:
-        filesize = os.path.getsize(output_filepath) / (1024 * 1024 * 1024)
-        stats += f"{filesize} "
+        file_size_gb = os.path.getsize(output_filepath) / (1024 * 1024 * 1024)
+        stats += f"{file_size_gb} "
     except OSError:
         stats += "N/A "
 
@@ -159,9 +154,9 @@ def main() -> None:
     config_file = sys.argv[6]
 
     stats_filepath = f"{output_dir}/stats_exp12_{output_label}_Config{config_number:03d}.txt"
-    header = "configNo n_timestamps t_target_write(s) filesize(Gb) total_t(s)\n"
+    header = "configNo n_timestamps t_target_write(s) file_size(Gb) total_t(s)\n"
 
-    start_tot_time = time.time_ns()
+    start_tot_time = time.perf_counter_ns()
 
     # Find and process the matching configuration
     stats = ""
@@ -182,9 +177,9 @@ def main() -> None:
     if not stats:
         raise ValueError(f"Config number {config_number} not found in {config_file}")
 
-    end_tot_time = time.time_ns()
-    net_tot_time_ms = time_ms(end_tot_time, start_tot_time)
-    stats += f"{net_tot_time_ms:.4f}\n"
+    end_tot_time = time.perf_counter_ns()
+    net_tot_time_s = (end_tot_time - start_tot_time) / 1e9
+    stats += f"{net_tot_time_s:.4f}\n"
 
     with open(stats_filepath, "a") as stats_f:
         stats_f.write(header)
