@@ -30,7 +30,16 @@ ucs = dict(
     ),
 )
 
-def time_slice(t0: int, t1: int, x0: int, x1: int, y0: int, y1: int, series: pynwb.ophys.TwoPhotonSeries) -> float:
+
+def time_slice(
+    t0: int,
+    t1: int,
+    x0: int,
+    x1: int,
+    y0: int,
+    y1: int,
+    series: pynwb.ophys.TwoPhotonSeries,
+) -> float:
     """Time reading a slice of the TwoPhotonSeries data array in seconds."""
     start_eval = time.perf_counter_ns()
     series.data[t0:t1, x0:x1, y0:y1]
@@ -39,7 +48,7 @@ def time_slice(t0: int, t1: int, x0: int, x1: int, y0: int, y1: int, series: pyn
 
 
 def gen_random(n_timestamps: int, spans: int) -> int:
-    num = random.randint(0, n_timestamps-spans)
+    num = random.randint(0, n_timestamps - spans)
     return num
 
 
@@ -88,18 +97,14 @@ def main():
                     t1 = t0 + span_t
                     x1 = x0 + span_x
                     y1 = y0 + span_y
-                    f[samples_dataset_path][samples,0] = t0
-                    f[samples_dataset_path][samples,1] = x0
-                    f[samples_dataset_path][samples,2] = y0
-
-                    print(f"Use case {usecase}, sample {samples}: reading t[{t0}:{t1}] x[{x0}:{x1}] y[{y0}:{y1}]")
+                    f[samples_dataset_path][samples, 0] = t0
+                    f[samples_dataset_path][samples, 1] = x0
+                    f[samples_dataset_path][samples, 2] = y0
 
                     exec_time = time_slice(t0, t1, x0, x1, y0, y1, series)
 
                     # write results
                     f[results_dataset_path][samples] = exec_time
-
-                    print(f"\tTime taken: {exec_time} seconds")
 
 
 if __name__ == "__main__":
