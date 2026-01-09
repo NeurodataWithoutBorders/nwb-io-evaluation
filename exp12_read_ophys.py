@@ -53,8 +53,8 @@ def main():
     max_samples = 100
     random.seed(30)
 
-    input_filepath = f"{input_dir}/exp12_{output_label}_Config{config_number:03d}.nwb"
-    output_filepath = f"{output_dir}/exp12_read_{output_label}_Config{config_number:03d}.h5"
+    input_filepath = f"{input_dir}/{output_label}_Config{config_number:03d}.nwb"
+    output_filepath = f"{output_dir}/read_{output_label}_Config{config_number:03d}.h5"
 
     with pynwb.NWBHDF5IO(input_filepath, "r") as io:
         nwbfile = io.read()
