@@ -50,7 +50,7 @@ def main():
     output_label = sys.argv[4]  # Label for this input NWB file experiment
     output_dir = sys.argv[5]  # Path to directory to write output HDF5 files
 
-    max_samples = 100
+    max_samples = 50
     random.seed(30)
 
     input_filepath = f"{input_dir}/{output_label}_Config{config_number:03d}.nwb"
@@ -92,10 +92,14 @@ def main():
                     f[samples_dataset_path][samples,1] = x0
                     f[samples_dataset_path][samples,2] = y0
 
+                    print(f"Use case {usecase}, sample {samples}: reading t[{t0}:{t1}] x[{x0}:{x1}] y[{y0}:{y1}]")
+
                     exec_time = time_slice(t0, t1, x0, x1, y0, y1, series)
 
                     # write results
                     f[results_dataset_path][samples] = exec_time
+
+                    print(f"\tTime taken: {exec_time} seconds")
 
 
 if __name__ == "__main__":
