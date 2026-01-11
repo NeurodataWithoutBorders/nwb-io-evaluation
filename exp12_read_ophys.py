@@ -10,12 +10,16 @@ Note that different datasets will have different lengths of time, x, and y dimen
 """
 
 import math
-import pynwb
-import sys
+import os
+from pathlib import Path
 import random
+import sys
 import time
+
 import h5py
 import hdf5plugin  # enable HDF5 compression filters
+import pynwb
+
 
 ucs = dict(
     uc4=dict(
@@ -29,6 +33,13 @@ ucs = dict(
         span_y=None,
     ),
 )
+
+
+def drop_cache(filepath):
+    """Drop the OS file cache for the given file."""
+    fd = os.open(filepath, os.O_RDONLY)
+    os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
+    os.close(fd)
 
 
 def time_slice(
@@ -47,24 +58,26 @@ def time_slice(
     return (end_eval - start_eval) / math.pow(10, 9)  # time in seconds
 
 
-def gen_random(n_timestamps: int, spans: int) -> int:
-    num = random.randint(0, n_timestamps - spans)
-    return num
+def gen_random(n_timestamps: int, span: int) -> int:
+    """Generate a random starting index for a slice of given span within n_timestamps."""
+    start = random.randint(0, n_timestamps - span)
+    return start
 
 
 def main():
     config_number = int(sys.argv[1])  # Config number (corresponds to line in config file)
-    input_dir = sys.argv[2]  # Path to input NWB files
+    input_dir = Path(sys.argv[2])  # Path to input NWB files
     series_name = sys.argv[3]  # Name of the TwoPhotonSeries in the NWB file to read
     output_label = sys.argv[4]  # Label for this input NWB file experiment
-    output_dir = sys.argv[5]  # Path to directory to write output HDF5 files
+    output_dir = Path(sys.argv[5])  # Path to directory to write output HDF5 files
 
     max_samples = 50
     random.seed(30)
 
-    input_filepath = f"{input_dir}/{output_label}_Config{config_number:03d}.nwb"
-    output_filepath = f"{output_dir}/read_{output_label}_Config{config_number:03d}.h5"
+    input_filepath = input_dir / f"{output_label}_Config{config_number:03d}.nwb"
+    output_filepath = output_dir / f"read_{output_label}_Config{config_number:03d}.h5"
 
+    # Initial read to get dimensions
     with pynwb.NWBHDF5IO(input_filepath, "r") as io:
         nwbfile = io.read()
         series = nwbfile.acquisition[series_name]
@@ -72,39 +85,38 @@ def main():
         dim_x = series.data.shape[1]
         dim_y = series.data.shape[2]
 
-        with h5py.File(output_filepath, "w") as f:
-            for usecase, spans in ucs.items():
-                span_t = spans["span_t"]
-                span_x = spans["span_x"]
-                span_y = spans["span_y"]
-                if span_t is None:
-                    span_t = dim_t
-                if span_x is None:
-                    span_x = dim_x
-                if span_y is None:
-                    span_y = dim_y
+    # Open output HDF5 file
+    with h5py.File(output_filepath, "a") as f:
+        samples_dataset_path = f"/{usecase}/t{span_t}x{span_x}_y{span_y}/samples_t0x0y0"
+        f.require_dataset(samples_dataset_path, shape=(max_samples, 3), dtype="i")
 
-                samples_dataset_path = f"/{usecase}/t{span_t}x{span_x}_y{span_y}/samples_t0x0y0"
-                results_dataset_path = f"/{usecase}/t{span_t}x{span_x}_y{span_y}/time_read"
+        results_dataset_path = f"/{usecase}/t{span_t}x{span_x}_y{span_y}/time_read"
+        f.require_dataset(results_dataset_path, shape=(max_samples,), dtype="f")
 
-                f.require_dataset(samples_dataset_path, shape=(max_samples, 3), dtype="i")
-                f.require_dataset(results_dataset_path, shape=(max_samples,), dtype="f")
+        for usecase, spans in ucs.items():
+            span_t = spans["span_t"] or dim_t
+            span_x = spans["span_x"] or dim_x
+            span_y = spans["span_y"] or dim_y
 
-                for samples in range(0, max_samples):
-                    t0 = gen_random(dim_t, span_t)  # for uc4, t0 can only be 0
-                    x0 = gen_random(dim_x, span_x)  # for uc5, x0 can only be 0
-                    y0 = gen_random(dim_y, span_y)  # for uc5, y0 can only be 0
-                    t1 = t0 + span_t
-                    x1 = x0 + span_x
-                    y1 = y0 + span_y
-                    f[samples_dataset_path][samples, 0] = t0
-                    f[samples_dataset_path][samples, 1] = x0
-                    f[samples_dataset_path][samples, 2] = y0
+            for samples in range(0, max_samples):
+                t0 = gen_random(dim_t, span_t)  # for uc4, t0 can only be 0
+                x0 = gen_random(dim_x, span_x)  # for uc5, x0 can only be 0
+                y0 = gen_random(dim_y, span_y)  # for uc5, y0 can only be 0
+                t1 = t0 + span_t
+                x1 = x0 + span_x
+                y1 = y0 + span_y
 
+                drop_cache(input_filepath)
+                with pynwb.NWBHDF5IO(input_filepath, "r") as io:
+                    nwbfile = io.read()
+                    series = nwbfile.acquisition[series_name]
                     exec_time = time_slice(t0, t1, x0, x1, y0, y1, series)
 
-                    # write results
-                    f[results_dataset_path][samples] = exec_time
+                # Write sample parameters and results
+                f[samples_dataset_path][samples, 0] = t0
+                f[samples_dataset_path][samples, 1] = x0
+                f[samples_dataset_path][samples, 2] = y0
+                f[results_dataset_path][samples] = exec_time
 
 
 if __name__ == "__main__":
