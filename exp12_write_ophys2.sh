@@ -27,5 +27,5 @@ TIFFDIR="$SCRATCH/nwbio/exp12/raw_data/ophys2"
 OUTLABEL="ophys2"
 OUTDIR="$SCRATCH/nwbio/exp12/write_output/"
 
-echo "Running: srun $PYTHON exp12_write_ophys_tiff.py $CONFIG $JOB $FILEPATH $SERIESNAME $TIFFDIR $OUTLABEL $OUTDIR"
-srun $PYTHON exp12_write_ophys_tiff.py $CONFIG $JOB $FILEPATH $SERIESNAME $TIFFDIR $OUTLABEL $OUTDIR
+echo "Running: srun $PYTHON exp12_write_ophys_tiff_to_nwb.py $CONFIG $JOB $FILEPATH $SERIESNAME $TIFFDIR $OUTLABEL $OUTDIR"
+srun $PYTHON exp12_write_ophys_tiff_to_nwb.py $CONFIG $JOB $FILEPATH $SERIESNAME $TIFFDIR $OUTLABEL $OUTDIR

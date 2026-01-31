@@ -23,6 +23,6 @@ SERIESNAME="TwoPhotonSeries"
 TIFFDIR="$SCRATCH/nwbio/exp12/raw_data/ophys1"
 OUTFILEPATH="$SCRATCH/nwbio/exp12/write_output/ophys1_unchunked.nwb"
 
-echo "Running: srun $PYTHON exp12_tiff_to_unchunked_nwb.py $FILEPATH $SERIESNAME $TIFFDIR $OUTFILEPATH"
-srun $PYTHON exp12_tiff_to_unchunked_nwb.py $FILEPATH $SERIESNAME $TIFFDIR $OUTFILEPATH
+echo "Running: srun $PYTHON exp12_write_ophys_tiff_to_unchunked_nwb.py $FILEPATH $SERIESNAME $TIFFDIR $OUTFILEPATH"
+srun $PYTHON exp12_write_ophys_tiff_to_unchunked_nwb.py $FILEPATH $SERIESNAME $TIFFDIR $OUTFILEPATH
 echo "Done!"
