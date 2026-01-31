@@ -245,9 +245,12 @@ def main() -> None:
     # Find and process the matching configuration
     stats = ""
     with open(config_file) as configset:
-        for configno, config_line in enumerate(configset):
-            if configno == config_number:
-                params = config_line.strip().split()
+        for lineno, config_line in enumerate(configset):
+            if lineno == config_number:
+                fields = config_line.strip().split()
+                configno = int(fields[0])
+                assert configno == lineno, f"configno {configno} does not match line number {lineno}"
+                params = fields[1:]
                 stats = process_config(
                     config_number,
                     input_filepath,
