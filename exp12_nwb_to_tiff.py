@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pynwb
 import tifffile
+from tqdm import tqdm
 
 
 def main() -> None:
@@ -40,13 +41,10 @@ def main() -> None:
         print(f"Frame shape: {data.shape[1]}x{data.shape[2]} (width x height)")
         print(f"Data type: {data.dtype}")
 
-        for frame_idx in range(n_frames):
+        for frame_idx in tqdm(range(n_frames), desc="Exporting", unit="frame"):
             frame = data[frame_idx, :, :].T  # transpose from (width, height) to (height, width)
             output_path = output_dir / f"frame_{frame_idx:06d}.tiff"
             tifffile.imwrite(output_path, frame, compression=None)
-
-            if (frame_idx + 1) % 100 == 0 or frame_idx == n_frames - 1:
-                print(f"  Exported {frame_idx + 1}/{n_frames} frames")
 
     print(f"Done. TIFF files saved to {output_dir}")
 

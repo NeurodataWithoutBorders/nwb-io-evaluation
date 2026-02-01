@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 import pynwb
+from tqdm import tqdm
 
 
 def main() -> None:
@@ -53,15 +54,13 @@ def main() -> None:
         # Read and write in chunks to handle large datasets
         chunk_size = 100000  # samples per chunk
         with open(output_filepath, "wb") as f:
-            for start_idx in range(0, n_samples, chunk_size):
+            for start_idx in tqdm(range(0, n_samples, chunk_size), desc="Exporting", unit="chunk"):
                 end_idx = min(start_idx + chunk_size, n_samples)
                 chunk = data[start_idx:end_idx, :n_channels_out]
 
                 # Ensure C-contiguous (time-major) order
                 chunk = np.ascontiguousarray(chunk)
                 chunk.tofile(f)
-
-                print(f"  Exported samples {start_idx}-{end_idx} / {n_samples}")
 
     print(f"Done. Binary file saved to {output_filepath}")
     print(f"To read in Python: np.fromfile('{output_filepath}', dtype='{data.dtype}').reshape({n_samples}, {n_channels_out})")
