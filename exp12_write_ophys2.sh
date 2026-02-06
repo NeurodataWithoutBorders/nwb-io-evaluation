@@ -7,7 +7,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=32G
-#SBATCH --array=1-126
+#SBATCH --array=1-91
 #SBATCH --job-name=exp12_write_ophys2
 #SBATCH --output=/global/scratch/users/rly/nwbio/exp12/write_logs/ophys2--%A_%03a-out.log
 #SBATCH --error=/global/scratch/users/rly/nwbio/exp12/write_logs/ophys2--%A_%03a-err.log
