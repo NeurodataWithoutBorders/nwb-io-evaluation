@@ -117,11 +117,13 @@ def process_config(
         compr = "lzf"
         comp_op = None
     elif algo == "lz4":
-        compr = hdf5plugin.LZ4(nbytes=int(clevel))
-        comp_op = None
+        filt = hdf5plugin.LZ4(nbytes=int(clevel))
+        compr = filt.filter_id
+        comp_op = filt.filter_options
     elif algo == "zstd":
-        compr = hdf5plugin.Zstd(clevel=int(clevel))
-        comp_op = None
+        filt = hdf5plugin.Zstd(clevel=int(clevel))
+        compr = filt.filter_id
+        comp_op = filt.filter_options
     elif algo.startswith("blosc2-"):
         blosc2_algo_map = {
             "blosc2-blosclz": hdf5plugin.Blosc2.BLOSCLZ,
@@ -129,8 +131,9 @@ def process_config(
             "blosc2-lz4hc": hdf5plugin.Blosc2.LZ4HC,
             "blosc2-zstd": hdf5plugin.Blosc2.ZSTD,
         }
-        compr = hdf5plugin.Blosc2(cname=blosc2_algo_map[algo], clevel=int(clevel))
-        comp_op = None
+        filt = hdf5plugin.Blosc2(cname=blosc2_algo_map[algo], clevel=int(clevel))
+        compr = filt.filter_id
+        comp_op = filt.filter_options
     else:
         raise ValueError(f"Unknown compression algorithm: {algo}")
 
