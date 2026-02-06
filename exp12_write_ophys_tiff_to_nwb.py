@@ -94,8 +94,8 @@ def process_config(
 ) -> str:
     """Process a single configuration and return stats."""
     assert (
-        len(params) == 5
-    ), f"Config line {config_number} requires exactly 5 parameters, got {len(params)}"
+        len(params) == 3
+    ), f"Config line {config_number} requires exactly 3 parameters, got {len(params)}"
 
     # Set chunk sizes
     if params[0].lower() == "true":
@@ -103,23 +103,36 @@ def process_config(
     else:
         chunk_shape = tuple(map(int, params[0].split(",")))
 
-    # Set compression algo or filter id
-    if params[2].lower() == "na":
-        compr = str(params[1])
-    else:
-        compr = int(params[2])
+    # Set compression filter
+    algo = params[1]
+    clevel = params[2]
 
-    # Set compression level
-    if params[1] == "gzip":
-        comp_op = int(params[4])
-    elif params[1] in ("lz4", "zstd"):
-        comp_op = (int(params[4]),)
-    elif params[1] == "zfp":
-        comp_op = (int(params[3]), 0, 0, 0, 0, 0)
-    elif params[1] in ("blosc-zstd", "blosc-lz4hc", "blosc-blosclz", "blosc-lz4"):
-        comp_op = (0, 0, 0, 0, int(params[4]), 0, int(params[3]))
-    else:
+    if algo == "NA":
+        compr = None
         comp_op = None
+    elif algo == "gzip":
+        compr = "gzip"
+        comp_op = int(clevel)
+    elif algo == "lzf":
+        compr = "lzf"
+        comp_op = None
+    elif algo == "lz4":
+        compr = hdf5plugin.LZ4(nbytes=int(clevel))
+        comp_op = None
+    elif algo == "zstd":
+        compr = hdf5plugin.Zstd(clevel=int(clevel))
+        comp_op = None
+    elif algo.startswith("blosc2-"):
+        blosc2_algo_map = {
+            "blosc2-blosclz": hdf5plugin.Blosc2.BLOSCLZ,
+            "blosc2-lz4": hdf5plugin.Blosc2.LZ4,
+            "blosc2-lz4hc": hdf5plugin.Blosc2.LZ4HC,
+            "blosc2-zstd": hdf5plugin.Blosc2.ZSTD,
+        }
+        compr = hdf5plugin.Blosc2(cname=blosc2_algo_map[algo], clevel=int(clevel))
+        comp_op = None
+    else:
+        raise ValueError(f"Unknown compression algorithm: {algo}")
 
     # Get sorted list of TIFF files
     tiff_files = sorted(tiff_dir.glob("*.tiff"))
@@ -172,7 +185,7 @@ def process_config(
             "chunks": chunk_shape,
         }
 
-        if params[1] != "NA":
+        if compr is not None:
             data_io_kwargs["compression"] = compr
             data_io_kwargs["allow_plugin_filters"] = True
             if comp_op is not None:

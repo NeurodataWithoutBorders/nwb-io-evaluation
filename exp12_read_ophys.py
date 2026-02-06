@@ -30,6 +30,7 @@ import sys
 import time
 from typing import Any
 
+import b2h5py.auto  # noqa: F401 - auto-use fast slicing for blosc2-compressed datasets
 import h5py
 import hdf5plugin  # noqa: F401 - enable HDF5 compression filters
 import numpy as np
