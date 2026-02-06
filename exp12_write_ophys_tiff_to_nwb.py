@@ -126,10 +126,10 @@ def process_config(
         comp_op = filt.filter_options
     elif algo.startswith("blosc2-"):
         blosc2_algo_map = {
-            "blosc2-blosclz": hdf5plugin.Blosc2.BLOSCLZ,
-            "blosc2-lz4": hdf5plugin.Blosc2.LZ4,
-            "blosc2-lz4hc": hdf5plugin.Blosc2.LZ4HC,
-            "blosc2-zstd": hdf5plugin.Blosc2.ZSTD,
+            "blosc2-blosclz": "blosclz",
+            "blosc2-lz4": "lz4",
+            "blosc2-lz4hc": "lz4hc",
+            "blosc2-zstd": "zstd",
         }
         filt = hdf5plugin.Blosc2(cname=blosc2_algo_map[algo], clevel=int(clevel))
         compr = filt.filter_id
