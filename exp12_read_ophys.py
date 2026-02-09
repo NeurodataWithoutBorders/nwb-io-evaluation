@@ -344,6 +344,7 @@ def main():
             results = uc_info["func"](input_filepath, series_name)
 
             print_summary(use_case, results)
+            sys.stdout.flush()
 
             write_results(output_file, uc_info["group_name"], results)
 
