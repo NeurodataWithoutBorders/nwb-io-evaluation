@@ -190,7 +190,6 @@ def process_config(
                 electrodes=orig_series.electrodes,
                 starting_time=orig_series.starting_time,
                 rate=orig_series.rate,
-                unit=orig_series.unit,
                 conversion=orig_series.conversion,
                 resolution=orig_series.resolution,
                 comments=orig_series.comments,
