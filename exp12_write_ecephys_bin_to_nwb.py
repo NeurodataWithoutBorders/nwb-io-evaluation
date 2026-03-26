@@ -183,11 +183,17 @@ def process_config(
 
             data = make_h5_data_io(data_iterator, chunk_shape, compr, comp_op)
 
+            electrodes_region = nwbfile.create_electrode_table_region(
+                region=orig_series.electrodes.data[:].tolist(),
+                name=orig_series.electrodes.name,
+                description=orig_series.electrodes.description,
+            )
+
             kwargs = dict(
                 name=orig_series.name,
                 description=orig_series.description,
                 data=data,
-                electrodes=orig_series.electrodes,
+                electrodes=electrodes_region,
                 starting_time=orig_series.starting_time,
                 rate=orig_series.rate,
                 conversion=orig_series.conversion,
