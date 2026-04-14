@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --qos=lr_normal
 #SBATCH --account=pc_rlyneuro
-#SBATCH --time=72:00:00
+#SBATCH --time=71:59:59
 #SBATCH --nodes=1
 #SBATCH --partition=lr7
 #SBATCH --ntasks-per-node=1

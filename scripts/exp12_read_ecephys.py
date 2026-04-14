@@ -28,6 +28,7 @@ Example:
     python exp12_read_ecephys.py 1 /path/to/nwb ElectricalSeries ecephys1 /path/to/results e2
 """
 
+import datetime
 import math
 import os
 from pathlib import Path
@@ -156,6 +157,7 @@ def benchmark_sequential_batches(
         "batch_sizes": np.array(batch_sizes, dtype=np.int32),
         "truncated": truncated,
         "n_repeats_completed": len(repeat_total_times),
+        "slow_repeat_threshold_s": SLOW_REPEAT_THRESHOLD_S,
     }
 
 
@@ -404,14 +406,27 @@ def main():
     print(f"  Input: {input_filepath}")
     print(f"  Output: {output_filepath}")
 
+    slurm_metadata = {
+        "slurm_nodename": os.environ.get("SLURMD_NODENAME", ""),
+        "slurm_job_id": os.environ.get("SLURM_JOB_ID", ""),
+        "slurm_array_job_id": os.environ.get("SLURM_ARRAY_JOB_ID", ""),
+        "slurm_array_task_id": os.environ.get("SLURM_ARRAY_TASK_ID", ""),
+    }
+
     with h5py.File(output_filepath, "w") as output_file:
         for use_case, uc_info in use_cases_to_run.items():
             print(f"\n[{use_case.upper()}] {uc_info['description']}")
 
+            start_wallclock = datetime.datetime.now(datetime.timezone.utc).isoformat()
             results = uc_info["func"](input_filepath, series_name)
+            end_wallclock = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
             print_summary(use_case, results)
             sys.stdout.flush()
+
+            results["start_wallclock"] = start_wallclock
+            results["end_wallclock"] = end_wallclock
+            results.update(slurm_metadata)
 
             write_results(output_file, uc_info["group_name"], results)
 

@@ -61,11 +61,6 @@ def process_file(filepath, target_keys, error_log_handle):
 
             for group_path, group in traverse_groups(f):
 
-                if bool(group.attrs.get("truncated", False)):
-                    msg = f"Skipping truncated group: {filepath} :: {group_path}\n"
-                    print(f"{msg.strip()}")
-                    continue
-
                 for key in target_keys:
                     if key in group:
                         try:
@@ -80,6 +75,19 @@ def process_file(filepath, target_keys, error_log_handle):
                             msg = f"Dataset error in {filepath} :: {group_path}/{key} :: {inner_e}\n"
                             print(f"{msg.strip()}")
                             error_log_handle.write(msg)
+
+                # Carry through right-censoring metadata when present so downstream
+                # analysis can distinguish full runs from short-circuited ones.
+                if "truncated" in group.attrs:
+                    result[f"{group_path}_truncated"] = bool(group.attrs["truncated"])
+                if "n_repeats_completed" in group.attrs:
+                    result[f"{group_path}_n_repeats_completed"] = int(
+                        group.attrs["n_repeats_completed"]
+                    )
+                if "slow_repeat_threshold_s" in group.attrs:
+                    result[f"{group_path}_slow_repeat_threshold_s"] = float(
+                        group.attrs["slow_repeat_threshold_s"]
+                    )
 
     except Exception as e:
         msg = f"FILE ERROR: {filepath} :: {e}\n"
