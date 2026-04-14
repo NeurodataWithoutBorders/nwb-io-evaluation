@@ -2,8 +2,8 @@
 Benchmark read patterns from ecephys NWB files.
 
 Implements access patterns from the chunking/compression evaluation plan:
-- E1: Sequential 30,000-sample all-channel batches, 5 repeats
-- E2: Sequential 3,000,000-sample all-channel batches, 5 repeats
+- E1: Sequential 30,000-sample all-channel batches, 10 repeats (with short-circuit for unusably long read times)
+- E2: Sequential 3,000,000-sample all-channel batches, 10 repeats (with short-circuit for unusably long read times)
 - E3: 20 random batches of 15,000 samples, all channels (50 samples)
 - E4: 30,000 samples x 32 channels at random (time, channel) position (50 samples)
 
@@ -46,6 +46,13 @@ RANDOM_SEED = 42
 PERMUTATION_SEED = 20260413
 NUM_CONFIGS = 91
 
+# E1/E2 short-circuit: if this many individual repeats each exceed
+# SLOW_REPEAT_THRESHOLD_S, stop running further repeats for that pattern.
+# Avoids wasting compute on configs that are unusably slow to read.
+N_REPEATS_SEQUENTIAL = 10
+MAX_SLOW_REPEATS = 3
+SLOW_REPEAT_THRESHOLD_S = 500 * 60
+
 
 def get_config_number(array_task_id: int, num_configs: int = NUM_CONFIGS) -> int:
     # SLURM schedules array tasks roughly in order of task ID, so neighboring
@@ -76,20 +83,32 @@ def drop_cache(filepath):
 # =============================================================================
 
 def benchmark_sequential_batches(
-    input_filepath: Path, series_name: str, batch_size: int, n_repeats: int = 5
+    input_filepath: Path,
+    series_name: str,
+    batch_size: int,
+    n_repeats: int = N_REPEATS_SEQUENTIAL,
 ) -> dict[str, Any]:
     """
     Sequential all-channel batch reads through entire recording, repeated n_repeats times.
 
     Each repeat: drop cache, open file, read data[t:t+batch_size, :] sequentially.
 
+    Short-circuits: if MAX_SLOW_REPEATS individual repeats each exceed
+    SLOW_REPEAT_THRESHOLD_S, no further repeats are run. The returned arrays
+    will have fewer than n_repeats rows in that case, and the result dict
+    includes a "truncated" flag.
+
     Returns dict with:
-        - repeat_total_times: total read time per repeat (seconds), shape (n_repeats,)
-        - batch_times: per-batch read times for all repeats, shape (n_repeats, n_batches)
+        - repeat_total_times: total read time per completed repeat (seconds)
+        - batch_times: per-batch read times for all completed repeats
         - batch_sizes: actual samples per batch, shape (n_batches,)
+        - truncated: True if the benchmark short-circuited, False otherwise
+        - n_repeats_completed: number of repeats actually run
     """
     all_batch_times = []
     repeat_total_times = []
+    slow_count = 0
+    truncated = False
 
     for repeat in range(n_repeats):
         drop_cache(input_filepath)
@@ -116,32 +135,46 @@ def benchmark_sequential_batches(
                 batch_read_times.append((end_time - start_time) / 1e9)
                 batch_sizes.append(t1 - t0)
 
+        repeat_time = sum(batch_read_times)
         all_batch_times.append(batch_read_times)
-        repeat_total_times.append(sum(batch_read_times))
+        repeat_total_times.append(repeat_time)
+
+        if repeat_time > SLOW_REPEAT_THRESHOLD_S:
+            slow_count += 1
+            if slow_count >= MAX_SLOW_REPEATS:
+                print(
+                    f"  Short-circuit after {repeat + 1} repeats: "
+                    f"{slow_count} repeats exceeded {SLOW_REPEAT_THRESHOLD_S}s "
+                    f"(last repeat: {repeat_time:.1f}s)"
+                )
+                truncated = True
+                break
 
     return {
         "repeat_total_times": np.array(repeat_total_times, dtype=np.float64),
         "batch_times": np.array(all_batch_times, dtype=np.float64),
         "batch_sizes": np.array(batch_sizes, dtype=np.int32),
+        "truncated": truncated,
+        "n_repeats_completed": len(repeat_total_times),
     }
 
 
 def benchmark_e1(input_filepath: Path, series_name: str) -> dict[str, Any]:
     """
-    E1: Sequential 30,000-sample all-channel batches through whole recording, 5 repeats.
+    E1: Sequential 30,000-sample all-channel batches through whole recording, 10 repeats.
 
     Derived from SpikeInterface chunk-based processing (default chunk_duration="1s" at 30kHz).
     """
-    return benchmark_sequential_batches(input_filepath, series_name, batch_size=30000, n_repeats=5)
+    return benchmark_sequential_batches(input_filepath, series_name, batch_size=30000)
 
 
 def benchmark_e2(input_filepath: Path, series_name: str) -> dict[str, Any]:
     """
-    E2: Sequential 3,000,000-sample all-channel batches through whole recording, 5 repeats.
+    E2: Sequential 3,000,000-sample all-channel batches through whole recording, 10 repeats.
 
     Larger batch variant of E1 for systems with large RAM.
     """
-    return benchmark_sequential_batches(input_filepath, series_name, batch_size=3000000, n_repeats=5)
+    return benchmark_sequential_batches(input_filepath, series_name, batch_size=3000000)
 
 
 def benchmark_e3(input_filepath: Path, series_name: str) -> dict[str, Any]:
@@ -265,12 +298,12 @@ def benchmark_e4(input_filepath: Path, series_name: str) -> dict[str, Any]:
 USE_CASES = {
     "e1": {
         "func": benchmark_e1,
-        "description": "Sequential all-channel batches (30,000 samples, 5 repeats)",
+        "description": "Sequential all-channel batches (30,000 samples, 10 repeats, short-circuit)",
         "group_name": "e1_sequential_30k",
     },
     "e2": {
         "func": benchmark_e2,
-        "description": "Sequential all-channel batches (3,000,000 samples, 5 repeats)",
+        "description": "Sequential all-channel batches (3,000,000 samples, 10 repeats, short-circuit)",
         "group_name": "e2_sequential_3M",
     },
     "e3": {
@@ -306,8 +339,10 @@ def print_summary(use_case: str, results: dict[str, Any]):
     if "repeat_total_times" in results:
         # E1, E2
         times = results["repeat_total_times"]
-        print(f"  Repeats: {len(times)}")
-        print(f"  Total time per repeat: mean={np.mean(times):.3f}s std={np.std(times):.3f}s")
+        truncated = results.get("truncated", False)
+        suffix = " (short-circuited)" if truncated else ""
+        print(f"  Repeats: {len(times)}{suffix}")
+        print(f"  Total time per repeat: median={np.median(times):.3f}s")
         print(f"  Min={np.min(times):.3f}s Max={np.max(times):.3f}s")
     elif "sample_total_times" in results:
         # E3

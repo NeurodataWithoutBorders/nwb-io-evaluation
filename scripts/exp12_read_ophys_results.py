@@ -61,6 +61,11 @@ def process_file(filepath, target_keys, error_log_handle):
 
             for group_path, group in traverse_groups(f):
 
+                if bool(group.attrs.get("truncated", False)):
+                    msg = f"Skipping truncated group: {filepath} :: {group_path}\n"
+                    print(f"{msg.strip()}")
+                    continue
+
                 for key in target_keys:
                     if key in group:
                         try:
