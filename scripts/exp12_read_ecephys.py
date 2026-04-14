@@ -10,10 +10,12 @@ Implements access patterns from the chunking/compression evaluation plan:
 Runs all registered use cases for a given config file.
 
 Usage:
-    python exp12_read_ecephys.py <config_number> <input_dir> <series_name> <output_label> <output_dir>
+    python exp12_read_ecephys.py <array_task_id> <input_dir> <series_name> <output_label> <output_dir>
 
 Arguments:
-    config_number: Config number (1-indexed, corresponds to line+1 in config file)
+    array_task_id: SLURM array task ID (1-indexed, 1..NUM_CONFIGS). This is
+        mapped to an actual config number via a fixed seeded permutation — see
+        get_config_number() for rationale.
     input_dir: Path to input NWB files
     series_name: Name of the ElectricalSeries in the NWB file to read
     output_label: Label for this input NWB file experiment (e.g., "ecephys1")
@@ -38,6 +40,21 @@ import pynwb
 
 
 RANDOM_SEED = 42
+PERMUTATION_SEED = 20260413
+NUM_CONFIGS = 91
+
+
+def get_config_number(array_task_id: int, num_configs: int = NUM_CONFIGS) -> int:
+    # SLURM schedules array tasks roughly in order of task ID, so neighboring
+    # IDs run close together in wall-clock time and share correlated noise:
+    # node load, Lustre OSS cache state, network weather. If config N were read
+    # by array task N directly, adjacent configs would see correlated measurement
+    # noise and bias between-config comparisons. Mapping through a fixed seeded
+    # permutation spreads any time-correlated noise uniformly across the config
+    # space while keeping the mapping reproducible across runs.
+    rng = np.random.default_rng(PERMUTATION_SEED)
+    permutation = rng.permutation(num_configs) + 1
+    return int(permutation[array_task_id - 1])
 
 
 # =============================================================================
@@ -315,7 +332,8 @@ def main():
             print(f"  {name}: {info['description']}")
         sys.exit(1)
 
-    config_number = int(sys.argv[1])
+    array_task_id = int(sys.argv[1])
+    config_number = get_config_number(array_task_id)
     input_dir = Path(sys.argv[2])
     series_name = sys.argv[3]
     output_label = sys.argv[4]
