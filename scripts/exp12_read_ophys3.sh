@@ -19,11 +19,12 @@ conda activate ~/envs/nwbio
 
 PYTHON=$(which python)  # Capture the full python path
 
-CONFIGNUM="$SLURM_ARRAY_TASK_ID"
+ARRAYTASKID="$SLURM_ARRAY_TASK_ID"
 INPUTDIR="$SCRATCH/nwb-io-evaluation/write_output/"
 SERIESNAME="MotionCorrectedTwoPhotonSeries"
 OUTLABEL="ophys3"
 OUTDIR="$SCRATCH/nwb-io-evaluation/read_output/"
+USECASE="${USECASE:-all}"  # submit per-pattern with e.g. --export=ALL,USECASE=o2
 
-echo "Running: srun $PYTHON scripts/exp12_read_ophys.py $CONFIGNUM $INPUTDIR $SERIESNAME $OUTLABEL $OUTDIR"
-srun $PYTHON scripts/exp12_read_ophys.py $CONFIGNUM $INPUTDIR $SERIESNAME $OUTLABEL $OUTDIR
+echo "Running: srun $PYTHON scripts/exp12_read_ophys.py $ARRAYTASKID $INPUTDIR $SERIESNAME $OUTLABEL $OUTDIR $USECASE"
+srun $PYTHON scripts/exp12_read_ophys.py $ARRAYTASKID $INPUTDIR $SERIESNAME $OUTLABEL $OUTDIR $USECASE

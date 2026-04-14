@@ -10,7 +10,7 @@ Implements access patterns from the chunking/compression evaluation plan:
 Runs all registered use cases for a given config file.
 
 Usage:
-    python exp12_read_ecephys.py <array_task_id> <input_dir> <series_name> <output_label> <output_dir>
+    python exp12_read_ecephys.py <array_task_id> <input_dir> <series_name> <output_label> <output_dir> [use_case]
 
 Arguments:
     array_task_id: SLURM array task ID (1-indexed, 1..NUM_CONFIGS). This is
@@ -20,9 +20,12 @@ Arguments:
     series_name: Name of the ElectricalSeries in the NWB file to read
     output_label: Label for this input NWB file experiment (e.g., "ecephys1")
     output_dir: Path to directory to write output HDF5 files
+    use_case: Which pattern to run ("e1", "e2", "e3", "e4", or "all").
+        Defaults to "all". Running each pattern in a separate job prevents
+        earlier patterns from pre-warming page/OSS caches for later ones.
 
 Example:
-    python exp12_read_ecephys.py 1 /path/to/nwb ElectricalSeries ecephys1 /path/to/results
+    python exp12_read_ecephys.py 1 /path/to/nwb ElectricalSeries ecephys1 /path/to/results e2
 """
 
 import math
@@ -338,9 +341,23 @@ def main():
     series_name = sys.argv[3]
     output_label = sys.argv[4]
     output_dir = Path(sys.argv[5])
+    use_case_arg = sys.argv[6] if len(sys.argv) >= 7 else "all"
+
+    if use_case_arg == "all":
+        use_cases_to_run = USE_CASES
+    elif use_case_arg in USE_CASES:
+        use_cases_to_run = {use_case_arg: USE_CASES[use_case_arg]}
+    else:
+        print(
+            f"Unknown use case: {use_case_arg}. "
+            f"Valid: {list(USE_CASES.keys())} or 'all'"
+        )
+        sys.exit(1)
 
     input_filepath = input_dir / f"{output_label}_Config{config_number:03d}.nwb"
-    output_filepath = output_dir / f"read_{output_label}_Config{config_number:03d}.h5"
+    output_filepath = (
+        output_dir / f"read_{output_label}_Config{config_number:03d}_{use_case_arg}.h5"
+    )
 
     if not input_filepath.exists():
         print(f"Input file not found: {input_filepath}")
@@ -353,7 +370,7 @@ def main():
     print(f"  Output: {output_filepath}")
 
     with h5py.File(output_filepath, "w") as output_file:
-        for use_case, uc_info in USE_CASES.items():
+        for use_case, uc_info in use_cases_to_run.items():
             print(f"\n[{use_case.upper()}] {uc_info['description']}")
 
             results = uc_info["func"](input_filepath, series_name)

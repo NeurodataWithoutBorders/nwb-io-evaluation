@@ -25,15 +25,18 @@ def column_sort_key(col):
     return (len(STAT_ORDER), col)
 
 
-def extract_config_no(filename):
+def extract_config_no_and_use_case(filename):
     """
-    Extract value between 'Config' and '.'
-    Example:
-        file_Config12.h5 -> 12
-        run_ConfigA_v2.h5 -> A_v2
+    Extract config number and optional use case suffix from a read-result filename.
+    Examples:
+        read_ophys1_Config042.h5       -> ("042", "")
+        read_ophys1_Config042_o2.h5    -> ("042", "o2")
+        read_ophys1_Config042_all.h5   -> ("042", "all")
     """
-    match = re.search(r'Config(.*?)\.', filename)
-    return match.group(1) if match else filename
+    match = re.search(r'Config(\d+)(?:_([a-z0-9]+))?\.', filename)
+    if not match:
+        return filename, ""
+    return match.group(1), match.group(2) or ""
 
 
 def traverse_groups(h5obj, path=""):
@@ -98,9 +101,9 @@ def main():
 
             row = {}
 
-            # config extraction
-            config_no = extract_config_no(fname)
+            config_no, use_case = extract_config_no_and_use_case(fname)
             row["config_no"] = config_no
+            row["use_case"] = use_case
 
             stats = process_file(filepath, TARGET_KEYS, elog)
 
@@ -114,8 +117,9 @@ def main():
             all_columns.update(row.keys())
 
     # Ensure consistent column order
-    all_columns = ["config_no"] + sorted(
-        (c for c in all_columns if c != "config_no"), key=column_sort_key
+    leading = ["config_no", "use_case"]
+    all_columns = leading + sorted(
+        (c for c in all_columns if c not in leading), key=column_sort_key
     )
 
     # Write final output
