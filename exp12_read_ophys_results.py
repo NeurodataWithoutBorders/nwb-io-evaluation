@@ -7,13 +7,22 @@ ERROR_LOG = "h5_errors.log"
 INPUT_DIR = "read_ophys2_Configs"
 OUTPUT_FILE = "h5_summary_Ophys2.txt"
 
-TARGET_KEYS = ["repeat_total_times", "repeat_total_times", "read_times","location_total_times"]
+TARGET_KEYS = ["repeat_total_times", "read_times", "location_total_times"]
 
+STAT_ORDER = ("median", "min", "max")
 
 
 def compute_stats(arr):
     arr = np.ravel(arr)
-    return np.mean(arr), np.std(arr)
+    return np.median(arr), np.min(arr), np.max(arr)
+
+
+def column_sort_key(col):
+    for idx, stat in enumerate(STAT_ORDER):
+        suffix = f"_{stat}"
+        if col.endswith(suffix):
+            return (idx, col[: -len(suffix)])
+    return (len(STAT_ORDER), col)
 
 
 def extract_config_no(filename):
@@ -53,10 +62,11 @@ def process_file(filepath, target_keys, error_log_handle):
                     if key in group:
                         try:
                             data = group[key][()]
-                            mean, std = compute_stats(data)
+                            median, minimum, maximum = compute_stats(data)
 
-                            result[f"{group_path}_{key}_mean"] = mean
-                            result[f"{group_path}_{key}_std"] = std
+                            result[f"{group_path}_{key}_median"] = median
+                            result[f"{group_path}_{key}_min"] = minimum
+                            result[f"{group_path}_{key}_max"] = maximum
 
                         except Exception as inner_e:
                             msg = f"Dataset error in {filepath} :: {group_path}/{key} :: {inner_e}\n"
@@ -104,7 +114,9 @@ def main():
             all_columns.update(row.keys())
 
     # Ensure consistent column order
-    all_columns = ["config_no"] + sorted(c for c in all_columns if c != "config_no")
+    all_columns = ["config_no"] + sorted(
+        (c for c in all_columns if c != "config_no"), key=column_sort_key
+    )
 
     # Write final output
     with open(OUTPUT_FILE, "w") as out:
