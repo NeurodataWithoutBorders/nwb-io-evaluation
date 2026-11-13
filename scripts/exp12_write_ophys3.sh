@@ -19,7 +19,7 @@ conda activate ~/envs/nwbio
 
 PYTHON=$(which python)  # Capture the full python path
 
-CONFIG="exp12_configs_ophys3.txt"
+CONFIG="scripts/exp12_configs_ophys3.txt"
 JOB="$SLURM_ARRAY_TASK_ID"
 FILEPATH="$SCRATCH/nwb-io-evaluation/data/sub-491604967_ses-496908818-StimB_ophys.nwb"
 SERIESNAME="MotionCorrectedTwoPhotonSeries"

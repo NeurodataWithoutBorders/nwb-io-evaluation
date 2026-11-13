@@ -19,7 +19,7 @@ conda activate ~/envs/nwbio
 
 PYTHON=$(which python)  # Capture the full python path
 
-CONFIG="exp12_configs_ecephys.txt"
+CONFIG="scripts/exp12_configs_ecephys.txt"
 JOB="$SLURM_ARRAY_TASK_ID"
 FILEPATH="$SCRATCH/nwb-io-evaluation/data/sub-CSHL045_ses-034e726f-b35f-41e0-8d6c-a22cc32391fb_desc-raw_ecephys.nwb"
 OUTLABEL="ecephys2"

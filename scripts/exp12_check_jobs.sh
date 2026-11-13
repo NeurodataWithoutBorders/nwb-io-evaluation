@@ -1,7 +1,7 @@
 #!/bin/bash
 # Report results from an sbatch array job in a table format.
-# Usage: ./exp12_check_jobs.sh <job_id> <log_folder> <config_file> <experiment_name>
-# Example: ./exp12_check_jobs.sh 20463593 write_logs exp12_configs_ophys1.txt ophys1
+# Usage: ./scripts/exp12_check_jobs.sh <job_id> <log_folder> <config_file> <experiment_name>
+# Example: ./scripts/exp12_check_jobs.sh 20463593 write_logs scripts/exp12_configs_ophys1.txt ophys1
 
 if [ $# -ne 4 ]; then
     echo "Usage: $0 <job_id> <log_folder> <config_file> <experiment_name>"

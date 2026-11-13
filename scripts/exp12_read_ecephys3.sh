@@ -9,8 +9,8 @@
 #SBATCH --mem-per-cpu=32G
 #SBATCH --array=1-91
 #SBATCH --job-name=exp12_read_ecephys3
-#SBATCH --output=/global/scratch/users/rly/nwbio/exp12/read_logs/ecephys3--%A_%03a-out.log
-#SBATCH --error=/global/scratch/users/rly/nwbio/exp12/read_logs/ecephys3--%A_%03a-err.log
+#SBATCH --output=/global/scratch/users/rly/nwb-io-evaluation/read_logs/ecephys3--%A_%03a-out.log
+#SBATCH --error=/global/scratch/users/rly/nwb-io-evaluation/read_logs/ecephys3--%A_%03a-err.log
 #SBATCH --mail-user=rly@lbl.gov
 #SBATCH --mail-type=ALL
 
@@ -20,10 +20,10 @@ conda activate ~/envs/nwbio
 PYTHON=$(which python)  # Capture the full python path
 
 CONFIGNUM="$SLURM_ARRAY_TASK_ID"
-INPUTDIR="$SCRATCH/nwbio/exp12/write_output/"
+INPUTDIR="$SCRATCH/nwb-io-evaluation/write_output/"
 SERIESNAME="ElectricalSeriesAP"
 OUTLABEL="ecephys3"
-OUTDIR="$SCRATCH/nwbio/exp12/read_output/"
+OUTDIR="$SCRATCH/nwb-io-evaluation/read_output/"
 
-echo "Running: srun $PYTHON exp12_read_ecephys.py $CONFIGNUM $INPUTDIR $SERIESNAME $OUTLABEL $OUTDIR"
-srun $PYTHON exp12_read_ecephys.py $CONFIGNUM $INPUTDIR $SERIESNAME $OUTLABEL $OUTDIR
+echo "Running: srun $PYTHON scripts/exp12_read_ecephys.py $CONFIGNUM $INPUTDIR $SERIESNAME $OUTLABEL $OUTDIR"
+srun $PYTHON scripts/exp12_read_ecephys.py $CONFIGNUM $INPUTDIR $SERIESNAME $OUTLABEL $OUTDIR

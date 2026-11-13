@@ -8,8 +8,8 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=32G
 #SBATCH --job-name=exp12_write_ecephys_all_binary
-#SBATCH --output=/global/scratch/users/rly/nwbio/exp12/write_logs/ecephys_all_binary--%A-out.log
-#SBATCH --error=/global/scratch/users/rly/nwbio/exp12/write_logs/ecephys_all_binary--%A-err.log
+#SBATCH --output=/global/scratch/users/rly/nwb-io-evaluation/write_logs/ecephys_all_binary--%A-out.log
+#SBATCH --error=/global/scratch/users/rly/nwb-io-evaluation/write_logs/ecephys_all_binary--%A-err.log
 #SBATCH --mail-user=rly@lbl.gov
 #SBATCH --mail-type=ALL
 
@@ -18,9 +18,9 @@ conda activate ~/envs/nwbio
 
 PYTHON=$(which python)  # Capture the full python path
 
-srun $PYTHON exp12_nwb_to_binary.py ../../data/sub-npI3_ses-20190421_behavior+ecephys.nwb ElectricalSeries ../raw_data/ecephys1.bin
-srun $PYTHON exp12_nwb_to_binary.py ../../data/sub-CSHL045_ses-034e726f-b35f-41e0-8d6c-a22cc32391fb_desc-raw_ecephys.nwb ElectricalSeriesProbe00AP ../raw_data/ecephys2_00ap.bin
-srun $PYTHON exp12_nwb_to_binary.py ../../data/sub-CSHL045_ses-034e726f-b35f-41e0-8d6c-a22cc32391fb_desc-raw_ecephys.nwb ElectricalSeriesProbe00LF ../raw_data/ecephys2_00lf.bin
-srun $PYTHON exp12_nwb_to_binary.py ../../data/sub-CSHL045_ses-034e726f-b35f-41e0-8d6c-a22cc32391fb_desc-raw_ecephys.nwb ElectricalSeriesProbe01AP ../raw_data/ecephys2_01ap.bin
-srun $PYTHON exp12_nwb_to_binary.py ../../data/sub-CSHL045_ses-034e726f-b35f-41e0-8d6c-a22cc32391fb_desc-raw_ecephys.nwb ElectricalSeriesProbe01LF ../raw_data/ecephys2_01lf.bin
-srun $PYTHON exp12_nwb_to_binary.py ../../data/sub-Elgar_ses-2022-08-19_ecephys.nwb ElectricalSeriesAP ../raw_data/ecephys3.bin
+srun $PYTHON scripts/exp12_nwb_to_binary.py data/sub-npI3_ses-20190421_behavior+ecephys.nwb ElectricalSeries raw_data/ecephys1.bin
+srun $PYTHON scripts/exp12_nwb_to_binary.py data/sub-CSHL045_ses-034e726f-b35f-41e0-8d6c-a22cc32391fb_desc-raw_ecephys.nwb ElectricalSeriesProbe00AP raw_data/ecephys2_00ap.bin
+srun $PYTHON scripts/exp12_nwb_to_binary.py data/sub-CSHL045_ses-034e726f-b35f-41e0-8d6c-a22cc32391fb_desc-raw_ecephys.nwb ElectricalSeriesProbe00LF raw_data/ecephys2_00lf.bin
+srun $PYTHON scripts/exp12_nwb_to_binary.py data/sub-CSHL045_ses-034e726f-b35f-41e0-8d6c-a22cc32391fb_desc-raw_ecephys.nwb ElectricalSeriesProbe01AP raw_data/ecephys2_01ap.bin
+srun $PYTHON scripts/exp12_nwb_to_binary.py data/sub-CSHL045_ses-034e726f-b35f-41e0-8d6c-a22cc32391fb_desc-raw_ecephys.nwb ElectricalSeriesProbe01LF raw_data/ecephys2_01lf.bin
+srun $PYTHON scripts/exp12_nwb_to_binary.py data/sub-Elgar_ses-2022-08-19_ecephys.nwb ElectricalSeriesAP raw_data/ecephys3.bin

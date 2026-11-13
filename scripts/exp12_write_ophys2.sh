@@ -19,7 +19,7 @@ conda activate ~/envs/nwbio
 
 PYTHON=$(which python)  # Capture the full python path
 
-CONFIG="exp12_configs_ophys2.txt"
+CONFIG="scripts/exp12_configs_ophys2.txt"
 JOB="$SLURM_ARRAY_TASK_ID"
 FILEPATH="$SCRATCH/nwb-io-evaluation/data/sub-408021_ses-758519303_obj-raw_behavior+image+ophys.nwb"
 SERIESNAME="motion_corrected_stack"

@@ -100,7 +100,7 @@ h5ls -v sub-R6_ses-20200206T210000_behavior+ophys.nwb/acquisition/TwoPhotonSerie
 
 #### Ophys Dataset 2
 ```bash
-dandi download "https://api.dandiarchive.org/api/dandisets/000037/versions/0.240209.1623/assets/?path=sub-408021/sub-408021_ses-758519303_behavior+ophys.nwb"
+dandi download "https://api.dandiarchive.org/api/dandisets/000037/versions/0.240209.1623/assets/?path=sub-408021/sub-408021_ses-758519303_obj-raw_behavior+image+ophys.nwb"
 h5ls -v sub-408021_ses-758519303_obj-raw_behavior+image+ophys.nwb/acquisition/motion_corrected_stack/data
 ```
 - Shape: 126741, 512, 512
@@ -164,13 +164,13 @@ sbatch scripts/exp12_write_ophys3.sh
 
 Get h5py default chunk sizes (Config 91):
 ```bash
-h5ls -v ophys1_Config091.nwb/acquisition/TwoPhotonSeries/data
+h5ls -v write_output/ophys1_Config091.nwb/acquisition/TwoPhotonSeries/data
 # Chunks:    {652, 25, 16} 521600 bytes
 
-h5ls -v ophys2_Config091.nwb/acquisition/motion_corrected_stack/data
+h5ls -v write_output/ophys2_Config091.nwb/acquisition/motion_corrected_stack/data
 # Chunks:    {1981, 8, 16} 507136 bytes
 
-h5ls -v ophys3_Config091.nwb/acquisition/MotionCorrectedTwoPhotonSeries/data
+h5ls -v write_output/ophys3_Config091.nwb/acquisition/MotionCorrectedTwoPhotonSeries/data
 # Chunks:    {1779, 8, 16} 455424 bytes
 ```
 
@@ -179,6 +179,7 @@ h5ls -v ophys3_Config091.nwb/acquisition/MotionCorrectedTwoPhotonSeries/data
 Run sbatch with `#SBATCH --array=1` before doing the full array to make sure the env and script are set up correctly. 
 
 ```bash
+mkdir -p read_logs read_output
 sbatch scripts/exp12_read_ophys1.sh
 sbatch scripts/exp12_read_ophys2.sh
 sbatch scripts/exp12_read_ophys3.sh
@@ -194,11 +195,9 @@ This takes about 2 hours each, so we put it in a slurm script.
 
 Run:
 ```bash
-conda activate $HOME/envs/nwbio
-cd /global/home/users/rly/scratch/nwb-io-evaluation
-python scripts/exp12_nwb_to_binary.py data/sub-npI3_ses-20190421_behavior+ecephys.nwb ElectricalSeries raw_data/ecephys1.bin
-python scripts/exp12_nwb_to_binary.py data/sub-440956_ses-20190207T120657_behavior+ecephys+image+ogen.nwb ElectricalSeries-1 raw_data/ecephys2.bin
-python scripts/exp12_nwb_to_binary.py data/sub-Elgar_ses-2022-08-19_ecephys.nwb ElectricalSeriesAP raw_data/ecephys3.bin
+cd $SCRATCH/nwb-io-evaluation
+mkdir -p write_logs raw_data
+sbatch scripts/exp12_write_ecephys_all_binary.sh
 ```
 
 ### Generate unchunked NWB files from the raw ecephys files
@@ -227,13 +226,13 @@ sbatch scripts/exp12_write_ecephys3.sh
 
 Get h5py default chunk sizes (Config 91):
 ```bash
-h5ls -v ecephys1_Config091.nwb/acquisition/ElectricalSeries/data
+h5ls -v write_output/ecephys1_Config091.nwb/acquisition/ElectricalSeries/data
 # Chunks:    {341774, 1} 683548 bytes
 
-h5ls -v ecephys2_Config091.nwb/acquisition/ElectricalSeriesProbe00AP/data
+h5ls -v write_output/ecephys2_Config091.nwb/acquisition/ElectricalSeriesProbe00AP/data
 # Chunks:    {224216, 1} 448432 bytes
 
-h5ls -v ecephys3_Config091.nwb/acquisition/ElectricalSeriesAP/data
+h5ls -v write_output/ecephys3_Config091.nwb/acquisition/ElectricalSeriesAP/data
 # Chunks:    {319058, 1} 638116 bytes
 ```
 
@@ -242,6 +241,7 @@ h5ls -v ecephys3_Config091.nwb/acquisition/ElectricalSeriesAP/data
 Run sbatch with `#SBATCH --array=1` before doing the full array to make sure the env and script are set up correctly. 
 
 ```bash
+mkdir -p read_logs read_output
 sbatch scripts/exp12_read_ecephys1.sh
 sbatch scripts/exp12_read_ecephys2.sh
 sbatch scripts/exp12_read_ecephys3.sh
