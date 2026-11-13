@@ -9,8 +9,8 @@
 #SBATCH --mem-per-cpu=32G
 #SBATCH --array=1-91
 #SBATCH --job-name=exp12_write_ophys1
-#SBATCH --output=/global/scratch/users/rly/nwbio/exp12/write_logs/ophys1--%A_%03a-out.log
-#SBATCH --error=/global/scratch/users/rly/nwbio/exp12/write_logs/ophys1--%A_%03a-err.log
+#SBATCH --output=/global/scratch/users/rly/nwb-io-evaluation/write_logs/ophys1--%A_%03a-out.log
+#SBATCH --error=/global/scratch/users/rly/nwb-io-evaluation/write_logs/ophys1--%A_%03a-err.log
 #SBATCH --mail-user=rly@lbl.gov
 #SBATCH --mail-type=ALL
 
@@ -21,11 +21,11 @@ PYTHON=$(which python)  # Capture the full python path
 
 CONFIG="exp12_configs_ophys1.txt"
 JOB="$SLURM_ARRAY_TASK_ID"
-FILEPATH="$SCRATCH/nwbio/data/sub-R6_ses-20200206T210000_behavior+ophys.nwb"
+FILEPATH="$SCRATCH/nwb-io-evaluation/data/sub-R6_ses-20200206T210000_behavior+ophys.nwb"
 SERIESNAME="TwoPhotonSeries"
-TIFFDIR="$SCRATCH/nwbio/exp12/raw_data/ophys1"
+TIFFDIR="$SCRATCH/nwb-io-evaluation/raw_data/ophys1"
 OUTLABEL="ophys1"
-OUTDIR="$SCRATCH/nwbio/exp12/write_output/"
+OUTDIR="$SCRATCH/nwb-io-evaluation/write_output/"
 
-echo "Running: srun $PYTHON exp12_write_ophys_tiff_to_nwb.py $CONFIG $JOB $FILEPATH $SERIESNAME $TIFFDIR $OUTLABEL $OUTDIR"
-srun $PYTHON exp12_write_ophys_tiff_to_nwb.py $CONFIG $JOB $FILEPATH $SERIESNAME $TIFFDIR $OUTLABEL $OUTDIR
+echo "Running: srun $PYTHON scripts/exp12_write_ophys_tiff_to_nwb.py $CONFIG $JOB $FILEPATH $SERIESNAME $TIFFDIR $OUTLABEL $OUTDIR"
+srun $PYTHON scripts/exp12_write_ophys_tiff_to_nwb.py $CONFIG $JOB $FILEPATH $SERIESNAME $TIFFDIR $OUTLABEL $OUTDIR
