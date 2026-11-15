@@ -15,8 +15,9 @@ timed reads, and closes it.
     o4  ophys    50 samples, each reading a 16 x 16 pixel patch at a random position through the
                  window in 500 frame batches
 
-Random positions come from a generator seeded with RANDOM_SEED for each pattern, so every
-configuration of a dataset is read at the same positions.
+Random positions come from a generator seeded with RANDOM_SEED and the pattern's name, so every
+configuration of a dataset is read at the same positions, and the positions of one pattern are
+independent of those of another.
 
 Read paths:
 
@@ -136,12 +137,12 @@ Selection = list[int | list[int]]  # per dimension, an index or [start, stop]
 
 def unit_positions(pattern: Pattern, shape: tuple[int, ...]) -> np.ndarray:
     """Random positions of each unit, as rows; empty rows for the sequential repeats."""
-    rng = np.random.default_rng(RANDOM_SEED)
+    rng = np.random.default_rng([RANDOM_SEED, *pattern.name.encode()])
     n = shape[0]
     if pattern.kind == "sequential":
         return np.zeros((pattern.n_units, 0), dtype=np.int64)
     if pattern.kind == "random_batches":
-        return rng.integers(0, n - pattern.batch, size=(N_SAMPLES, pattern.reads_per_sample))
+        return rng.integers(0, n - pattern.batch + 1, size=(N_SAMPLES, pattern.reads_per_sample))
     if pattern.kind == "subregion":
         t = rng.integers(0, n - pattern.batch + 1, size=N_SAMPLES)
         c = rng.integers(0, shape[1] - pattern.width + 1, size=N_SAMPLES)
