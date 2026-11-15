@@ -10,8 +10,7 @@
 
 - The recommended configuration for each access pattern, and the runner-up.
 - The uncompressed baselines: `<label>_unchunked.nwb`, plus EC2-none and OC2-none.
-- The library default chunk shapes: ECh5py-gzip4, EChdmf-gzip4, OCh5py-gzip4, and OChdmf-gzip4.
-- The configuration that the most DANDI files already use, if it is added to the tables (see below).
+- The library default chunk shapes: ECh5py-gzip4, EChdmf-gzip4, ECneuroconv-gzip4, OCh5py-gzip4, OChdmf-gzip4, and OCneuroconv-gzip4.
 - One configuration each where chunk shape and access pattern are mismatched, for example EC5 for E1 and OC1 for O4, as a check that the large effects reproduce.
 
 **Conditions** (each run with the same read scripts, recording wall time and CPU time):
@@ -29,8 +28,7 @@
 
 ## Before the read benchmarks
 
-- Update the read scripts on `exp12-read-improvements` to the config tables: config IDs in file names, the row count from the table, `--array=1-197`, `#SBATCH --export=NONE` with `srun --export=ALL`, and `cpu_affinity_count` and `os_cpu_count` in the recorded metadata.
+- Update the read scripts on `exp12-read-improvements` to the config tables: config IDs in file names, the row count from the table, `--array=1-198`, `#SBATCH --export=NONE` with `srun --export=ALL`, and `cpu_affinity_count` and `os_cpu_count` in the recorded metadata.
 - Read Blosc2 configurations both with and without b2h5py, run each timed read in its own subprocess so a crash is recorded, check that each read path returns the same bytes as the source, and record whether b2h5py's fast path was used.
 - Decide whether the sequential patterns (E1, E2, O1, O2, O4) read the whole window or a bounded span at a random offset per repeat.
-- Decide whether to add the chunking that most DANDI Neuropixels files already use, `(78125, 64)` with gzip 4, as a baseline configuration.
 - Decide the Lustre stripe count for `write_output/` and set it with `lfs setstripe` before writing.

@@ -196,3 +196,4 @@ EC5-b2zstd9-shuf	180000,32	blosc2-zstd	9	shuffle
 EC5-b2zstd9-bitshuf	180000,32	blosc2-zstd	9	bitshuffle
 ECh5py-gzip4	224216,1	gzip	4	none
 EChdmf-gzip4	5461,384	gzip	4	none
+ECneuroconv-gzip4	78125,64	gzip	4	none

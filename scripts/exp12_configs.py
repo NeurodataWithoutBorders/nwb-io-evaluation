@@ -19,7 +19,7 @@ A Blosc2 level sets both the codec level and the Blosc2 block size. For blosc2-z
 runs zstd at level 2c - 1 for c < 9 and at zstd's maximum (22) for c = 9, so blosc2-zstd levels
 2, 6, and 9 run zstd at the same levels as the standalone zstd 3, 11, and 22 configurations.
 
-Chunk shape labels follow the paper: EC1 to EC5 for ecephys and OC1 to OC5 for ophys. Two more
+Chunk shape labels follow the paper: EC1 to EC5 for ecephys and OC1 to OC5 for ophys. Three more
 labels hold library default chunk shapes, computed for each full-length recording (the shape,
 dtype, and label of every recording are in DATASETS) and written with gzip 4:
 
@@ -28,8 +28,10 @@ dtype, and label of every recording are in DATASETS) and written with gzip 4:
                     Many existing DANDI files have these chunks.
     EChdmf, OChdmf  hdmf's default chunk shape (HDF5IO.compute_default_chunk_shape), which hdmf
                     uses for chunks=True and iterator writes.
+    ECneuroconv,    NeuroConv's default chunk shape and compression (see neuroconv_chunks), the most
+    OCneuroconv     common setting for raw Neuropixels data in a scan of large DANDI dandisets.
 
-Both computations depend on the dataset shape, so they use the full-length shape, which is what
+The computations depend on the dataset shape, so they use the full-length shape, which is what
 users writing the full recording get. The tables record the shapes for the installed h5py and hdmf.
 Regenerating the tables and comparing them with the committed ones checks that the shapes still
 hold.
@@ -86,7 +88,8 @@ BLOSC2_SETTINGS = [
     ("blosc2-zstd", 2), ("blosc2-zstd", 6), ("blosc2-zstd", 9),
 ]
 # The library default chunk shapes are written with gzip 4 (h5py's default gzip level) and no
-# shuffle, so the h5py and hdmf rows differ only in chunk shape.
+# shuffle, so the h5py, hdmf, and NeuroConv rows differ only in chunk shape. gzip 4 without shuffle
+# is also NeuroConv's default compression for these datasets.
 DEFAULT_CHUNKS_SETTING = ("gzip", 4)
 
 ECEPHYS_CHUNKS = {
@@ -122,6 +125,27 @@ DATASETS = {
 }
 
 
+def neuroconv_chunks(shape: tuple[int, ...], dtype: Any) -> tuple[int, ...]:
+    """NeuroConv's default chunk shape for an ElectricalSeries (2-D) or TwoPhotonSeries (3-D) dataset.
+
+    This follows NeuroConv 0.10.2, which aims for chunks of at most 10 MB:
+    get_electrical_series_chunk_shape keeps min(64, channels) channels and as many frames as fit,
+    and get_image_series_chunk_shape keeps whole frames, as many as fit and at least one. Its
+    default dataset configuration compresses both with gzip at h5py's default level 4, without
+    shuffle. For 384 channel int16 data the chunks are (78125, 64). In a scan of the largest NWB
+    file in each DANDI dandiset of 200 GB or more, 7 of the 10 files holding a raw 384 channel int16
+    AP series used (78125, 64) with gzip 4, including every one created from August 2023 to March
+    2026 and the source of ecephys3.
+    """
+    itemsize = np.dtype(dtype).itemsize
+    chunk_bytes = 10_000_000
+    if len(shape) == 2:
+        channels = min(64, shape[1])
+        return (min(chunk_bytes // (channels * itemsize), shape[0]), channels)
+    frames = int(chunk_bytes / (shape[1] * shape[2] * itemsize))
+    return (max(1, min(frames, shape[0])), shape[1], shape[2])
+
+
 def default_chunks(label: str) -> dict[str, tuple[int, ...]]:
     """Library default chunk shapes for the full-length recording of a dataset, by chunk label."""
     spec = DATASETS[label]
@@ -129,6 +153,7 @@ def default_chunks(label: str) -> dict[str, tuple[int, ...]]:
     return {
         f"{spec['prefix']}h5py": tuple(guess_chunk(shape, shape, np.dtype(dtype).itemsize)),
         f"{spec['prefix']}hdmf": tuple(HDF5IO.compute_default_chunk_shape(shape, dtype)),
+        f"{spec['prefix']}neuroconv": neuroconv_chunks(shape, dtype),
     }
 
 

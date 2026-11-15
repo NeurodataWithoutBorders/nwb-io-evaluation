@@ -148,13 +148,14 @@ Each dataset has a config table, `scripts/exp12_configs_<label>.tsv`, with one c
 python scripts/exp12_configs.py
 ```
 
-Each table has 197 configurations: 5 chunk shapes times 39 codec settings, plus two library default chunk shapes.
+Each table has 198 configurations: 5 chunk shapes times 39 codec settings, plus three library default chunk shapes.
 
 - Chunk shapes: EC1 to EC5 for ecephys and OC1 to OC5 for ophys, as in the paper.
 - Codec settings: uncompressed; gzip 1, 4, 6, 9, lzf, lz4, and zstd 3, 11, 22, each with and without the HDF5 shuffle filter; Blosc2 blosclz 1, 9, lz4 1, 9, lz4hc 1, 5, 9, and zstd 2, 6, 9, each with Blosc2's shuffle and with its bitshuffle. Blosc2 zstd levels 2, 6, and 9 run zstd at levels 3, 11, and 22.
 - Library defaults, both with gzip 4 and computed for the full-length recording:
   - ECh5py, OCh5py: h5py's chunk guess for `chunks=True`, which hdmf used for `chunks=True` and iterator writes before it computed its own shape. Many existing DANDI files have these chunks.
   - EChdmf, OChdmf: hdmf's default chunk shape, which the hdmf version in `environment.yml` uses for `chunks=True` and iterator writes.
+  - ECneuroconv, OCneuroconv: NeuroConv's default chunk shape, about 10 MB per chunk: `(78125, 64)` for the ecephys datasets, `(12, 796, 512)` for ophys1, and `(19, 512, 512)` for ophys2 and ophys3. In a scan of large DANDI dandisets, `(78125, 64)` with gzip 4 is the most common setting for raw Neuropixels data; `neuroconv_chunks` in `scripts/exp12_configs.py` gives the source and the evidence.
 
 The tables record these shapes for the installed h5py and hdmf. To check that they still hold, regenerate the tables and compare:
 

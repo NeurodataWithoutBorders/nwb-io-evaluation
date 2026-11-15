@@ -196,3 +196,4 @@ OC5-b2zstd9-shuf	20480,16,16	blosc2-zstd	9	shuffle
 OC5-b2zstd9-bitshuf	20480,16,16	blosc2-zstd	9	bitshuffle
 OCh5py-gzip4	1779,8,16	gzip	4	none
 OChdmf-gzip4	8,512,512	gzip	4	none
+OCneuroconv-gzip4	19,512,512	gzip	4	none
