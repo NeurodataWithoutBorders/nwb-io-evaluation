@@ -4,7 +4,7 @@ Contiguous time windows taken from the middle of each source recording.
 The write scripts that build test NWB files from the raw binary and TIFF data all take their
 data from these windows, so the unchunked baseline and every chunking and compression
 configuration of a dataset hold the same samples. Each window length is a whole number of chunk
-time extents for the chunk shapes EC1 to EC5 and C1 to C5 and for the hdmf default ophys shapes.
+time extents for the chunk shapes EC1 to EC5 and OC1 to OC5 and for the hdmf default ophys shapes.
 The h5py chunk guesses and the hdmf default ecephys shape do not divide the window, so those
 datasets end in a chunk that is partly filled along time.
 """

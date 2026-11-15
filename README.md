@@ -138,7 +138,7 @@ The raw binary and TIFF files hold each full recording. The test NWB files (unch
 - Ecephys: 108,000,000 samples, which is 60 min at 30 kHz (59.998 min for ecephys3 at 30001.065 Hz). Only the AP band is written, from `ElectricalSeries` in ecephys1, `ElectricalSeriesProbe00AP` in ecephys2, and `ElectricalSeriesAP` in ecephys3.
 - Ophys: 40,960 frames, which is 45.5 min for ophys1 at 15 Hz and 22.7 min for ophys2 and ophys3 at 30.075 Hz, from `TwoPhotonSeries` in ophys1, `motion_corrected_stack` in ophys2, and `MotionCorrectedTwoPhotonSeries` in ophys3.
 
-Each window is a whole number of chunk time extents for the chunk shapes EC1 to EC5 and C1 to C5. The ophys1 frames are 796 pixels wide, which is not a multiple of the 128 and 16 pixel tiles of C3 to C5, so those datasets have partly filled edge chunks; their uncompressed files report a compression ratio below 1.
+Each window is a whole number of chunk time extents for the chunk shapes EC1 to EC5 and OC1 to OC5. The ophys1 frames are 796 pixels wide, which is not a multiple of the 128 and 16 pixel tiles of OC3 to OC5, so those datasets have partly filled edge chunks; their uncompressed files report a compression ratio below 1.
 
 ### Chunking and compression configurations
 
@@ -150,11 +150,11 @@ python scripts/exp12_configs.py
 
 Each table has 197 configurations: 5 chunk shapes times 39 codec settings, plus two library default chunk shapes.
 
-- Chunk shapes: EC1 to EC5 for ecephys and C1 to C5 for ophys, as in the paper.
+- Chunk shapes: EC1 to EC5 for ecephys and OC1 to OC5 for ophys, as in the paper.
 - Codec settings: uncompressed; gzip 1, 4, 6, 9, lzf, lz4, and zstd 3, 11, 22, each with and without the HDF5 shuffle filter; Blosc2 blosclz 1, 9, lz4 1, 9, lz4hc 1, 5, 9, and zstd 2, 6, 9, each with Blosc2's shuffle and with its bitshuffle. Blosc2 zstd levels 2, 6, and 9 run zstd at levels 3, 11, and 22.
 - Library defaults, both with gzip 4 and computed for the full-length recording:
-  - ECh5py, Ch5py: h5py's chunk guess for `chunks=True`, which hdmf used for `chunks=True` and iterator writes before it computed its own shape. Many existing DANDI files have these chunks.
-  - EChdmf, Chdmf: hdmf's default chunk shape, which the hdmf version in `environment.yml` uses for `chunks=True` and iterator writes.
+  - ECh5py, OCh5py: h5py's chunk guess for `chunks=True`, which hdmf used for `chunks=True` and iterator writes before it computed its own shape. Many existing DANDI files have these chunks.
+  - EChdmf, OChdmf: hdmf's default chunk shape, which the hdmf version in `environment.yml` uses for `chunks=True` and iterator writes.
 
 The tables record these shapes for the installed h5py and hdmf. To check that they still hold, regenerate the tables and compare:
 

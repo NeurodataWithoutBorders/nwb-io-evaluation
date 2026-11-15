@@ -9,10 +9,10 @@
 **Configurations** (per dataset, about 15 to 20, from the existing config tables and write outputs):
 
 - The recommended configuration for each access pattern, and the runner-up.
-- The uncompressed baselines: `<label>_unchunked.nwb`, plus EC2-none and C2-none.
-- The library default chunk shapes: ECh5py-gzip4, EChdmf-gzip4, Ch5py-gzip4, and Chdmf-gzip4.
+- The uncompressed baselines: `<label>_unchunked.nwb`, plus EC2-none and OC2-none.
+- The library default chunk shapes: ECh5py-gzip4, EChdmf-gzip4, OCh5py-gzip4, and OChdmf-gzip4.
 - The configuration that the most DANDI files already use, if it is added to the tables (see below).
-- One configuration each where chunk shape and access pattern are mismatched, for example EC5 for E1 and C1 for O4, as a check that the large effects reproduce.
+- One configuration each where chunk shape and access pattern are mismatched, for example EC5 for E1 and OC1 for O4, as a check that the large effects reproduce.
 
 **Conditions** (each run with the same read scripts, recording wall time and CPU time):
 

@@ -19,15 +19,15 @@ A Blosc2 level sets both the codec level and the Blosc2 block size. For blosc2-z
 runs zstd at level 2c - 1 for c < 9 and at zstd's maximum (22) for c = 9, so blosc2-zstd levels
 2, 6, and 9 run zstd at the same levels as the standalone zstd 3, 11, and 22 configurations.
 
-Chunk shape labels follow the paper: EC1 to EC5 for ecephys and C1 to C5 for ophys. Two more
+Chunk shape labels follow the paper: EC1 to EC5 for ecephys and OC1 to OC5 for ophys. Two more
 labels hold library default chunk shapes, computed for each full-length recording (the shape,
 dtype, and label of every recording are in DATASETS) and written with gzip 4:
 
-    ECh5py, Ch5py  h5py's chunk guess for chunks=True (h5py._hl.filters.guess_chunk), which hdmf
-                   used for chunks=True and iterator writes before hdmf computed its own shape.
-                   Many existing DANDI files have these chunks.
-    EChdmf, Chdmf  hdmf's default chunk shape (HDF5IO.compute_default_chunk_shape), which hdmf
-                   uses for chunks=True and iterator writes.
+    ECh5py, OCh5py  h5py's chunk guess for chunks=True (h5py._hl.filters.guess_chunk), which hdmf
+                    used for chunks=True and iterator writes before hdmf computed its own shape.
+                    Many existing DANDI files have these chunks.
+    EChdmf, OChdmf  hdmf's default chunk shape (HDF5IO.compute_default_chunk_shape), which hdmf
+                    uses for chunks=True and iterator writes.
 
 Both computations depend on the dataset shape, so they use the full-length shape, which is what
 users writing the full recording get. The tables record the shapes for the installed h5py and hdmf.
@@ -100,11 +100,11 @@ ECEPHYS_CHUNKS = {
 
 def ophys_chunks(width: int, height: int) -> dict[str, tuple[int, ...]]:
     return {
-        "C1": (2, width, height),
-        "C2": (20, width, height),
-        "C3": (32, 128, 128),
-        "C4": (320, 128, 128),
-        "C5": (20480, 16, 16),
+        "OC1": (2, width, height),
+        "OC2": (20, width, height),
+        "OC3": (32, 128, 128),
+        "OC4": (320, 128, 128),
+        "OC5": (20480, 16, 16),
     }
 
 
@@ -113,11 +113,11 @@ DATASETS = {
     "ecephys1": {"prefix": "EC", "chunks": ECEPHYS_CHUNKS, "full_shape": (349975807, 384), "dtype": np.int16},
     "ecephys2": {"prefix": "EC", "chunks": ECEPHYS_CHUNKS, "full_shape": (114798408, 384), "dtype": np.int16},
     "ecephys3": {"prefix": "EC", "chunks": ECEPHYS_CHUNKS, "full_shape": (326714943, 384), "dtype": np.int16},
-    "ophys1": {"prefix": "C", "chunks": ophys_chunks(796, 512), "full_shape": (41673, 796, 512),
+    "ophys1": {"prefix": "OC", "chunks": ophys_chunks(796, 512), "full_shape": (41673, 796, 512),
                "dtype": np.uint16},
-    "ophys2": {"prefix": "C", "chunks": ophys_chunks(512, 512), "full_shape": (126741, 512, 512),
+    "ophys2": {"prefix": "OC", "chunks": ophys_chunks(512, 512), "full_shape": (126741, 512, 512),
                "dtype": np.uint16},
-    "ophys3": {"prefix": "C", "chunks": ophys_chunks(512, 512), "full_shape": (113855, 512, 512),
+    "ophys3": {"prefix": "OC", "chunks": ophys_chunks(512, 512), "full_shape": (113855, 512, 512),
                "dtype": np.uint16},
 }
 
