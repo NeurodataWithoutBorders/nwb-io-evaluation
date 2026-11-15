@@ -1,13 +1,23 @@
 """
-Generate NWB files with TwoPhotonSeries data from TIFF files.
+Generate an NWB file with TwoPhotonSeries data from TIFF files, using one chunking and
+compression configuration.
 
 This script reads TwoPhotonSeries metadata from an existing NWB file and raw imaging data
-from a directory of TIFF files (one per frame), then writes new NWB files using various
-configurations of chunking and compression specified in a config file.
+from a directory of TIFF files (one per frame), then writes a new NWB file using the
+configuration in one row of a config table (see exp12_configs.py). The new series holds the
+window of frames defined in exp12_window.py, with its timing metadata shifted to match, and is
+named TwoPhotonSeries (see exp12_series.py for what else the test file leaves out).
+
+Writes <output_dir>/<output_label>_<config_id>.nwb and a stats table
+<output_dir>/stats_<output_label>_<config_id>.tsv (see exp12_write_stats.py).
 
 Usage:
-    python exp12_write_ophys_tiff.py <config_file> <config_number> <input_nwb_filepath> \
+    python exp12_write_ophys_tiff_to_nwb.py <config_table> <row> <input_nwb_filepath> \
         <series_name> <tiff_dir> <output_label> <output_dir>
+
+Arguments:
+    config_table: Path to a config table, e.g. scripts/exp12_configs_ophys1.tsv
+    row: 1-based row of the config table (the SLURM array task ID)
 """
 
 import sys
@@ -15,16 +25,27 @@ import time
 from pathlib import Path
 from typing import Any, NoReturn
 
-import hdf5plugin  # enable HDF5 compression filters
+import hdf5plugin  # noqa: F401 - enable HDF5 compression filters
 from hdmf.backends.hdf5.h5_utils import H5DataIO
 from hdmf.data_utils import AbstractDataChunkIterator, DataChunk
 import numpy as np
 import pynwb
 import tifffile
 
+from exp12_configs import h5dataio_kwargs, read_config, write_buffer_length
+from exp12_series import OPHYS_SERIES_NAME, replace_series
+from exp12_window import OPHYS_WINDOW_FRAMES, centered_window, windowed_timing
+from exp12_write_stats import fsync, partial_path, publish_nwb, remove_outputs, series_rows, write_stats
+
+# Each write buffer is the largest whole number of the configuration's chunk time extent that fits
+# in this many frames (10.7 GB for 512 x 512 frames, 16.7 GB for 796 x 512 frames), so every chunk
+# is written in one piece.
+WRITE_BUFFER_TARGET_FRAMES = 20_480
+
 
 class TiffDataChunkIterator(AbstractDataChunkIterator):
-    """A data chunk iterator that reads frames from a directory of TIFF files."""
+    """A data chunk iterator that reads frames from a list of TIFF files, one per frame.
+    read_time_s accumulates the time spent reading the TIFF files."""
 
     def __init__(
         self,
@@ -40,6 +61,7 @@ class TiffDataChunkIterator(AbstractDataChunkIterator):
         self._dtype = np.dtype(dtype)
         self.buffer_frames = buffer_frames
         self._current_frame = 0
+        self.read_time_s = 0.0
 
     def __iter__(self):
         return self
@@ -53,13 +75,13 @@ class TiffDataChunkIterator(AbstractDataChunkIterator):
         end_frame = min(start_frame + self.buffer_frames, len(self.tiff_files))
 
         # Read the frames
-        frames = []
-        for frame_idx in range(start_frame, end_frame):
-            frame = tifffile.imread(self.tiff_files[frame_idx])
+        start_time = time.perf_counter_ns()
+        data = np.empty((end_frame - start_frame, self.frame_width, self.frame_height), dtype=self._dtype)
+        for i, frame_idx in enumerate(range(start_frame, end_frame)):
             # Transpose from (height, width) to (width, height) for NWB
-            frames.append(frame.T)
+            data[i] = tifffile.imread(self.tiff_files[frame_idx]).T
+        self.read_time_s += (time.perf_counter_ns() - start_time) / 1e9
 
-        data = np.stack(frames, axis=0)
         selection = np.s_[start_frame:end_frame, :, :]
 
         self._current_frame = end_frame
@@ -83,59 +105,29 @@ class TiffDataChunkIterator(AbstractDataChunkIterator):
         return (len(self.tiff_files), self.frame_width, self.frame_height)
 
 
-def process_config(
-    config_number: int,
-    input_filepath: Path,
-    series_name: str,
-    tiff_dir: Path,
-    output_dir: Path,
-    output_label: str,
-    params: list[str],
-) -> str:
-    """Process a single configuration and return stats."""
-    assert (
-        len(params) == 3
-    ), f"Config line {config_number} requires exactly 3 parameters, got {len(params)}"
+def main() -> None:
+    usage = (
+        "Usage: python3 exp12_write_ophys_tiff_to_nwb.py "
+        "<config_table> <row> <input_nwb_filepath> <series_name> <tiff_dir> "
+        "<output_label> <output_dir>"
+    )
+    if len(sys.argv) != 8:
+        print(usage)
+        sys.exit(1)
+    config_table = Path(sys.argv[1])
+    row = int(sys.argv[2])
+    input_filepath = Path(sys.argv[3])  # Path to the input NWB file (for metadata)
+    series_name = sys.argv[4]  # Name of the TwoPhotonSeries in the source NWB file
+    tiff_dir = Path(sys.argv[5])  # Directory containing TIFF files
+    output_label = sys.argv[6]  # Label for this dataset
+    output_dir = Path(sys.argv[7])  # Directory to save output NWB files
 
-    # Set chunk sizes
-    if params[0].lower() == "true":
-        chunk_shape = True
-    else:
-        chunk_shape = tuple(map(int, params[0].split(",")))
-
-    # Set compression filter
-    algo = params[1]
-    clevel = params[2]
-
-    if algo == "NA":
-        compr = None
-        comp_op = None
-    elif algo == "gzip":
-        compr = "gzip"
-        comp_op = int(clevel)
-    elif algo == "lzf":
-        compr = "lzf"
-        comp_op = None
-    elif algo == "lz4":
-        filt = hdf5plugin.LZ4(nbytes=int(clevel))
-        compr = filt.filter_id
-        comp_op = filt.filter_options
-    elif algo == "zstd":
-        filt = hdf5plugin.Zstd(clevel=int(clevel))
-        compr = filt.filter_id
-        comp_op = filt.filter_options
-    elif algo.startswith("blosc2-"):
-        blosc2_algo_map = {
-            "blosc2-blosclz": "blosclz",
-            "blosc2-lz4": "lz4",
-            "blosc2-lz4hc": "lz4hc",
-            "blosc2-zstd": "zstd",
-        }
-        filt = hdf5plugin.Blosc2(cname=blosc2_algo_map[algo], clevel=int(clevel))
-        compr = filt.filter_id
-        comp_op = filt.filter_options
-    else:
-        raise ValueError(f"Unknown compression algorithm: {algo}")
+    start_tot_time = time.perf_counter_ns()
+    config = read_config(config_table, row)
+    print(f"Config {row}: {config}")
+    output_filepath = output_dir / f"{output_label}_{config.config_id}.nwb"
+    stats_filepath = output_dir / f"stats_{output_label}_{config.config_id}.tsv"
+    remove_outputs(output_filepath, stats_filepath)
 
     # Get sorted list of TIFF files
     tiff_files = sorted(tiff_dir.glob("*.tiff"))
@@ -174,120 +166,50 @@ def process_config(
                 f"original series dimensions ({orig_width}x{orig_height})"
             )
 
+        start, stop = centered_window(n_frames, OPHYS_WINDOW_FRAMES)
+        print(f"{series_name}: writing frames {start}:{stop} of {n_frames} as {OPHYS_SERIES_NAME}")
+
         data_iterator = TiffDataChunkIterator(
-            tiff_files=tiff_files,
+            tiff_files=tiff_files[start:stop],
             frame_width=frame_width,
             frame_height=frame_height,
             dtype=dtype,
-            buffer_frames=10000,  # 5-9 GB buffer depending on frame size
+            buffer_frames=write_buffer_length(config.chunks, WRITE_BUFFER_TARGET_FRAMES),
         )
 
-        # Build H5DataIO parameters based on compression algorithm
-        data_io_kwargs = {
-            "data": data_iterator,
-            "chunks": chunk_shape,
-        }
-
-        if compr is not None:
-            data_io_kwargs["compression"] = compr
-            data_io_kwargs["allow_plugin_filters"] = True
-            if comp_op is not None:
-                data_io_kwargs["compression_opts"] = comp_op
-
-        data = H5DataIO(**data_io_kwargs)
-
         kwargs = dict(
-            name=orig_2pseries.name,
+            name=OPHYS_SERIES_NAME,
             description=orig_2pseries.description,
-            data=data,
-            starting_time=orig_2pseries.starting_time,
-            rate=orig_2pseries.rate,
+            data=H5DataIO(data=data_iterator, **h5dataio_kwargs(config)),
             unit=orig_2pseries.unit,
             conversion=orig_2pseries.conversion,
             resolution=orig_2pseries.resolution,
             comments=orig_2pseries.comments,
             dimension=orig_2pseries.dimension,
             imaging_plane=orig_2pseries.imaging_plane,
+            **windowed_timing(orig_2pseries, start, stop),
         )
-        if orig_2pseries.timestamps is not None:
-            kwargs["timestamps"] = orig_2pseries.timestamps[:]
 
-        new_2pseries = pynwb.ophys.TwoPhotonSeries(**kwargs)
-
-        nwbfile.acquisition.pop(series_name)
-        nwbfile.add_acquisition(new_2pseries)
-
-        output_filepath = output_dir / f"{output_label}_Config{config_number:03d}.nwb"
+        replace_series(nwbfile, series_name, pynwb.ophys.TwoPhotonSeries(**kwargs))
 
         start_time_write = time.perf_counter_ns()
-        with pynwb.NWBHDF5IO(output_filepath, "w", manager=io.manager) as export_io:
+        with pynwb.NWBHDF5IO(partial_path(output_filepath), "w", manager=io.manager) as export_io:
             export_io.export(io, nwbfile)
-        end_time_write = time.perf_counter_ns()
-        net_time_write_s = (end_time_write - start_time_write) / 1e9
+        fsync(partial_path(output_filepath))
+        net_time_write_s = (time.perf_counter_ns() - start_time_write) / 1e9
 
-    stats = f"{config_number} {n_frames} {net_time_write_s:.4f} "
-
-    try:
-        file_size_gb = output_filepath.stat().st_size / (1024 * 1024 * 1024)
-        stats += f"{file_size_gb} "
-    except OSError:
-        stats += "N/A "
-
-    return stats
-
-
-def main() -> None:
-    usage = (
-        "Usage: python3 exp12_write_ophys_tiff.py "
-        "<config_file> <config_number> <input_nwb_filepath> <series_name> <tiff_dir> "
-        "<output_label> <output_dir>"
+    publish_nwb(output_filepath)
+    net_tot_time_s = (time.perf_counter_ns() - start_tot_time) / 1e9
+    rows = series_rows(
+        output_filepath,
+        config.config_id,
+        {OPHYS_SERIES_NAME: series_name},
+        net_time_write_s,
+        {OPHYS_SERIES_NAME: data_iterator.read_time_s},
+        net_tot_time_s,
     )
-    assert len(sys.argv) == 8, usage
-    config_file = Path(sys.argv[1])  # Path to the configuration file
-    config_number = int(
-        sys.argv[2]
-    )  # Config number (corresponds to line in config file)
-    input_filepath = Path(sys.argv[3])  # Path to the input NWB file (for metadata)
-    series_name = sys.argv[4]  # Name of the TwoPhotonSeries in the NWB file
-    tiff_dir = Path(sys.argv[5])  # Directory containing TIFF files
-    output_label = sys.argv[6]  # Label for this experiment
-    output_dir = Path(sys.argv[7])  # Directory to save output NWB files
-
-    stats_filepath = output_dir / f"stats_{output_label}_Config{config_number:03d}.txt"
-    header = "configNo n_frames t_write(s) file_size(Gb) total_t(s)\n"
-
-    start_tot_time = time.perf_counter_ns()
-
-    # Find and process the matching configuration
-    stats = ""
-    with open(config_file) as configset:
-        for lineno, config_line in enumerate(configset):
-            if lineno == config_number:
-                fields = config_line.strip().split()
-                configno = int(fields[0])
-                assert configno == lineno, f"configno {configno} does not match line number {lineno}"
-                params = fields[1:]
-                stats = process_config(
-                    config_number,
-                    input_filepath,
-                    series_name,
-                    tiff_dir,
-                    output_dir,
-                    output_label,
-                    params,
-                )
-                break
-
-    if not stats:
-        raise ValueError(f"Config number {config_number} not found in {config_file}")
-
-    end_tot_time = time.perf_counter_ns()
-    net_tot_time_s = (end_tot_time - start_tot_time) / 1e9
-    stats += f"{net_tot_time_s:.4f}\n"
-
-    with open(stats_filepath, "w") as stats_f:
-        stats_f.write(header)
-        stats_f.write(stats)
+    write_stats(stats_filepath, rows)
+    print(f"Wrote {output_filepath} in {net_time_write_s:.1f} s; stats in {stats_filepath}")
 
 
 if __name__ == "__main__":

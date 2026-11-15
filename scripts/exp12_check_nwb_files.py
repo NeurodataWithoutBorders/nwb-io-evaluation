@@ -1,32 +1,29 @@
 #!/usr/bin/env python3
-"""Check which NWB files in a directory can be opened with PyNWB."""
+"""
+Check which NWB files in a directory can be opened with PyNWB, and which write outputs are
+missing for the given datasets.
+
+For each dataset label, the expected outputs are <label>_<config_id>.nwb and
+stats_<label>_<config_id>.tsv for every configuration in scripts/exp12_configs_<label>.tsv,
+plus <label>_unchunked.nwb and stats_<label>_unchunked.tsv.
+"""
 
 import sys
 from pathlib import Path
 
 import pynwb
 
-
-def parse_range(range_str: str) -> tuple[int, int]:
-    """Parse a range string like '1-126' into start and end integers."""
-    parts = range_str.split("-")
-    if len(parts) != 2:
-        raise ValueError(f"Invalid range format: {range_str}. Expected format: start-end (e.g., 1-126)")
-    return int(parts[0]), int(parts[1])
+from exp12_configs import config_table_path, load_configs
 
 
 def main() -> None:
-    if len(sys.argv) != 3:
-        print("Usage: python exp12_check_nwb_files.py <directory> <range>")
-        print("Example: python exp12_check_nwb_files.py /path/to/files 1-126")
+    if len(sys.argv) < 3:
+        print("Usage: python exp12_check_nwb_files.py <directory> <label> [<label> ...]")
+        print("Example: python exp12_check_nwb_files.py write_output ophys1 ophys2 ophys3")
         sys.exit(1)
 
     directory = Path(sys.argv[1])
-    try:
-        range_start, range_end = parse_range(sys.argv[2])
-    except ValueError as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+    labels = sys.argv[2:]
     if not directory.is_dir():
         print(f"Error: {directory} is not a directory")
         sys.exit(1)
@@ -74,26 +71,22 @@ def main() -> None:
     if not failed_files:
         print("All files opened successfully")
 
-    # Check for missing files in the specified range for each ophys experiment
+    # Check for missing write outputs for each dataset
     print()
-    print(f"Checking for missing files in range {range_start}-{range_end}...")
-    experiments = ["ophys1", "ophys2", "ophys3"]
-    suffixes = [".nwb", ".txt"]
-
-    for experiment in experiments:
-        print(f"\n{experiment}:")
-        for suffix in suffixes:
-            missing = []
-            for config_num in range(range_start, range_end + 1):
-                padded = f"{config_num:03d}"
-                pattern = f"*_{experiment}_Config{padded}{suffix}"
-                matches = list(directory.glob(pattern))
-                if not matches:
-                    missing.append(config_num)
+    print("Checking for missing write outputs...")
+    for label in labels:
+        config_ids = [c.config_id for c in load_configs(config_table_path(label))] + ["unchunked"]
+        print(f"\n{label}:")
+        expected = (("NWB", "{label}_{config_id}.nwb"), ("stats", "stats_{label}_{config_id}.tsv"))
+        for kind, name_format in expected:
+            missing = [
+                config_id for config_id in config_ids
+                if not (directory / name_format.format(label=label, config_id=config_id)).exists()
+            ]
             if missing:
-                print(f"  Missing {len(missing)} {suffix} files: {missing}")
+                print(f"  Missing {len(missing)} {kind} files: {missing}")
             else:
-                print(f"  No missing {suffix} files")
+                print(f"  No missing {kind} files")
 
 
 if __name__ == "__main__":

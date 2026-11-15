@@ -1,7 +1,7 @@
 #!/bin/bash
 # Report results from an sbatch array job in a table format.
 # Usage: ./scripts/exp12_check_jobs.sh <job_id> <log_folder> <config_file> <experiment_name>
-# Example: ./scripts/exp12_check_jobs.sh 20463593 write_logs scripts/exp12_configs_ophys1.txt ophys1
+# Example: ./scripts/exp12_check_jobs.sh 20463593 write_logs scripts/exp12_configs_ophys1.tsv ophys1
 
 if [ $# -ne 4 ]; then
     echo "Usage: $0 <job_id> <log_folder> <config_file> <experiment_name>"
@@ -26,8 +26,8 @@ NUM_CONFIGS=$(tail -n +2 "$CONFIG_FILE" | grep -c .)
 mapfile -t CONFIG_LINES < <(tail -n +2 "$CONFIG_FILE")
 
 # Print header
-printf "%-6s %-15s %-14s %-12s %-10s %-12s %s\n" "Task" "Chunk" "Compression" "Level" "Status" "Duration" "Errors"
-printf "%-6s %-15s %-14s %-12s %-10s %-12s %s\n" "----" "-----" "-----------" "-----" "------" "--------" "------"
+printf "%-6s %-24s %-10s %-12s %s\n" "Task" "Config" "Status" "Duration" "Errors"
+printf "%-6s %-24s %-10s %-12s %s\n" "----" "------" "------" "--------" "------"
 
 FAILED_TASKS=()
 RUNNING_TASKS=()
@@ -38,10 +38,7 @@ for i in $(seq 1 $NUM_CONFIGS); do
     ERR_FILE="${LOG_FOLDER}/${EXPERIMENT}--${JOB_ID}_${PADDED}-err.log"
 
     # Get config info (0-indexed array, so use i-1)
-    CONFIG_LINE="${CONFIG_LINES[$((i-1))]}"
-    CHUNK=$(echo "$CONFIG_LINE" | awk '{print $1}')
-    COMPR=$(echo "$CONFIG_LINE" | awk '{print $2}')
-    LEVEL=$(echo "$CONFIG_LINE" | awk '{print $5}')
+    CONFIG_ID=$(echo "${CONFIG_LINES[$((i-1))]}" | cut -f1)
 
     # Get job status and duration from sacct
     SACCT_OUTPUT=$(sacct -j "${JOB_ID}_${i}" --format=State,Elapsed --noheader 2>/dev/null | head -1)
@@ -80,7 +77,7 @@ for i in $(seq 1 $NUM_CONFIGS); do
         COLOR=$RED
     fi
 
-    printf "${COLOR}%-6s %-15s %-14s %-12s %-10s %-12s %s${NC}\n" "$i" "$CHUNK" "$COMPR" "$LEVEL" "$STATUS" "$DURATION" "$ERRORS"
+    printf "${COLOR}%-6s %-24s %-10s %-12s %s${NC}\n" "$i" "$CONFIG_ID" "$STATUS" "$DURATION" "$ERRORS"
 done
 
 # Print summary
