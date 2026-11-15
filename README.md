@@ -175,6 +175,8 @@ python scripts/exp12_check_nwb_files.py write_output ecephys1 ecephys2 ecephys3 
 
 Note that these do not take long to run (~20-30 min) and could have been put into a sbatch script.
 
+Each recording becomes a directory of uncompressed multi-page TIFF files of 1,000 frames each (the last file holds the rest), in the layout ScanImage writes when it splits a session into files. `scripts/exp12_tiff.py` describes the layout and reads it for the write scripts. Each output directory must be empty or not exist.
+
 Run:
 ```bash
 conda activate $HOME/envs/nwbio

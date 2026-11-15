@@ -3,7 +3,7 @@ Generate an NWB file with TwoPhotonSeries data from TIFF files, using one chunki
 compression configuration.
 
 This script reads TwoPhotonSeries metadata from an existing NWB file and raw imaging data
-from a directory of TIFF files (one per frame), then writes a new NWB file using the
+from a directory of multi-page TIFF files (see exp12_tiff.py), then writes a new NWB file using the
 configuration in one row of a config table (see exp12_configs.py). The new series holds the
 window of frames defined in exp12_window.py, with its timing metadata shifted to match, and is
 named TwoPhotonSeries (see exp12_series.py for what else the test file leaves out).
@@ -23,17 +23,17 @@ Arguments:
 import sys
 import time
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import NoReturn
 
 import hdf5plugin  # noqa: F401 - enable HDF5 compression filters
 from hdmf.backends.hdf5.h5_utils import H5DataIO
 from hdmf.data_utils import AbstractDataChunkIterator, DataChunk
 import numpy as np
 import pynwb
-import tifffile
 
 from exp12_configs import h5dataio_kwargs, read_config, write_buffer_length
 from exp12_series import OPHYS_SERIES_NAME, replace_series
+from exp12_tiff import TiffStack
 from exp12_window import OPHYS_WINDOW_FRAMES, centered_window, windowed_timing
 from exp12_write_stats import fsync, partial_path, publish_nwb, remove_outputs, series_rows, write_stats
 
@@ -44,21 +44,13 @@ WRITE_BUFFER_TARGET_FRAMES = 20_480
 
 
 class TiffDataChunkIterator(AbstractDataChunkIterator):
-    """A data chunk iterator that reads frames from a list of TIFF files, one per frame.
+    """A data chunk iterator that reads frames start:stop of a TiffStack, in NWB orientation.
     read_time_s accumulates the time spent reading the TIFF files."""
 
-    def __init__(
-        self,
-        tiff_files: list[Path],
-        frame_width: int,
-        frame_height: int,
-        dtype: Any,
-        buffer_frames: int,
-    ) -> None:
-        self.tiff_files = tiff_files
-        self.frame_width = frame_width
-        self.frame_height = frame_height
-        self._dtype = np.dtype(dtype)
+    def __init__(self, stack: TiffStack, start: int, stop: int, buffer_frames: int) -> None:
+        self.stack = stack
+        self.start = start
+        self.n_frames = stop - start
         self.buffer_frames = buffer_frames
         self._current_frame = 0
         self.read_time_s = 0.0
@@ -67,19 +59,14 @@ class TiffDataChunkIterator(AbstractDataChunkIterator):
         return self
 
     def __next__(self) -> DataChunk:
-        if self._current_frame >= len(self.tiff_files):
+        if self._current_frame >= self.n_frames:
             raise StopIteration
 
-        # Determine how many frames to read in this buffer
         start_frame = self._current_frame
-        end_frame = min(start_frame + self.buffer_frames, len(self.tiff_files))
+        end_frame = min(start_frame + self.buffer_frames, self.n_frames)
 
-        # Read the frames
         start_time = time.perf_counter_ns()
-        data = np.empty((end_frame - start_frame, self.frame_width, self.frame_height), dtype=self._dtype)
-        for i, frame_idx in enumerate(range(start_frame, end_frame)):
-            # Transpose from (height, width) to (width, height) for NWB
-            data[i] = tifffile.imread(self.tiff_files[frame_idx]).T
+        data = self.stack.read(self.start + start_frame, self.start + end_frame)
         self.read_time_s += (time.perf_counter_ns() - start_time) / 1e9
 
         selection = np.s_[start_frame:end_frame, :, :]
@@ -98,11 +85,11 @@ class TiffDataChunkIterator(AbstractDataChunkIterator):
 
     @property
     def dtype(self) -> np.dtype:
-        return self._dtype
+        return self.stack.dtype
 
     @property
     def maxshape(self) -> tuple[int, int, int]:
-        return (len(self.tiff_files), self.frame_width, self.frame_height)
+        return (self.n_frames, self.stack.frame_width, self.stack.frame_height)
 
 
 def main() -> None:
@@ -118,7 +105,7 @@ def main() -> None:
     row = int(sys.argv[2])
     input_filepath = Path(sys.argv[3])  # Path to the input NWB file (for metadata)
     series_name = sys.argv[4]  # Name of the TwoPhotonSeries in the source NWB file
-    tiff_dir = Path(sys.argv[5])  # Directory containing TIFF files
+    tiff_dir = Path(sys.argv[5])  # Directory of multi-page TIFF files from exp12_nwb_to_tiff.py
     output_label = sys.argv[6]  # Label for this dataset
     output_dir = Path(sys.argv[7])  # Directory to save output NWB files
 
@@ -129,51 +116,21 @@ def main() -> None:
     stats_filepath = output_dir / f"stats_{output_label}_{config.config_id}.tsv"
     remove_outputs(output_filepath, stats_filepath)
 
-    # Get sorted list of TIFF files
-    tiff_files = sorted(tiff_dir.glob("*.tiff"))
-    if not tiff_files:
-        raise ValueError(f"No TIFF files found in {tiff_dir}")
-
-    n_frames = len(tiff_files)
-
-    # Read first TIFF to get dimensions and dtype
-    first_frame = tifffile.imread(tiff_files[0])
-    # TIFF is height x width, NWB stores width x height
-    frame_height, frame_width = first_frame.shape
-    dtype = first_frame.dtype
-    assert dtype == np.uint16, f"Expected uint16 data type, got {dtype}"
+    stack = TiffStack(tiff_dir)
+    assert stack.dtype == np.uint16, f"Expected uint16 data type, got {stack.dtype}"
 
     with pynwb.NWBHDF5IO(input_filepath, "r") as io:
         nwbfile = io.read()
         orig_2pseries = nwbfile.acquisition[series_name]
+        stack.check_shape(orig_2pseries.data.shape)
 
-        # Validate TIFF frame count matches original series
-        orig_n_frames = orig_2pseries.data.shape[0]
-        if n_frames != orig_n_frames:
-            raise ValueError(
-                f"Number of TIFF files ({n_frames}) does not match "
-                f"original series frame count ({orig_n_frames})"
-            )
-
-        # Validate TIFF dimensions match original series dimensions
-        orig_width, orig_height = (
-            orig_2pseries.data.shape[1],
-            orig_2pseries.data.shape[2],
-        )
-        if frame_width != orig_width or frame_height != orig_height:
-            raise ValueError(
-                f"TIFF frame dimensions ({frame_width}x{frame_height}) do not match "
-                f"original series dimensions ({orig_width}x{orig_height})"
-            )
-
-        start, stop = centered_window(n_frames, OPHYS_WINDOW_FRAMES)
-        print(f"{series_name}: writing frames {start}:{stop} of {n_frames} as {OPHYS_SERIES_NAME}")
+        start, stop = centered_window(stack.n_frames, OPHYS_WINDOW_FRAMES)
+        print(f"{series_name}: writing frames {start}:{stop} of {stack.n_frames} as {OPHYS_SERIES_NAME}")
 
         data_iterator = TiffDataChunkIterator(
-            tiff_files=tiff_files[start:stop],
-            frame_width=frame_width,
-            frame_height=frame_height,
-            dtype=dtype,
+            stack=stack,
+            start=start,
+            stop=stop,
             buffer_frames=write_buffer_length(config.chunks, WRITE_BUFFER_TARGET_FRAMES),
         )
 

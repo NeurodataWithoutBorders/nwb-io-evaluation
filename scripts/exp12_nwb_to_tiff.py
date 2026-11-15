@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
-"""Export frames from a TwoPhotonSeries in an NWB file to uncompressed TIFF files."""
+"""
+Export the frames of a TwoPhotonSeries in an NWB file to uncompressed multi-page TIFF files.
+
+Each file holds FRAMES_PER_FILE consecutive frames (the last file holds the rest), one page per
+frame, in the layout described in exp12_tiff.py. The output directory must be empty or not exist.
+"""
 
 import sys
 from pathlib import Path
 
+import numpy as np
 import pynwb
 import tifffile
 from tqdm import tqdm
+
+from exp12_tiff import FRAMES_PER_FILE, tiff_file_name
 
 
 def main() -> None:
@@ -21,6 +29,9 @@ def main() -> None:
 
     if not nwb_filepath.exists():
         print(f"Error: NWB file not found: {nwb_filepath}")
+        sys.exit(1)
+    if output_dir.exists() and any(output_dir.iterdir()):
+        print(f"Error: {output_dir} is not empty")
         sys.exit(1)
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -37,14 +48,17 @@ def main() -> None:
         data = series.data
         n_frames = data.shape[0]
 
-        print(f"Exporting {n_frames} frames from {series_name}")
+        print(f"Exporting {n_frames} frames from {series_name} in files of {FRAMES_PER_FILE} frames")
         print(f"Frame shape: {data.shape[1]}x{data.shape[2]} (width x height)")
         print(f"Data type: {data.dtype}")
 
-        for frame_idx in tqdm(range(n_frames), desc="Exporting", unit="frame"):
-            frame = data[frame_idx, :, :].T  # transpose from (width, height) to (height, width)
-            output_path = output_dir / f"frame_{frame_idx:06d}.tiff"
-            tifffile.imwrite(output_path, frame, compression=None)
+        for file_index, start in enumerate(tqdm(range(0, n_frames, FRAMES_PER_FILE), desc="Exporting",
+                                                unit="file")):
+            stop = min(start + FRAMES_PER_FILE, n_frames)
+            # Transpose each frame from (width, height) to (height, width)
+            frames = np.ascontiguousarray(data[start:stop].transpose(0, 2, 1))
+            tifffile.imwrite(output_dir / tiff_file_name(file_index), frames, photometric="minisblack",
+                             compression=None)
 
     print(f"Done. TIFF files saved to {output_dir}")
 

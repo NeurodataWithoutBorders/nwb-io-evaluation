@@ -2,10 +2,10 @@
 Write an NWB file with unchunked, uncompressed TwoPhotonSeries data from TIFF files.
 
 This script reads an existing NWB file, replaces the TwoPhotonSeries with a new one
-that has unchunked, uncompressed data read from a directory of TIFF files. The new series
-holds the window of frames defined in exp12_window.py, with its timing metadata shifted to
-match, and is named TwoPhotonSeries (see exp12_series.py for what else the test file leaves
-out).
+that has unchunked, uncompressed data read from a directory of multi-page TIFF files (see
+exp12_tiff.py). The new series holds the window of frames defined in exp12_window.py, with its
+timing metadata shifted to match, and is named TwoPhotonSeries (see exp12_series.py for what
+else the test file leaves out).
 
 Writes the NWB file and a stats table stats_<output_stem>.tsv next to it
 (see exp12_write_stats.py).
@@ -22,11 +22,13 @@ from pathlib import Path
 import h5py
 from hdmf.backends.hdf5.h5_utils import H5DataIO
 import pynwb
-import tifffile
 
 from exp12_series import OPHYS_SERIES_NAME, replace_series
+from exp12_tiff import TiffStack
 from exp12_window import OPHYS_WINDOW_FRAMES, centered_window, windowed_timing
 from exp12_write_stats import fsync, partial_path, publish_nwb, remove_outputs, series_rows, write_stats
+
+WRITE_BUFFER_FRAMES = 20_480  # 10.7 GB for 512 x 512 frames, 16.7 GB for 796 x 512 frames
 
 
 def main() -> None:
@@ -51,22 +53,10 @@ def main() -> None:
         print(f"Error: TIFF directory not found: {tiff_dir}")
         sys.exit(1)
 
-    # Get sorted list of TIFF files
-    tiff_files = sorted(tiff_dir.glob("*.tiff")) + sorted(tiff_dir.glob("*.tif"))
-    if not tiff_files:
-        print(f"Error: No TIFF files found in {tiff_dir}")
-        sys.exit(1)
-
-    n_frames = len(tiff_files)
-    print(f"Found {n_frames} TIFF files")
-
-    # Read first TIFF to get dimensions and dtype
-    first_frame = tifffile.imread(tiff_files[0])
-    # TIFF is height x width, NWB stores width x height, so transpose
-    frame_height, frame_width = first_frame.shape
-    dtype = first_frame.dtype
-    print(f"Frame shape: {frame_width}x{frame_height} (width x height in NWB)")
-    print(f"Data type: {dtype}")
+    stack = TiffStack(tiff_dir)
+    print(f"Found {stack.n_frames} frames in {len(stack.files)} TIFF files")
+    print(f"Frame shape: {stack.frame_width}x{stack.frame_height} (width x height in NWB)")
+    print(f"Data type: {stack.dtype}")
 
     stats_filepath = output_filepath.parent / f"stats_{output_filepath.stem}.tsv"
     remove_outputs(output_filepath, stats_filepath)
@@ -76,22 +66,18 @@ def main() -> None:
     with pynwb.NWBHDF5IO(input_filepath, "r") as io:
         nwbfile = io.read()
         orig_2pseries = nwbfile.acquisition[series_name]
-        orig_n_frames = orig_2pseries.data.shape[0]
-        if n_frames != orig_n_frames:
-            raise ValueError(
-                f"Number of TIFF files ({n_frames}) does not match "
-                f"original series frame count ({orig_n_frames})"
-            )
+        stack.check_shape(orig_2pseries.data.shape)
 
-        start, stop = centered_window(n_frames, OPHYS_WINDOW_FRAMES)
-        window_files = tiff_files[start:stop]
-        print(f"{series_name}: writing frames {start}:{stop} of {n_frames} as {OPHYS_SERIES_NAME}")
+        window_start, window_stop = centered_window(stack.n_frames, OPHYS_WINDOW_FRAMES)
+        n_window = window_stop - window_start
+        print(f"{series_name}: writing frames {window_start}:{window_stop} of {stack.n_frames} "
+              f"as {OPHYS_SERIES_NAME}")
 
         # Create H5DataIO with data=None to create an empty dataset with correct shape
         data = H5DataIO(
             data=None,
-            dtype=dtype,
-            shape=(len(window_files), frame_width, frame_height),
+            dtype=stack.dtype,
+            shape=(n_window, stack.frame_width, stack.frame_height),
             chunks=None,  # No chunking (contiguous)
         )
 
@@ -105,7 +91,7 @@ def main() -> None:
             comments=orig_2pseries.comments,
             dimension=orig_2pseries.dimension,
             imaging_plane=orig_2pseries.imaging_plane,
-            **windowed_timing(orig_2pseries, start, stop),
+            **windowed_timing(orig_2pseries, window_start, window_stop),
         )
 
         replace_series(nwbfile, series_name, pynwb.ophys.TwoPhotonSeries(**kwargs))
@@ -121,15 +107,13 @@ def main() -> None:
     with h5py.File(partial_path(output_filepath), "r+") as f:
         dataset = f[f"/acquisition/{OPHYS_SERIES_NAME}/data"]
 
-        for frame_idx, tiff_path in enumerate(window_files):
+        for start in range(0, n_window, WRITE_BUFFER_FRAMES):
+            end = min(start + WRITE_BUFFER_FRAMES, n_window)
             read_start = time.perf_counter_ns()
-            frame = tifffile.imread(tiff_path)
+            block = stack.read(window_start + start, window_start + end)
             source_read_s += (time.perf_counter_ns() - read_start) / 1e9
-            # Transpose from (height, width) to (width, height) for NWB
-            dataset[frame_idx, :, :] = frame.T
-
-            if (frame_idx + 1) % 100 == 0 or frame_idx == len(window_files) - 1:
-                print(f"  Wrote {frame_idx + 1}/{len(window_files)} frames")
+            dataset[start:end, :, :] = block
+            print(f"  Wrote {end}/{n_window} frames")
     fsync(partial_path(output_filepath))
 
     net_time_write_s = (time.perf_counter_ns() - start_time_write) / 1e9
