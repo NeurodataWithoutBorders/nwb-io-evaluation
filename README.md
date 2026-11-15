@@ -62,6 +62,8 @@ dandi download "https://api.dandiarchive.org/api/dandisets/000053/versions/0.210
 h5ls -v sub-npI3_ses-20190421_behavior+ecephys.nwb/acquisition/ElectricalSeries/data
 ```
 - Shape: 349975807, 384
+- Sampling rate: 30000 Hz (`starting_time` rate)
+- Duration: 194.4 min
 - Dtype: int16
 - Chunks: 341774, 1
 - Compression: gzip level 4
@@ -73,6 +75,8 @@ dandi download "https://api.dandiarchive.org/api/dandisets/000409/versions/0.260
 h5ls -v sub-CSHL045_ses-034e726f-b35f-41e0-8d6c-a22cc32391fb_desc-raw_ecephys.nwb/acquisition/ElectricalSeriesProbe00AP/data
 ```
 - Shape: 114798408, 384
+- Sampling rate: 30000 Hz (from `timestamps`, which have a constant interval)
+- Duration: 63.8 min
 - Dtype: int16
 - Chunks: 13020, 384
 - Compression: gzip level 4
@@ -83,6 +87,8 @@ dandi download "https://api.dandiarchive.org/api/dandisets/000620/versions/0.260
 h5ls -v sub-Elgar_ses-2022-08-19_ecephys.nwb/acquisition/ElectricalSeriesAP/data
 ```
 - Shape: 326714943, 384
+- Sampling rate: 30001.065 Hz (`starting_time` rate)
+- Duration: 181.5 min
 - Dtype: int16
 - Chunks: 78125, 64
 - Compression: gzip level 4
@@ -93,6 +99,8 @@ dandi download "https://api.dandiarchive.org/api/dandisets/000054/versions/0.210
 h5ls -v sub-R6_ses-20200206T210000_behavior+ophys.nwb/acquisition/TwoPhotonSeries/data
 ```
 - Shape: 41673, 796, 512
+- Sampling rate: 15.0 Hz (`starting_time` rate and `imaging_plane` `imaging_rate`)
+- Duration: 46.3 min
 - Dtype: uint16
 - Chunks: 2, 100, 64
 - Compression: gzip level 4
@@ -104,6 +112,8 @@ dandi download "https://api.dandiarchive.org/api/dandisets/000037/versions/0.240
 h5ls -v sub-408021_ses-758519303_obj-raw_behavior+image+ophys.nwb/acquisition/motion_corrected_stack/data
 ```
 - Shape: 126741, 512, 512
+- Sampling rate: 30.075 Hz (from `timestamps`, median interval 0.03325 s; the `imaging_plane` `imaging_rate` says 30.0 Hz)
+- Duration: 70.2 min
 - Dtype: uint16
 - Chunks: 16, 128, 128
 - Compression: gzip level 4
@@ -114,6 +124,8 @@ dandi download "https://api.dandiarchive.org/api/dandisets/000728/versions/0.240
 h5ls -v sub-491604967_ses-496908818-StimB_ophys.nwb/acquisition/MotionCorrectedTwoPhotonSeries/data
 ```
 - Shape: 113855, 512, 512
+- Sampling rate: 30.075 Hz (from `timestamps`, median interval 0.03325 s; the `imaging_plane` has no `imaging_rate`)
+- Duration: 63.1 min
 - Dtype: uint16
 - Chunks: 19, 512, 512
 - Compression: gzip level 4
