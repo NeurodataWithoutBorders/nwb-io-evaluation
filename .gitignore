@@ -7,3 +7,16 @@
 /old/
 
 .ipynb_checkpoints/
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# Results-parser output, regenerated from read_output/
+/h5_summary_*
+/h5_errors*.log
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/main.pdf
