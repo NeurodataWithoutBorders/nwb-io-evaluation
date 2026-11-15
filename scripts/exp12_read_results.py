@@ -22,7 +22,7 @@ import numpy as np
 ATTR_COLUMNS = (
     "task", "stage", "label", "config_id", "chunks", "codec", "level", "shuffle", "pattern", "path", "cache",
     "rdcc_nbytes", "rdcc_nslots", "n_units", "n_units_run", "truncated", "n_crashed", "reads", "fast_reads",
-    "check_selection", "check_sha256", "page_cache_evicted", "host", "start_utc", "end_utc",
+    "check_selection", "check_sha256", "check_fast_path", "page_cache_evicted", "host", "start_utc", "end_utc",
 )
 STAT_COLUMNS = tuple(
     f"{name}_{stat}" for name in ("wall_s", "cpu_s") for stat in ("median", "min", "max")

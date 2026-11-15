@@ -20,13 +20,15 @@ MAX_SLOW_REPEATS slow repeats (see exp12_read_patterns.py).
 The parent process does not open the test file, so it does not bring the file into the page cache
 before a unit. Lustre's server caches cannot be flushed from user space.
 
-After the timed units, two checks run, each in a child process:
+After the timed units, three checks run, the first two each in a child process:
 
     selection  the first and last selections of the first unit, read through the task's read
                path, equal the same selections of the dataset's unchunked file (not run for the
                unchunked file itself)
     sha256     for the b2h5py path, the whole window read through b2h5py has the SHA-256 the
                write recorded in its stats file. The h5py path is the one the write checked.
+    fast_path  b2h5py's fast path served every timed read of the b2h5py path and none of the h5py
+               path, so each path's timings are of that path
 
 The output file holds these root attributes:
 
@@ -36,8 +38,8 @@ The output file holds these root attributes:
                         the configuration ("contiguous" and "none" for unchunked)
     data_shape          shape of the series
     rdcc_nbytes, rdcc_nslots, rdcc_w0
-                        the chunk cache setting the file was opened with, as the child read it
-                        back from the file
+                        the chunk cache setting the series was read with, as the child read it
+                        back from the series (from the file for unchunked, which has no chunk cache)
     n_units, n_units_run
                         units in the pattern, and units run before any early stop
     truncated           whether a sequential pattern stopped early on slow repeats
@@ -45,12 +47,13 @@ The output file holds these root attributes:
     n_crashed           units whose child process failed
     reads, fast_reads   timed reads, and those that b2h5py's fast path served
     page_cache_evicted  whether posix_fadvise was available to evict the file's pages
-    check_selection, check_sha256
-                        match, mismatch, missing reference, or not run
+    check_selection, check_sha256, check_fast_path
+                        match, mismatch, missing reference, crashed, or not run
     start_utc, end_utc
     host, cpu_model, cpu_affinity_count, os_cpu_count, slurm_job_id, python, hdf5, h5py,
-    hdf5plugin, hdmf, pynwb, numpy, b2h5py, blosc2, blosc_nthreads
-                        where and with what software the reads ran
+    hdf5plugin, hdmf, pynwb, numpy, b2h5py, blosc2, blosc2_nthreads
+                        where and with what software the reads ran; blosc2_nthreads is the
+                        number of threads blosc2, and so b2h5py, decompresses with
 
 and these datasets, one row per unit (NaN for a unit that did not run or crashed):
 
@@ -82,6 +85,7 @@ from typing import Any
 
 import b2h5py
 import b2h5py.blosc2
+import blosc2
 import h5py
 import hdf5plugin  # noqa: F401 - enable HDF5 compression filters
 import numpy as np
@@ -104,6 +108,9 @@ WINDOWS = {"ecephys": ECEPHYS_WINDOW_SAMPLES, "ophys": OPHYS_WINDOW_FRAMES}
 # The sha256 check reads the window in blocks of whole chunk time extents of about this many bytes.
 CHECK_BLOCK_BYTES = 2**30
 STDERR_TAIL = 4000
+
+# Check results that fail the task.
+FAILED_CHECKS = ("mismatch", "crashed", "missing reference")
 
 
 # =============================================================================
@@ -167,19 +174,29 @@ def open_series(spec: dict[str, Any]) -> tuple[h5py.File, pynwb.NWBHDF5IO, Any]:
     return f, io, data
 
 
+def chunk_cache(f: h5py.File, data: h5py.Dataset) -> list[Any]:
+    """[rdcc_nbytes, rdcc_nslots, rdcc_w0] that reads of data use: the dataset's own chunk cache,
+    or the file's for a contiguous dataset, which has none."""
+    if data.chunks is None:
+        _, nslots, nbytes, w0 = f.id.get_access_plist().get_cache()
+    else:
+        nslots, nbytes, w0 = data.id.get_access_plist().get_chunk_cache()
+    return [nbytes, nslots, w0]
+
+
 def child_unit(spec: dict[str, Any]) -> dict[str, Any]:
     counter = set_read_path(spec["path"])
     evicted = evict_page_cache(spec["file"])
     f, io, data = open_series(spec)
     try:
-        _, nslots, nbytes, w0 = f.id.get_access_plist().get_cache()
+        counter.count = 0
         walls, cpus = [], []
         for selection in spec["selections"]:
             wall_s, cpu_s = timed_read(data, to_index(selection))
             walls.append(wall_s)
             cpus.append(cpu_s)
         return {"wall": walls, "cpu": cpus, "fast_reads": counter.count, "evicted": evicted,
-                "rdcc": [nbytes, nslots, w0], "shape": list(data.shape),
+                "rdcc": chunk_cache(f, data), "shape": list(data.shape),
                 "chunks": None if data.chunks is None else list(data.chunks)}
     finally:
         io.close()
@@ -279,10 +296,11 @@ def recorded_sha256(stats_path: Path) -> str:
 
 def run_info_with_reads() -> dict[str, Any]:
     info = run_info()
+    del info["slurm_array_task_id"]  # each read is its own job
     info["os_cpu_count"] = os.cpu_count() or 0
     info["b2h5py"] = version("b2h5py")
     info["blosc2"] = version("blosc2")
-    info["blosc_nthreads"] = os.environ.get("BLOSC_NTHREADS", "")
+    info["blosc2_nthreads"] = blosc2.nthreads
     return info
 
 
@@ -317,6 +335,7 @@ def run_task(task: ReadTask, input_dir: Path, output_dir: Path) -> int:
     read_cpu_times = np.full((n_units, reads_per_unit), np.nan)
     returncodes = np.full(n_units, -1, dtype=np.int64)
     fast_reads = np.zeros(n_units, dtype=np.int64)
+    completed = np.zeros(n_units, dtype=bool)
     crashes: list[str] = []
     slow = 0
     truncated = False
@@ -339,13 +358,17 @@ def run_task(task: ReadTask, input_dir: Path, output_dir: Path) -> int:
                     print(f"  Stopping after {len(crashes)} failed units", flush=True)
                     break
                 continue
+            if list(result["shape"]) != list(shape):
+                raise SystemExit(f"{input_path} holds shape {result['shape']}, expected {list(shape)}")
+            file_chunks = None if result["chunks"] is None else tuple(result["chunks"])
+            if file_chunks != chunks:
+                raise SystemExit(f"{input_path} holds chunks {file_chunks}, expected {chunks}")
             read_times[unit] = result["wall"]
             read_cpu_times[unit] = result["cpu"]
             fast_reads[unit] = result["fast_reads"]
+            completed[unit] = True
             evicted &= result["evicted"]
             rdcc_in_file = result["rdcc"]
-            if list(result["shape"]) != list(shape):
-                raise SystemExit(f"{input_path} holds shape {result['shape']}, expected {list(shape)}")
             total = float(np.sum(result["wall"]))
             print(f"  Unit {unit}: {total:.3f} s wall, {float(np.sum(result['cpu'])):.3f} s CPU", flush=True)
             if pattern.kind == "sequential" and total > threshold:
@@ -377,6 +400,12 @@ def run_task(task: ReadTask, input_dir: Path, output_dir: Path) -> int:
         else:
             check_sha256 = "not run"
 
+    if completed.any():
+        expected = reads_per_unit if task.path == "b2h5py" else 0
+        check_fast_path = "match" if np.all(fast_reads[completed] == expected) else "mismatch"
+    else:
+        check_fast_path = "not run"
+
     with h5py.File(partial, "w") as out:
         attrs = {
             "task": task.task, "stage": task.stage, "label": task.label,
@@ -395,6 +424,7 @@ def run_task(task: ReadTask, input_dir: Path, output_dir: Path) -> int:
             "reads": int(np.sum(~np.isnan(read_times))), "fast_reads": int(fast_reads.sum()),
             "page_cache_evicted": evicted,
             "check_selection": check_selection, "check_sha256": check_sha256,
+            "check_fast_path": check_fast_path,
             "start_utc": info["start_utc"],
             "end_utc": datetime.now(UTC).isoformat(timespec="seconds"),
             **{k: v for k, v in info.items() if k != "start_utc"},
@@ -412,10 +442,9 @@ def run_task(task: ReadTask, input_dir: Path, output_dir: Path) -> int:
             [1 if isinstance(s[0], int) else s[0][1] - s[0][0] for s in first], dtype=np.int64))
     partial.replace(output_path)
 
-    print(f"Checks: selection {check_selection}, sha256 {check_sha256}; "
+    print(f"Checks: selection {check_selection}, sha256 {check_sha256}, fast path {check_fast_path}; "
           f"{len(crashes)} failed units; results in {output_path}", flush=True)
-    failed = crashes or check_selection in ("mismatch", "crashed", "missing reference") or \
-        check_sha256 in ("mismatch", "crashed", "missing reference")
+    failed = crashes or any(c in FAILED_CHECKS for c in (check_selection, check_sha256, check_fast_path))
     return 1 if failed else 0
 
 
