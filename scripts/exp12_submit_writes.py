@@ -1,11 +1,11 @@
 """
-Submit the writes of one modality (ecephys or ophys) in scripts/write/exp12_write_schedule.tsv as SLURM
+Submit the writes of one modality (ecephys or ophys) in scripts/exp12_write_schedule.tsv as SLURM
 jobs, keeping the number of jobs under a cap, and report their status.
 
 The ecephys and ophys writes are separate runs: a submission takes the tasks of one modality only,
 so each modality can start once its raw data exist and be checked and rerun on its own.
 
-Each task is its own job, scripts/write/exp12_write.sh <task>, named exp12_write_<label>_<config_id>,
+Each task is its own job, scripts/exp12_write.sh <task>, named exp12_write_<label>_<config_id>,
 with logs write_logs/<label>_<config_id>--<job ID>-{out,err}.log. The cap counts every job of the
 user in the queue, pending and running, including this script's own job and jobs unrelated to the
 writes. While tasks remain, the script submits as many as fit under the cap, in schedule order,
@@ -19,13 +19,13 @@ left off. --tasks submits the given tasks whether or not they were submitted bef
 and resubmitting failed writes; the status report uses the latest job of each task.
 
 Usage:
-    python scripts/write/exp12_submit_writes.py submit {ecephys,ophys} [--tasks 3,17,250] [--max-jobs 95]
+    python scripts/exp12_submit_writes.py submit {ecephys,ophys} [--tasks 3,17,250] [--max-jobs 95]
         [--dry-run]
-    python scripts/write/exp12_submit_writes.py status [--modality {ecephys,ophys}]
+    python scripts/exp12_submit_writes.py status [--modality {ecephys,ophys}]
 
 Run the full submission of a modality as a job, so it can wait on the queue for as long as the
 writes take:
-    sbatch scripts/write/exp12_submit_writes.sh ecephys
+    sbatch scripts/exp12_submit_writes.sh ecephys
 """
 
 import argparse
@@ -43,8 +43,8 @@ import time
 
 from exp12_write_schedule import MODALITIES, Task, load_schedule
 
-REPO = Path(__file__).resolve().parents[2]
-WRITE_SCRIPT = REPO / "scripts" / "write" / "exp12_write.sh"
+REPO = Path(__file__).resolve().parent.parent
+WRITE_SCRIPT = REPO / "scripts" / "exp12_write.sh"
 LOG_DIR = REPO / "write_logs"
 OUTPUT_DIR = REPO / "write_output"
 SUBMITTED_PATH = LOG_DIR / "exp12_write_submitted.tsv"
@@ -209,7 +209,7 @@ def status(args: argparse.Namespace) -> None:
         for modality in MODALITIES:
             tasks = [task.task for task, *_ in problems if task.modality == modality]
             if tasks:
-                print(f"Resubmit with: python scripts/write/exp12_submit_writes.py submit {modality} --tasks "
+                print(f"Resubmit with: python scripts/exp12_submit_writes.py submit {modality} --tasks "
                       + ",".join(str(t) for t in tasks))
 
 

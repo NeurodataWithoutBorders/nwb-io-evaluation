@@ -18,7 +18,7 @@ Usage:
         <output_label> <output_dir> <series_name> <binary_file>
 
 Arguments:
-    config_table: Path to a config table, e.g. scripts/write/exp12_configs_ecephys1.tsv
+    config_table: Path to a config table, e.g. scripts/exp12_configs_ecephys1.tsv
     row: 1-based row of the config table (the SLURM array task ID)
     series_name: Name of the ElectricalSeries in the source NWB file
     binary_file: The series' raw data, from exp12_nwb_to_binary.py

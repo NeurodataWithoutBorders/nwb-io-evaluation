@@ -25,5 +25,5 @@ SERIESNAME="ElectricalSeriesProbe00AP"
 OUTLABEL="ecephys2"
 OUTDIR="$SCRATCH/nwb-io-evaluation/read_output/"
 
-echo "Running: srun $PYTHON scripts/read/exp12_read_ecephys.py $CONFIGNUM $INPUTDIR $SERIESNAME $OUTLABEL $OUTDIR"
-srun $PYTHON scripts/read/exp12_read_ecephys.py $CONFIGNUM $INPUTDIR $SERIESNAME $OUTLABEL $OUTDIR
+echo "Running: srun $PYTHON scripts/exp12_read_ecephys.py $CONFIGNUM $INPUTDIR $SERIESNAME $OUTLABEL $OUTDIR"
+srun $PYTHON scripts/exp12_read_ecephys.py $CONFIGNUM $INPUTDIR $SERIESNAME $OUTLABEL $OUTDIR

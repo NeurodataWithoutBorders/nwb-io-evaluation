@@ -30,7 +30,7 @@
 
 **When:** any time after the raw `.bin` and TIFF files exist. It does not depend on the read results, and running it before the main writes means an unrepresentative window can be moved without rewriting the test files.
 
-**Goal:** check that the centered window (`scripts/write/exp12_window.py`) is representative of the whole recording for compression ratio, so the ratios and codec rankings from the main runs can be stated for the session as a whole.
+**Goal:** check that the centered window (`scripts/exp12_window.py`) is representative of the whole recording for compression ratio, so the ratios and codec rankings from the main runs can be stated for the session as a whole.
 
 **Method:**
 
@@ -49,7 +49,7 @@
 
 ## Before the read benchmarks
 
-- Update the read scripts on `exp12-read-improvements` to the config tables: config IDs in file names, the row count from the table, submission under the 100 job cap with a random order (as `scripts/write/exp12_submit_writes.py` does for the writes), `#SBATCH --export=NONE` with `srun --export=ALL`, and `cpu_affinity_count` and `os_cpu_count` in the recorded metadata.
+- Update the read scripts on `exp12-read-improvements` to the config tables: config IDs in file names, the row count from the table, submission under the 100 job cap with a random order (as `scripts/exp12_submit_writes.py` does for the writes), `#SBATCH --export=NONE` with `srun --export=ALL`, and `cpu_affinity_count` and `os_cpu_count` in the recorded metadata.
 - Read Blosc2 configurations both with and without b2h5py, run each timed read in its own subprocess so a crash is recorded, check that each read path returns the same bytes as the source, and record whether b2h5py's fast path was used.
 - Decide whether the sequential patterns (E1, E2, O1, O2, O4) read the whole window or a bounded span at a random offset per repeat.
 - Set the chunk cache size explicitly for every read (`rdcc_nbytes` and `rdcc_nslots`, passing an `h5py.File` to `NWBHDF5IO` with `file=`) and record it. The default is 8 MiB per dataset in HDF5 2.x (h5py 3.16.0 wheels on PyPI bundle HDF5 2.0.0) and 1 MiB in HDF5 1.x (h5py 3.15.1 wheels bundle HDF5 1.14.6), and a chunk larger than the cache is decompressed again on every read that touches it. The S shapes and the h5py defaults fit both, the M shapes and the hdmf defaults fit 8 MiB only, and the L shapes and the NeuroConv defaults (about 10 MB) fit neither. A read that spans several chunks and continues in the next read needs all of them in the cache, so even M chunks miss when a read cuts across them (for example E1 on EC64M touches six 7.68 MB chunks). Run the patterns that touch a chunk in more than one read call with 1 MiB, 8 MiB, and a cache large enough for every chunk a read touches (for example 256 MiB), so the results separate chunk size from cache fit and hold for readers on either HDF5.
