@@ -39,6 +39,10 @@ and the sizes, in uncompressed bytes, are
 
 The chunk cache holds decompressed chunks no larger than itself, so a read that touches a chunk
 again, in the same read call or a later one, decompresses it again when the chunk does not fit.
+Which cache a reader has depends on how it opens the file: h5py.File and tools that use it
+directly get HDF5's default (1 MiB in HDF5 1.x, 8 MiB in HDF5 2.x), and hdmf, and so pynwb, opens
+files it opens by path with a 32 MiB cache (hdmf.backends.hdf5.h5tools.RDCC_NBYTES). S chunks fit
+every reader's cache, M chunks fit HDF5 2.x's and pynwb's, and L chunks fit pynwb's only.
 Each shape's time extent divides the window (exp12_window.py) and is at most half of it, so every
 dataset has at least two chunks along time, and the ecephys time extents divide or are multiples
 of 30,000 samples, one second of data. For OCtile16 these limits hold the sizes below their
