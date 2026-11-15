@@ -4,6 +4,7 @@
 /read_output/
 /write_logs/
 /write_output/
+/window_check/
 /old/
 
 .ipynb_checkpoints/
