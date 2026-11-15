@@ -180,12 +180,14 @@ CODEC_SWEEP_CHUNKS = {"EC": ("EC384M", "EC32M"), "OC": ("OCframeM", "OCtile16M")
 # reads of the codec sweep shapes, 2 shapes x 3 datasets = 6 cells per setting. Per cell:
 #
 #     R  compression ratio (write stats)
-#     D  read CPU time of the full-width sequential pattern (E1 or O1) without b2h5py, median over
-#        repeats
+#     D  read CPU time of the full-width sequential pattern (E1 or O1) without b2h5py, with the
+#        largest chunk cache the cell was read with, median over repeats
 #     C  write CPU time of the series, cpu_series_s - cpu_source_read_s
 #
 # Each is divided by the gzip 4 (no shuffle) value of the same cell, and the settings are compared
-# on the geometric mean over the 6 cells. Ratios within 1% of each other count as equal, and the
+# on the geometric mean over the 6 cells. The ophys cells include ophys1, whose compression ratio
+# is close to 1 for every setting, so the ophys means of R differ less than those of ophys2 and
+# ophys3 alone. Ratios within 1% of each other count as equal, and the
 # setting with the lower D ranks first among them. The picks:
 #
 #     1  fastest to read: lowest D among settings with R >= 1

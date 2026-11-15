@@ -19,7 +19,7 @@ Usage:
 
 Arguments:
     config_table: Path to a config table, e.g. scripts/exp12_configs_ecephys1.tsv
-    row: 1-based row of the config table (the SLURM array task ID)
+    row: 1-based row of the config table, as recorded for the task in exp12_write_schedule.tsv
     series_name: Name of the ElectricalSeries in the source NWB file
     binary_file: The series' raw data, from exp12_nwb_to_binary.py
 """

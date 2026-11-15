@@ -19,7 +19,7 @@ Usage:
 
 Arguments:
     config_table: Path to a config table, e.g. scripts/exp12_configs_ophys1.tsv
-    row: 1-based row of the config table (the SLURM array task ID)
+    row: 1-based row of the config table, as recorded for the task in exp12_write_schedule.tsv
 """
 
 import sys
