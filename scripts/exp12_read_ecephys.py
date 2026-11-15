@@ -79,6 +79,21 @@ def drop_cache(filepath):
     os.close(fd)
 
 
+def timed_read(data, selection) -> tuple[float, float]:
+    """Read data[selection] and return (wall time, CPU time) in seconds.
+
+    CPU time is this process's user plus system time during the read: decompression, copying,
+    and HDF5 bookkeeping. With the process on one core (--cpus-per-task=1), wall time minus CPU
+    time is time spent waiting, mostly on storage.
+    """
+    start_wall = time.perf_counter_ns()
+    start_cpu = time.process_time_ns()
+    _ = data[selection]
+    end_cpu = time.process_time_ns()
+    end_wall = time.perf_counter_ns()
+    return (end_wall - start_wall) / 1e9, (end_cpu - start_cpu) / 1e9
+
+
 # =============================================================================
 # Use case implementations
 # =============================================================================
@@ -102,12 +117,15 @@ def benchmark_sequential_batches(
     Returns dict with:
         - repeat_total_times: total read time per completed repeat (seconds)
         - batch_times: per-batch read times for all completed repeats
+        - repeat_total_cpu_times, batch_cpu_times: CPU time for the same reads (see timed_read)
         - batch_sizes: actual samples per batch, shape (n_batches,)
         - truncated: True if the benchmark short-circuited, False otherwise
         - n_repeats_completed: number of repeats actually run
     """
     all_batch_times = []
     repeat_total_times = []
+    all_batch_cpu_times = []
+    repeat_total_cpu_times = []
     slow_count = 0
     truncated = False
 
@@ -123,22 +141,23 @@ def benchmark_sequential_batches(
             n_batches = math.ceil(n_samples / batch_size)
 
             batch_read_times = []
+            batch_cpu_times = []
             batch_sizes = []
 
             for i in range(n_batches):
                 t0 = i * batch_size
                 t1 = min(t0 + batch_size, n_samples)
 
-                start_time = time.perf_counter_ns()
-                _ = data[t0:t1, :]
-                end_time = time.perf_counter_ns()
-
-                batch_read_times.append((end_time - start_time) / 1e9)
+                wall_s, cpu_s = timed_read(data, np.s_[t0:t1, :])
+                batch_read_times.append(wall_s)
+                batch_cpu_times.append(cpu_s)
                 batch_sizes.append(t1 - t0)
 
         repeat_time = sum(batch_read_times)
         all_batch_times.append(batch_read_times)
         repeat_total_times.append(repeat_time)
+        all_batch_cpu_times.append(batch_cpu_times)
+        repeat_total_cpu_times.append(sum(batch_cpu_times))
 
         if repeat_time > SLOW_REPEAT_THRESHOLD_S:
             slow_count += 1
@@ -154,6 +173,8 @@ def benchmark_sequential_batches(
     return {
         "repeat_total_times": np.array(repeat_total_times, dtype=np.float64),
         "batch_times": np.array(all_batch_times, dtype=np.float64),
+        "repeat_total_cpu_times": np.array(repeat_total_cpu_times, dtype=np.float64),
+        "batch_cpu_times": np.array(all_batch_cpu_times, dtype=np.float64),
         "batch_sizes": np.array(batch_sizes, dtype=np.int32),
         "truncated": truncated,
         "n_repeats_completed": len(repeat_total_times),
@@ -189,6 +210,7 @@ def benchmark_e3(input_filepath: Path, series_name: str) -> dict[str, Any]:
     Returns dict with:
         - sample_total_times: total read time per sample (seconds), shape (n_samples,)
         - batch_times: per-batch read times for all samples, shape (n_samples, 20)
+        - sample_total_cpu_times, batch_cpu_times: CPU time for the same reads (see timed_read)
         - batch_starts: start indices for all batches, shape (n_samples, 20)
     """
     n_samples = 50
@@ -207,6 +229,8 @@ def benchmark_e3(input_filepath: Path, series_name: str) -> dict[str, Any]:
 
     all_batch_times = []
     sample_total_times = []
+    all_batch_cpu_times = []
+    sample_total_cpu_times = []
 
     for sample in range(n_samples):
         drop_cache(input_filepath)
@@ -217,23 +241,26 @@ def benchmark_e3(input_filepath: Path, series_name: str) -> dict[str, Any]:
             data = series.data
 
             batch_read_times = []
+            batch_cpu_times = []
 
             for b in range(n_batches_per_sample):
                 t0 = int(all_batch_starts[sample, b])
                 t1 = t0 + batch_size
 
-                start_time = time.perf_counter_ns()
-                _ = data[t0:t1, :]
-                end_time = time.perf_counter_ns()
-
-                batch_read_times.append((end_time - start_time) / 1e9)
+                wall_s, cpu_s = timed_read(data, np.s_[t0:t1, :])
+                batch_read_times.append(wall_s)
+                batch_cpu_times.append(cpu_s)
 
         all_batch_times.append(batch_read_times)
         sample_total_times.append(sum(batch_read_times))
+        all_batch_cpu_times.append(batch_cpu_times)
+        sample_total_cpu_times.append(sum(batch_cpu_times))
 
     return {
         "sample_total_times": np.array(sample_total_times, dtype=np.float64),
         "batch_times": np.array(all_batch_times, dtype=np.float64),
+        "sample_total_cpu_times": np.array(sample_total_cpu_times, dtype=np.float64),
+        "batch_cpu_times": np.array(all_batch_cpu_times, dtype=np.float64),
         "batch_starts": all_batch_starts,
     }
 
@@ -247,6 +274,7 @@ def benchmark_e4(input_filepath: Path, series_name: str) -> dict[str, Any]:
 
     Returns dict with:
         - read_times: per-sample read times (seconds), shape (n_samples,)
+        - read_cpu_times: CPU time for the same reads (see timed_read)
         - time_starts: start sample index per sample, shape (n_samples,)
         - channel_starts: start channel index per sample, shape (n_samples,)
     """
@@ -266,6 +294,7 @@ def benchmark_e4(input_filepath: Path, series_name: str) -> dict[str, Any]:
     channel_starts = rng.integers(0, n_channels - channel_span + 1, size=n_samples)
 
     read_times = []
+    read_cpu_times = []
 
     for sample in range(n_samples):
         t0 = int(time_starts[sample])
@@ -280,14 +309,14 @@ def benchmark_e4(input_filepath: Path, series_name: str) -> dict[str, Any]:
             series = nwbfile.acquisition[series_name]
             data = series.data
 
-            start_time = time.perf_counter_ns()
-            _ = data[t0:t1, c0:c1]
-            end_time = time.perf_counter_ns()
+            wall_s, cpu_s = timed_read(data, np.s_[t0:t1, c0:c1])
 
-        read_times.append((end_time - start_time) / 1e9)
+        read_times.append(wall_s)
+        read_cpu_times.append(cpu_s)
 
     return {
         "read_times": np.array(read_times, dtype=np.float64),
+        "read_cpu_times": np.array(read_cpu_times, dtype=np.float64),
         "time_starts": np.array(time_starts, dtype=np.int64),
         "channel_starts": np.array(channel_starts, dtype=np.int64),
     }

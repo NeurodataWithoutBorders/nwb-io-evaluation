@@ -7,7 +7,10 @@ ERROR_LOG = "h5_errors.log"
 INPUT_DIR = "read_ophys2_Configs"
 OUTPUT_FILE = "h5_summary_Ophys2.txt"
 
-TARGET_KEYS = ["repeat_total_times", "read_times", "location_total_times"]
+TARGET_KEYS = [
+    "repeat_total_times", "read_times", "location_total_times",
+    "repeat_total_cpu_times", "read_cpu_times", "location_total_cpu_times",
+]
 
 STAT_ORDER = ("median", "min", "max")
 

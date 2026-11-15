@@ -7,7 +7,10 @@ ERROR_LOG = "h5_errors_Ecephys1.log"
 INPUT_DIR = "/Users/rly/Downloads/read_ecephys1_Configs"
 OUTPUT_FILE = "h5_summary_Ecephys1.csv"
 
-TARGET_KEYS = ["repeat_total_times", "sample_total_times", "read_times"]
+TARGET_KEYS = [
+    "repeat_total_times", "sample_total_times", "read_times",
+    "repeat_total_cpu_times", "sample_total_cpu_times", "read_cpu_times",
+]
 
 STAT_ORDER = ("median", "min", "max")
 
