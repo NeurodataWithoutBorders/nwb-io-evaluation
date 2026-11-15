@@ -18,7 +18,7 @@ Usage:
         <series_name> <tiff_dir> <output_label> <output_dir>
 
 Arguments:
-    config_table: Path to a config table, e.g. scripts/exp12_configs_ophys1.tsv
+    config_table: Path to a config table, e.g. scripts/write/exp12_configs_ophys1.tsv
     row: 1-based row of the config table (the SLURM array task ID)
 """
 

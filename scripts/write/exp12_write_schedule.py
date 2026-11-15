@@ -2,7 +2,7 @@
 The order in which the writes run.
 
 Every write, one configuration or the unchunked baseline of one dataset, is a task in
-scripts/exp12_write_schedule.tsv, with these columns:
+scripts/write/exp12_write_schedule.tsv, with these columns:
 
     task       task number, 1 to the number of writes, the order in which exp12_submit_writes.py
                submits them
@@ -19,7 +19,7 @@ datasets, chunk shapes, and codecs, so the load on the file system while a write
 to its configuration.
 
 Write the schedule with:
-    python scripts/exp12_write_schedule.py
+    python scripts/write/exp12_write_schedule.py
 """
 
 import csv

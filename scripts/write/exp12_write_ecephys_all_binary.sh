@@ -18,6 +18,6 @@ conda activate ~/envs/nwbio
 
 PYTHON=$(which python)  # Capture the full python path
 
-srun $PYTHON scripts/exp12_nwb_to_binary.py data/sub-npI3_ses-20190421_behavior+ecephys.nwb ElectricalSeries raw_data/ecephys1.bin
-srun $PYTHON scripts/exp12_nwb_to_binary.py data/sub-CSHL045_ses-034e726f-b35f-41e0-8d6c-a22cc32391fb_desc-raw_ecephys.nwb ElectricalSeriesProbe00AP raw_data/ecephys2_00ap.bin
-srun $PYTHON scripts/exp12_nwb_to_binary.py data/sub-Elgar_ses-2022-08-19_ecephys.nwb ElectricalSeriesAP raw_data/ecephys3.bin
+srun $PYTHON scripts/write/exp12_nwb_to_binary.py data/sub-npI3_ses-20190421_behavior+ecephys.nwb ElectricalSeries raw_data/ecephys1.bin
+srun $PYTHON scripts/write/exp12_nwb_to_binary.py data/sub-CSHL045_ses-034e726f-b35f-41e0-8d6c-a22cc32391fb_desc-raw_ecephys.nwb ElectricalSeriesProbe00AP raw_data/ecephys2_00ap.bin
+srun $PYTHON scripts/write/exp12_nwb_to_binary.py data/sub-Elgar_ses-2022-08-19_ecephys.nwb ElectricalSeriesAP raw_data/ecephys3.bin

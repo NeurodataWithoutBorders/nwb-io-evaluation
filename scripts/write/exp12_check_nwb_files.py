@@ -10,7 +10,7 @@ Usage:
     python exp12_check_nwb_files.py [--delete] <directory> <label> [<label> ...]
 
 For each dataset label, the expected outputs are <label>_<config_id>.nwb and
-stats_<label>_<config_id>.tsv for every configuration in scripts/exp12_configs_<label>.tsv,
+stats_<label>_<config_id>.tsv for every configuration in scripts/write/exp12_configs_<label>.tsv,
 plus <label>_unchunked.nwb and stats_<label>_unchunked.tsv.
 """
 

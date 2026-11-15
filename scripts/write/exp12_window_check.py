@@ -12,7 +12,7 @@ numbers of the chunk's time extent, and the window blocks start at multiples of 
 window start, so the window's compression ratio (the sum of its blocks' bytes over the sum of
 their storage) is the one a test file of the window has.
 
-    python scripts/exp12_window_check.py run <label> <output_tsv>
+    python scripts/write/exp12_window_check.py run <label> <output_tsv>
 
 writes one row per segment or block and codec setting:
 
@@ -25,7 +25,7 @@ writes one row per segment or block and codec setting:
     storage_bytes  bytes the compressed dataset occupies
     ratio          nbytes / storage_bytes
 
-    python scripts/exp12_window_check.py summary <output_tsv> [<output_tsv> ...]
+    python scripts/write/exp12_window_check.py summary <output_tsv> [<output_tsv> ...]
 
 prints, per dataset and codec setting, the window's ratio and the range of the segment ratios,
 whether the window's ratio falls inside that range, and whether each segment ranks the codec
@@ -45,7 +45,7 @@ from exp12_configs import CODEC_SWEEP_CHUNKS, DATASETS, Config, h5dataio_kwargs,
 from exp12_tiff import TiffStack
 from exp12_window import ECEPHYS_WINDOW_SAMPLES, OPHYS_WINDOW_FRAMES, centered_window
 
-REPO = Path(__file__).resolve().parent.parent
+REPO = Path(__file__).resolve().parents[2]
 RAW_PATHS = {
     "ecephys1": REPO / "raw_data" / "ecephys1.bin",
     "ecephys2": REPO / "raw_data" / "ecephys2_00ap.bin",

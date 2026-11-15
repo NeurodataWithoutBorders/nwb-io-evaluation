@@ -1,7 +1,7 @@
 """
 Chunking and compression configurations for the write and read benchmarks.
 
-Each dataset has a tab-separated table, scripts/exp12_configs_<label>.tsv, with one configuration
+Each dataset has a tab-separated table, scripts/write/exp12_configs_<label>.tsv, with one configuration
 per row and these columns:
 
     config_id  readable name used in output file names, for example EC384M-zstd3-shuf
@@ -70,7 +70,7 @@ The write scripts take a configuration by its row in the table (1-based, after t
 the write schedule (exp12_write_schedule.py) records the row of each configuration.
 
 Write the tables with:
-    python scripts/exp12_configs.py
+    python scripts/write/exp12_configs.py
 """
 
 import csv

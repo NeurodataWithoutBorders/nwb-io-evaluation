@@ -9,11 +9,11 @@
 #SBATCH --mem-per-cpu=32G
 #SBATCH --export=NONE
 
-# One write from scripts/exp12_write_schedule.tsv:
+# One write from scripts/write/exp12_write_schedule.tsv:
 #
-#     sbatch scripts/exp12_write.sh <task>
+#     sbatch scripts/write/exp12_write.sh <task>
 #
-# scripts/exp12_submit_writes.py submits the tasks and sets each job's name and log files.
+# scripts/write/exp12_submit_writes.py submits the tasks and sets each job's name and log files.
 #
 # --export=NONE starts the job from a clean login environment wherever it was submitted (an Open
 # OnDemand Jupyter session exports SLURM_EXPORT_ENV=NONE). It also makes srun default to
@@ -28,7 +28,7 @@ REPO="$SCRATCH/nwb-io-evaluation"
 cd "$REPO"
 
 TASK="$1"
-SCHEDULE="scripts/exp12_write_schedule.tsv"
+SCHEDULE="scripts/write/exp12_write_schedule.tsv"
 ENTRY=$(awk -F'\t' -v t="$TASK" 'NR > 1 && $1 == t {print $3, $4, $5}' "$SCHEDULE")
 if [ -z "$ENTRY" ]; then
     echo "Task $TASK is not in $SCHEDULE" >&2
@@ -67,26 +67,26 @@ case "$LABEL" in
 esac
 
 OUTDIR="$REPO/write_output"
-CONFIG="scripts/exp12_configs_$LABEL.tsv"
+CONFIG="scripts/write/exp12_configs_$LABEL.tsv"
 
 if [ "$CONFIG_ID" = "unchunked" ]; then
     case "$LABEL" in
-        ecephys*) CMD=(scripts/exp12_write_ecephys_bin_to_unchunked_nwb.py "$SOURCE"
+        ecephys*) CMD=(scripts/write/exp12_write_ecephys_bin_to_unchunked_nwb.py "$SOURCE"
                        "$OUTDIR/${LABEL}_unchunked.nwb" "$SERIES" "$RAW") ;;
-        ophys*) CMD=(scripts/exp12_write_ophys_tiff_to_unchunked_nwb.py "$SOURCE" "$SERIES" "$RAW"
+        ophys*) CMD=(scripts/write/exp12_write_ophys_tiff_to_unchunked_nwb.py "$SOURCE" "$SERIES" "$RAW"
                      "$OUTDIR/${LABEL}_unchunked.nwb") ;;
     esac
 else
     TABLE_ID=$(awk -F'\t' -v r="$ROW" 'NR == r + 1 {print $1}' "$CONFIG")
     if [ "$TABLE_ID" != "$CONFIG_ID" ]; then
         echo "Row $ROW of $CONFIG is $TABLE_ID, but $SCHEDULE lists $CONFIG_ID for task $TASK." \
-             "Regenerate the schedule with python scripts/exp12_write_schedule.py" >&2
+             "Regenerate the schedule with python scripts/write/exp12_write_schedule.py" >&2
         exit 1
     fi
     case "$LABEL" in
-        ecephys*) CMD=(scripts/exp12_write_ecephys_bin_to_nwb.py "$CONFIG" "$ROW" "$SOURCE" "$LABEL"
+        ecephys*) CMD=(scripts/write/exp12_write_ecephys_bin_to_nwb.py "$CONFIG" "$ROW" "$SOURCE" "$LABEL"
                        "$OUTDIR" "$SERIES" "$RAW") ;;
-        ophys*) CMD=(scripts/exp12_write_ophys_tiff_to_nwb.py "$CONFIG" "$ROW" "$SOURCE" "$SERIES" "$RAW"
+        ophys*) CMD=(scripts/write/exp12_write_ophys_tiff_to_nwb.py "$CONFIG" "$ROW" "$SOURCE" "$SERIES" "$RAW"
                      "$LABEL" "$OUTDIR") ;;
     esac
 fi

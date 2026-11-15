@@ -14,10 +14,10 @@
 #SBATCH --mail-user=rly@lbl.gov
 #SBATCH --mail-type=END,FAIL
 
-# Submits the writes of one modality in scripts/exp12_write_schedule.tsv under the job cap (see
-# scripts/exp12_submit_writes.py). Arguments are passed to its submit command, for example
-#     sbatch scripts/exp12_submit_writes.sh ecephys
-#     sbatch scripts/exp12_submit_writes.sh ophys --max-jobs 90
+# Submits the writes of one modality in scripts/write/exp12_write_schedule.tsv under the job cap (see
+# scripts/write/exp12_submit_writes.py). Arguments are passed to its submit command, for example
+#     sbatch scripts/write/exp12_submit_writes.sh ecephys
+#     sbatch scripts/write/exp12_submit_writes.sh ophys --max-jobs 90
 #
 # --export=NONE starts the job from a clean login environment wherever it was submitted (an Open
 # OnDemand Jupyter session exports SLURM_EXPORT_ENV=NONE). It also makes srun default to
@@ -30,5 +30,5 @@ cd "$SCRATCH/nwb-io-evaluation"
 
 PYTHON=$(which python)  # Capture the full python path
 
-echo "Running: srun --export=ALL $PYTHON scripts/exp12_submit_writes.py submit $*"
-srun --export=ALL "$PYTHON" scripts/exp12_submit_writes.py submit "$@"
+echo "Running: srun --export=ALL $PYTHON scripts/write/exp12_submit_writes.py submit $*"
+srun --export=ALL "$PYTHON" scripts/write/exp12_submit_writes.py submit "$@"
