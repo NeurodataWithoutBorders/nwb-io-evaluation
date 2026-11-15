@@ -26,8 +26,11 @@ Read paths:
 
 Chunk cache settings, set when the file is opened:
 
-    1mib    1 MiB and 521 slots, the HDF5 1.x defaults
-    8mib    8 MiB and 8191 slots, the HDF5 2.x defaults
+    1mib    1 MiB and 521 slots, the HDF5 1.x defaults, which h5py.File gives with HDF5 1.x
+    8mib    8 MiB and 8191 slots, the HDF5 2.x defaults, which h5py.File gives with HDF5 2.x
+    32mib   32 MiB and 8191 slots, which pynwb gives when it opens a file by path: hdmf sets
+            32 MiB (hdmf.backends.hdf5.h5tools.RDCC_NBYTES) and leaves the slots at HDF5 2.x's
+            default
     fitted  enough for one row of chunks across the full width of the data (the chunks of one
             chunk time extent), plus one chunk, with a prime number of slots at least 100 times
             the chunks it holds. A sequential read then keeps every chunk it reads in part until
@@ -36,7 +39,7 @@ Chunk cache settings, set when the file is opened:
 A chunk larger than the cache is not cached, so a read call decompresses it again. The h5py path
 of a sequential pattern (e1, e2, o1, o2, o4) on a chunked file whose chunk time extent does not
 divide the batch reads part of some chunks in one call and the rest in the next, so it runs with
-each of the three settings. Every other task runs with 8mib.
+each of the four settings. Every other task runs with 32mib, the cache of a pynwb reader.
 """
 
 from dataclasses import dataclass
@@ -54,10 +57,10 @@ SLOW_REPEAT_THRESHOLD_S = {"ecephys": 500 * 60, "ophys": 100 * 60}
 MAX_SLOW_REPEATS = 3
 
 READ_PATHS = ("h5py", "b2h5py")
-CACHE_LABELS = ("1mib", "8mib", "fitted")
-DEFAULT_CACHE = "8mib"
+CACHE_LABELS = ("1mib", "8mib", "32mib", "fitted")
+DEFAULT_CACHE = "32mib"
 CACHE_W0 = 0.75
-FIXED_CACHES = {"1mib": (2**20, 521), "8mib": (8 * 2**20, 8191)}
+FIXED_CACHES = {"1mib": (2**20, 521), "8mib": (8 * 2**20, 8191), "32mib": (32 * 2**20, 8191)}
 
 
 @dataclass(frozen=True)

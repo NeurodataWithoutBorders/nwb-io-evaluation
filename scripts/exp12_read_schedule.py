@@ -11,7 +11,7 @@ exp12_read_patterns.py), is a task in scripts/exp12_read_schedule.tsv, with thes
     config_id  configuration, or unchunked
     pattern    read pattern, for example e1
     path       read path, h5py or b2h5py
-    cache      chunk cache setting, 1mib, 8mib, or fitted
+    cache      chunk cache setting, 1mib, 8mib, 32mib, or fitted
 
 Stage 1 reads every stage 1 configuration and the unchunked file of each dataset. Stage 2 reads
 the stage 2 configurations and reads again the stage 1 configurations on the shapes outside the
