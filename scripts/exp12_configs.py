@@ -4,8 +4,9 @@ Chunking and compression configurations for the write and read benchmarks.
 Each dataset has a tab-separated table, scripts/exp12_configs_<label>.tsv, with one configuration
 per row and these columns:
 
-    config_id  readable name used in output file names, for example EC2-zstd3-shuf
-    chunks     chunk shape, for example 15000,384
+    config_id  readable name used in output file names, for example EC384M-zstd3-shuf
+    stage      1 or 2 (see below)
+    chunks     chunk shape, for example 10000,384
     codec      none, gzip, lzf, lz4, zstd, blosc2-blosclz, blosc2-lz4, blosc2-lz4hc, or blosc2-zstd
     level      compression level, or - for codecs without one (none, lzf, lz4)
     shuffle    none, shuffle, or bitshuffle
@@ -19,9 +20,29 @@ A Blosc2 level sets both the codec level and the Blosc2 block size. For blosc2-z
 runs zstd at level 2c - 1 for c < 9 and at zstd's maximum (22) for c = 9, so blosc2-zstd levels
 2, 6, and 9 run zstd at the same levels as the standalone zstd 3, 11, and 22 configurations.
 
-Chunk shape labels follow the paper: EC1 to EC5 for ecephys and OC1 to OC5 for ophys. Three more
-labels hold library default chunk shapes, computed for each full-length recording (the shape,
-dtype, and label of every recording are in DATASETS) and written with gzip 4:
+Chunk shapes cross three aspects with three sizes. The aspects split time from the other
+dimensions differently:
+
+    EC384, EC64, EC32       all 384 channels, groups of 64 channels, and groups of 32 channels
+    OCframe                 whole frames
+    OCtile128, OCtile32     128 x 128 and 32 x 32 pixel tiles
+
+and the sizes, in uncompressed bytes, are
+
+    S  at most 1 MiB, the default chunk cache of HDF5 1.x
+    M  at most 8 MiB, the default chunk cache of HDF5 2.x
+    L  at most 24 MiB. At the compression ratios measured for these data in an earlier run (about
+       2.2 for ecephys and 1.8 for ophys with the best codecs) and at 1.5, these chunks make byte
+       range requests of about 8 to 15 MiB, within the 8 to 16 MB part size AWS suggests for
+       downloading large objects from S3
+
+The chunk cache holds decompressed chunks no larger than itself, so a read that touches a chunk
+again, in the same read call or a later one, decompresses it again when the chunk does not fit.
+Each shape's time extent divides the window (exp12_window.py), and the ecephys time extents
+divide or are multiples of 30,000 samples, one second of data.
+
+Three more labels hold library default chunk shapes, computed for each full-length recording
+(the shape, dtype, and label of every recording are in DATASETS) and written with gzip 4:
 
     ECh5py, OCh5py  h5py's chunk guess for chunks=True (h5py._hl.filters.guess_chunk), which hdmf
                     used for chunks=True and iterator writes before hdmf computed its own shape.
@@ -36,7 +57,17 @@ users writing the full recording get. The tables record the shapes for the insta
 Regenerating the tables and comparing them with the committed ones checks that the shapes still
 hold.
 
-Row N of a table (1-based, after the header) is SLURM array task N.
+The configurations run in two stages:
+
+    1  every codec setting on the M size of two aspects (CODEC_SWEEP_CHUNKS), which ranks the
+       codecs; no compression and gzip 4 on every other shape; and the library defaults
+    2  the codec settings chosen from the stage 1 results (STAGE2_SETTINGS) on every other shape
+
+Stage 2 rows follow the stage 1 rows, so adding them leaves the row of every stage 1
+configuration unchanged.
+
+The write scripts take a configuration by its row in the table (1-based, after the header), and
+the write schedule (exp12_write_schedule.py) records the row of each configuration.
 
 Write the tables with:
     python scripts/exp12_configs.py
@@ -52,8 +83,10 @@ import hdf5plugin
 from hdmf.backends.hdf5.h5tools import HDF5IO
 import numpy as np
 
+from exp12_window import ECEPHYS_WINDOW_SAMPLES, OPHYS_WINDOW_FRAMES
+
 CONFIG_DIR = Path(__file__).resolve().parent
-COLUMNS = ("config_id", "chunks", "codec", "level", "shuffle")
+COLUMNS = ("config_id", "stage", "chunks", "codec", "level", "shuffle")
 
 STANDARD_CODECS = ("gzip", "lzf", "lz4", "zstd")
 BLOSC2_CNAMES = {
@@ -92,23 +125,55 @@ BLOSC2_SETTINGS = [
 # is also NeuroConv's default compression for these datasets.
 DEFAULT_CHUNKS_SETTING = ("gzip", 4)
 
+# Largest uncompressed chunk size, in bytes, of each size label.
+SIZE_LIMITS = {"S": 2**20, "M": 8 * 2**20, "L": 24 * 2**20}
+
+# Time extents divide the window and divide or are multiples of 30,000 samples (one second). The
+# S, M, and L shapes of an aspect are 0.96, 7.68, and 23.04 MB.
 ECEPHYS_CHUNKS = {
-    "EC1": (1500, 384),
-    "EC2": (15000, 384),
-    "EC3": (6000, 96),
-    "EC4": (60000, 96),
-    "EC5": (180000, 32),
+    "EC384S": (1250, 384),
+    "EC384M": (10000, 384),
+    "EC384L": (30000, 384),
+    "EC64S": (7500, 64),
+    "EC64M": (60000, 64),
+    "EC64L": (180000, 64),
+    "EC32S": (15000, 32),
+    "EC32M": (120000, 32),
+    "EC32L": (360000, 32),
 }
 
 
+def largest_time_extent(slice_bytes: int, limit: int, window: int) -> int:
+    """The largest divisor of window whose chunks of slice_bytes per time step fit in limit."""
+    extent = max(1, limit // slice_bytes)
+    while window % extent:
+        extent -= 1
+    return extent
+
+
 def ophys_chunks(width: int, height: int) -> dict[str, tuple[int, ...]]:
-    return {
-        "OC1": (2, width, height),
-        "OC2": (20, width, height),
-        "OC3": (32, 128, 128),
-        "OC4": (320, 128, 128),
-        "OC5": (20480, 16, 16),
-    }
+    """Chunk shapes for frames of width x height uint16 pixels, by chunk label.
+
+    Each shape holds the most frames that divide the window and keep the chunk within its size
+    limit.
+    """
+    aspects = {"OCframe": (width, height), "OCtile128": (128, 128), "OCtile32": (32, 32)}
+    chunks = {}
+    for aspect, (w, h) in aspects.items():
+        for size, limit in SIZE_LIMITS.items():
+            frames = largest_time_extent(w * h * np.dtype(np.uint16).itemsize, limit, OPHYS_WINDOW_FRAMES)
+            chunks[f"{aspect}{size}"] = (frames, w, h)
+    return chunks
+
+
+# The M shapes of two aspects that differ most in how they split the data, on which stage 1 writes
+# every codec setting.
+CODEC_SWEEP_CHUNKS = {"EC": ("EC384M", "EC32M"), "OC": ("OCframeM", "OCtile32M")}
+
+# Codec settings (codec, level, shuffle) that stage 2 writes on every shape outside
+# CODEC_SWEEP_CHUNKS, chosen from the stage 1 results.
+# TODO: fill in from the stage 1 codec rankings, then regenerate the tables and the write schedule.
+STAGE2_SETTINGS: dict[str, list[tuple[str, int | None, str]]] = {"EC": [], "OC": []}
 
 
 # Full-length shape and dtype of each benchmarked series in its source NWB file.
@@ -160,36 +225,72 @@ def default_chunks(label: str) -> dict[str, tuple[int, ...]]:
 @dataclass(frozen=True)
 class Config:
     config_id: str
+    stage: int
     chunks: tuple[int, ...]
     codec: str
     level: int | None
     shuffle: str
 
 
-def make_config(chunk_label: str, chunks: tuple[int, ...], codec: str, level: int | None,
+def make_config(stage: int, chunk_label: str, chunks: tuple[int, ...], codec: str, level: int | None,
                 shuffle: str) -> Config:
     level_token = "" if level is None else str(level)
     parts = [chunk_label, f"{CODEC_TOKENS[codec]}{level_token}"]
     if SHUFFLE_TOKENS[shuffle]:
         parts.append(SHUFFLE_TOKENS[shuffle])
-    return Config("-".join(parts), chunks, codec, level, shuffle)
+    return Config("-".join(parts), stage, chunks, codec, level, shuffle)
+
+
+def all_codec_settings() -> list[tuple[str, int | None, str]]:
+    """Every codec setting, as (codec, level, shuffle)."""
+    settings: list[tuple[str, int | None, str]] = [("none", None, "none")]
+    for codec, level in STANDARD_SETTINGS:
+        for shuffle in ("none", "shuffle"):
+            settings.append((codec, level, shuffle))
+    for codec, level in BLOSC2_SETTINGS:
+        for shuffle in ("shuffle", "bitshuffle"):
+            settings.append((codec, level, shuffle))
+    return settings
 
 
 def build_configs(label: str) -> list[Config]:
     spec = DATASETS[label]
+    sweep = CODEC_SWEEP_CHUNKS[spec["prefix"]]
+    codec, level = DEFAULT_CHUNKS_SETTING
+    baseline_settings = [("none", None, "none"), (codec, level, "none")]
+
     configs = []
     for chunk_label, chunks in spec["chunks"].items():
-        configs.append(make_config(chunk_label, chunks, "none", None, "none"))
-        for codec, level in STANDARD_SETTINGS:
-            for shuffle in ("none", "shuffle"):
-                configs.append(make_config(chunk_label, chunks, codec, level, shuffle))
-        for codec, level in BLOSC2_SETTINGS:
-            for shuffle in ("shuffle", "bitshuffle"):
-                configs.append(make_config(chunk_label, chunks, codec, level, shuffle))
-    codec, level = DEFAULT_CHUNKS_SETTING
+        settings = all_codec_settings() if chunk_label in sweep else baseline_settings
+        for codec_setting in settings:
+            configs.append(make_config(1, chunk_label, chunks, *codec_setting))
     for chunk_label, chunks in default_chunks(label).items():
-        configs.append(make_config(chunk_label, chunks, codec, level, "none"))
+        configs.append(make_config(1, chunk_label, chunks, codec, level, "none"))
+
+    stage1_ids = {c.config_id for c in configs}
+    for chunk_label, chunks in spec["chunks"].items():
+        if chunk_label in sweep:
+            continue
+        for codec_setting in STAGE2_SETTINGS[spec["prefix"]]:
+            config = make_config(2, chunk_label, chunks, *codec_setting)
+            if config.config_id not in stage1_ids:
+                configs.append(config)
     return configs
+
+
+def check_chunks(label: str) -> None:
+    """Raise ValueError unless each EC or OC chunk shape fits its size limit and divides the window."""
+    spec = DATASETS[label]
+    window = ECEPHYS_WINDOW_SAMPLES if spec["prefix"] == "EC" else OPHYS_WINDOW_FRAMES
+    itemsize = np.dtype(spec["dtype"]).itemsize
+    for chunk_label, chunks in spec["chunks"].items():
+        nbytes = int(np.prod(chunks)) * itemsize
+        limit = SIZE_LIMITS[chunk_label[-1]]
+        if nbytes > limit or window % chunks[0]:
+            raise ValueError(
+                f"{label} {chunk_label} {chunks}: {nbytes} bytes (limit {limit}), and the window of "
+                f"{window} is {'' if window % chunks[0] == 0 else 'not '}a multiple of {chunks[0]}"
+            )
 
 
 def write_buffer_length(chunks: tuple[int, ...], target: int) -> int:
@@ -211,7 +312,7 @@ def write_config_table(path: Path, configs: list[Config]) -> None:
         writer = csv.writer(f, delimiter="\t", lineterminator="\n")
         writer.writerow(COLUMNS)
         for c in configs:
-            writer.writerow([c.config_id, ",".join(str(n) for n in c.chunks), c.codec,
+            writer.writerow([c.config_id, c.stage, ",".join(str(n) for n in c.chunks), c.codec,
                              "-" if c.level is None else c.level, c.shuffle])
 
 
@@ -222,9 +323,10 @@ def load_configs(path: Path) -> list[Config]:
         raise ValueError(f"{path}: expected header {COLUMNS}, got {tuple(rows[0])}")
     configs = []
     for row in rows[1:]:
-        config_id, chunks, codec, level, shuffle = row
+        config_id, stage, chunks, codec, level, shuffle = row
         configs.append(Config(
             config_id=config_id,
+            stage=int(stage),
             chunks=tuple(int(n) for n in chunks.split(",")),
             codec=codec,
             level=None if level == "-" else int(level),
@@ -279,6 +381,7 @@ def h5dataio_kwargs(config: Config) -> dict[str, Any]:
 
 def main() -> None:
     for label in DATASETS:
+        check_chunks(label)
         configs = build_configs(label)
         path = config_table_path(label)
         write_config_table(path, configs)

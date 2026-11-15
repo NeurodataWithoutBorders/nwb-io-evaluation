@@ -4,7 +4,7 @@ Contiguous time windows taken from the middle of each source recording.
 The write scripts that build test NWB files from the raw binary and TIFF data all take their
 data from these windows, so the unchunked baseline and every chunking and compression
 configuration of a dataset hold the same samples. Each window length is a whole number of chunk
-time extents for the chunk shapes EC1 to EC5 and OC1 to OC5 and for the hdmf default ophys shapes.
+time extents for the EC and OC chunk shapes (exp12_configs.py) and for the hdmf default ophys shapes.
 The h5py chunk guesses, the hdmf default ecephys shape, and the NeuroConv default shapes do not
 divide the window, so those datasets end in a chunk that is partly filled along time.
 """
@@ -12,11 +12,11 @@ divide the window, so those datasets end in a chunk that is partly filled along 
 from typing import Any
 
 # 20 min at 30 kHz (19.999 min for ecephys3, which records at 30001.065 Hz). Divisible by the
-# time extent of every ecephys chunk shape (1,500 to 180,000 samples).
+# time extent of every ecephys chunk shape (1,250 to 360,000 samples).
 ECEPHYS_WINDOW_SAMPLES = 36_000_000
 
-# 2 x 20,480 frames: 45.5 min for ophys1 at 15 Hz, 22.7 min for ophys2 and ophys3 at 30.075 Hz.
-# Divisible by the time extent of every ophys chunk shape (2 to 20,480 frames).
+# 2^13 x 5 frames: 45.5 min for ophys1 at 15 Hz, 22.7 min for ophys2 and ophys3 at 30.075 Hz.
+# Divisible by the time extent of every ophys chunk shape (1 to 10,240 frames).
 OPHYS_WINDOW_FRAMES = 40_960
 
 

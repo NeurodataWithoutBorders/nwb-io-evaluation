@@ -19,8 +19,11 @@ Each write produces a tab-separated stats file with one row per series written:
     t_series_s          part of t_write_s spent writing this series' data: from the first read of
                         the source data to the last write of the series, including the source
                         reads. It leaves out the rest of the file and the fsync. Chunks still in
-                        HDF5's chunk cache (at most 1 MiB by default) are compressed when the file
-                        closes, after this span.
+                        HDF5's chunk cache are compressed when the file closes, after this span.
+                        The cache holds only chunks no larger than itself, and its default size is
+                        8 MiB per dataset in HDF5 2.x and 1 MiB in HDF5 1.x (the hdf5 column
+                        records the version), so at most that much data is compressed after the
+                        span.
     cpu_series_s        process CPU time over the t_series_s span, summed over all threads. With
                         one core per task this is close to the compression cost plus
                         cpu_source_read_s, and is much less sensitive to file system load than

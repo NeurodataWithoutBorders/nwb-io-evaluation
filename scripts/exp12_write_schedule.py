@@ -6,11 +6,13 @@ scripts/exp12_write_schedule.tsv, with these columns:
 
     task       task number, 1 to the number of writes, the order in which exp12_submit_writes.py
                submits them
+    stage      stage of the configuration (see exp12_configs.py); the unchunked writes are stage 1
     label      dataset label, for example ecephys1
     row        row of the dataset's config table (see exp12_configs.py), or - for unchunked
     config_id  configuration, or unchunked
 
-The tasks are in a random order with a fixed seed. The ecephys and ophys writes are submitted as
+The tasks of each stage are in a random order with a fixed seed, and the stage 2 tasks follow the
+stage 1 tasks, so adding stage 2 configurations leaves every stage 1 task number unchanged. The ecephys and ophys writes are submitted as
 separate runs (see exp12_submit_writes.py), each taking its modality's tasks in schedule order,
 which is a random order within the modality. The writes running at any one time are then a mix of
 datasets, chunk shapes, and codecs, so the load on the file system while a write runs is not tied
@@ -29,7 +31,7 @@ import numpy as np
 from exp12_configs import CONFIG_DIR, DATASETS, config_table_path, load_configs
 
 SCHEDULE_PATH = CONFIG_DIR / "exp12_write_schedule.tsv"
-COLUMNS = ("task", "label", "row", "config_id")
+COLUMNS = ("task", "stage", "label", "row", "config_id")
 UNCHUNKED = "unchunked"
 MODALITIES = ("ecephys", "ophys")
 SEED = 12
@@ -38,6 +40,7 @@ SEED = 12
 @dataclass(frozen=True)
 class Task:
     task: int
+    stage: int
     label: str
     row: int | None
     config_id: str
@@ -49,13 +52,16 @@ class Task:
 
 
 def build_schedule() -> list[Task]:
-    writes = []
+    writes: dict[int, list[tuple[str, int | None, str]]] = {}
     for label in DATASETS:
-        writes.append((label, None, UNCHUNKED))
+        writes.setdefault(1, []).append((label, None, UNCHUNKED))
         for row, config in enumerate(load_configs(config_table_path(label)), start=1):
-            writes.append((label, row, config.config_id))
-    order = np.random.default_rng(SEED).permutation(len(writes))
-    return [Task(task, *writes[i]) for task, i in enumerate(order, start=1)]
+            writes.setdefault(config.stage, []).append((label, row, config.config_id))
+    tasks = []
+    for stage in sorted(writes):
+        order = np.random.default_rng([SEED, stage]).permutation(len(writes[stage]))
+        tasks += [Task(len(tasks) + n, stage, *writes[stage][i]) for n, i in enumerate(order, start=1)]
+    return tasks
 
 
 def write_schedule(path: Path, tasks: list[Task]) -> None:
@@ -63,7 +69,7 @@ def write_schedule(path: Path, tasks: list[Task]) -> None:
         writer = csv.writer(f, delimiter="\t", lineterminator="\n")
         writer.writerow(COLUMNS)
         for t in tasks:
-            writer.writerow([t.task, t.label, "-" if t.row is None else t.row, t.config_id])
+            writer.writerow([t.task, t.stage, t.label, "-" if t.row is None else t.row, t.config_id])
 
 
 def load_schedule(path: Path = SCHEDULE_PATH) -> list[Task]:
@@ -72,8 +78,8 @@ def load_schedule(path: Path = SCHEDULE_PATH) -> list[Task]:
     if tuple(rows[0]) != COLUMNS:
         raise ValueError(f"{path}: expected header {COLUMNS}, got {tuple(rows[0])}")
     return [
-        Task(int(task), label, None if row == "-" else int(row), config_id)
-        for task, label, row, config_id in rows[1:]
+        Task(int(task), int(stage), label, None if row == "-" else int(row), config_id)
+        for task, stage, label, row, config_id in rows[1:]
     ]
 
 

@@ -1,1195 +1,577 @@
-task	label	row	config_id
-1	ecephys1	30	EC1-b2lz4hc5-shuf
-2	ophys3	135	OC4-zstd22
-3	ecephys3	74	EC2-b2zstd2-bitshuf
-4	ophys1	55	OC2-zstd11
-5	ophys2	43	OC2-gzip4
-6	ophys2	167	OC5-lzf-shuf
-7	ophys1	45	OC2-gzip6
-8	ecephys2	14	EC1-zstd3
-9	ecephys1	118	EC4-none
-10	ecephys3	52	EC2-lz4-shuf
-11	ophys1	17	OC1-zstd11-shuf
-12	ecephys2	191	EC5-b2zstd2-bitshuf
-13	ophys2	38	OC1-b2zstd9-shuf
-14	ecephys1	58	EC2-zstd22-shuf
-15	ecephys1	100	EC3-b2blosclz9-shuf
-16	ophys2	189	OC5-b2lz4hc9-bitshuf
-17	ophys1	159	OC5-gzip1-shuf
-18	ecephys3	185	EC5-b2lz4hc1-bitshuf
-19	ophys1	74	OC2-b2zstd2-bitshuf
-20	ecephys3	97	EC3-zstd22-shuf
-21	ecephys3	141	EC4-b2lz41-shuf
-22	ophys2	149	OC4-b2lz4hc9-shuf
-23	ophys2	65	OC2-b2lz49-shuf
-24	ophys3	149	OC4-b2lz4hc9-shuf
-25	ecephys1	79	EC3-none
-26	ecephys2	21	EC1-b2blosclz1-bitshuf
-27	ecephys1	-	unchunked
-28	ecephys2	94	EC3-zstd11
-29	ecephys2	43	EC2-gzip4
-30	ecephys1	107	EC3-b2lz4hc1-bitshuf
-31	ecephys1	18	EC1-zstd22
-32	ecephys2	156	EC4-b2zstd9-bitshuf
-33	ophys1	145	OC4-b2lz4hc1-shuf
-34	ophys2	16	OC1-zstd11
-35	ecephys2	167	EC5-lzf-shuf
-36	ophys1	12	OC1-lz4
-37	ecephys2	42	EC2-gzip1-shuf
-38	ecephys1	108	EC3-b2lz4hc5-shuf
-39	ophys3	4	OC1-gzip4
-40	ophys2	186	OC5-b2lz4hc5-shuf
-41	ecephys3	90	EC3-lz4
-42	ophys1	51	OC2-lz4
-43	ecephys3	83	EC3-gzip4-shuf
-44	ophys1	141	OC4-b2lz41-shuf
-45	ecephys3	2	EC1-gzip1
-46	ecephys1	23	EC1-b2blosclz9-bitshuf
-47	ophys2	71	OC2-b2lz4hc9-shuf
-48	ophys3	167	OC5-lzf-shuf
-49	ophys2	140	OC4-b2blosclz9-bitshuf
-50	ophys3	144	OC4-b2lz49-bitshuf
-51	ophys2	134	OC4-zstd11-shuf
-52	ophys3	98	OC3-b2blosclz1-shuf
-53	ophys1	118	OC4-none
-54	ophys1	192	OC5-b2zstd6-shuf
-55	ecephys2	100	EC3-b2blosclz9-shuf
-56	ecephys3	51	EC2-lz4
-57	ophys2	113	OC3-b2zstd2-bitshuf
-58	ecephys3	39	EC1-b2zstd9-bitshuf
-59	ecephys2	123	EC4-gzip6
-60	ecephys2	15	EC1-zstd3-shuf
-61	ophys2	60	OC2-b2blosclz1-bitshuf
-62	ophys3	132	OC4-zstd3-shuf
-63	ecephys2	139	EC4-b2blosclz9-shuf
-64	ophys3	171	OC5-zstd3-shuf
-65	ecephys2	110	EC3-b2lz4hc9-shuf
-66	ecephys3	119	EC4-gzip1
-67	ophys1	48	OC2-gzip9-shuf
-68	ecephys2	150	EC4-b2lz4hc9-bitshuf
-69	ophys2	9	OC1-gzip9-shuf
-70	ophys1	129	OC4-lz4
-71	ecephys1	25	EC1-b2lz41-bitshuf
-72	ecephys1	152	EC4-b2zstd2-bitshuf
-73	ecephys1	178	EC5-b2blosclz9-shuf
-74	ecephys3	59	EC2-b2blosclz1-shuf
-75	ophys1	173	OC5-zstd11-shuf
-76	ophys2	107	OC3-b2lz4hc1-bitshuf
-77	ecephys1	96	EC3-zstd22
-78	ophys2	122	OC4-gzip4-shuf
-79	ophys1	147	OC4-b2lz4hc5-shuf
-80	ecephys1	197	EChdmf-gzip4
-81	ecephys1	27	EC1-b2lz49-bitshuf
-82	ophys3	-	unchunked
-83	ecephys2	3	EC1-gzip1-shuf
-84	ecephys3	113	EC3-b2zstd2-bitshuf
-85	ecephys1	180	EC5-b2lz41-shuf
-86	ophys3	67	OC2-b2lz4hc1-shuf
-87	ophys2	133	OC4-zstd11
-88	ophys2	40	OC2-none
-89	ecephys3	136	EC4-zstd22-shuf
-90	ophys1	128	OC4-lzf-shuf
-91	ophys3	41	OC2-gzip1
-92	ecephys2	141	EC4-b2lz41-shuf
-93	ecephys2	91	EC3-lz4-shuf
-94	ecephys1	67	EC2-b2lz4hc1-shuf
-95	ecephys3	108	EC3-b2lz4hc5-shuf
-96	ecephys2	148	EC4-b2lz4hc5-bitshuf
-97	ecephys3	81	EC3-gzip1-shuf
-98	ophys1	193	OC5-b2zstd6-bitshuf
-99	ophys3	60	OC2-b2blosclz1-bitshuf
-100	ecephys1	98	EC3-b2blosclz1-shuf
-101	ecephys3	162	EC5-gzip6
-102	ophys2	108	OC3-b2lz4hc5-shuf
-103	ophys1	94	OC3-zstd11
-104	ophys2	95	OC3-zstd11-shuf
-105	ecephys1	75	EC2-b2zstd6-shuf
-106	ecephys1	127	EC4-lzf
-107	ophys2	66	OC2-b2lz49-bitshuf
-108	ophys1	39	OC1-b2zstd9-bitshuf
-109	ophys1	113	OC3-b2zstd2-bitshuf
-110	ophys2	88	OC3-lzf
-111	ecephys2	164	EC5-gzip9
-112	ophys2	32	OC1-b2lz4hc9-shuf
-113	ophys1	97	OC3-zstd22-shuf
-114	ecephys2	118	EC4-none
-115	ophys3	141	OC4-b2lz41-shuf
-116	ecephys1	40	EC2-none
-117	ophys3	153	OC4-b2zstd6-shuf
-118	ecephys3	154	EC4-b2zstd6-bitshuf
-119	ecephys2	1	EC1-none
-120	ophys1	20	OC1-b2blosclz1-shuf
-121	ecephys2	48	EC2-gzip9-shuf
-122	ecephys1	72	EC2-b2lz4hc9-bitshuf
-123	ophys3	106	OC3-b2lz4hc1-shuf
-124	ophys3	125	OC4-gzip9
-125	ophys1	165	OC5-gzip9-shuf
-126	ecephys3	126	EC4-gzip9-shuf
-127	ophys2	30	OC1-b2lz4hc5-shuf
-128	ecephys3	55	EC2-zstd11
-129	ecephys1	151	EC4-b2zstd2-shuf
-130	ophys3	168	OC5-lz4
-131	ecephys3	138	EC4-b2blosclz1-bitshuf
-132	ecephys2	37	EC1-b2zstd6-bitshuf
-133	ophys3	80	OC3-gzip1
-134	ophys1	187	OC5-b2lz4hc5-bitshuf
-135	ecephys1	37	EC1-b2zstd6-bitshuf
-136	ophys1	169	OC5-lz4-shuf
-137	ecephys3	10	EC1-lzf
-138	ecephys2	63	EC2-b2lz41-shuf
-139	ecephys1	115	EC3-b2zstd6-bitshuf
-140	ecephys1	188	EC5-b2lz4hc9-shuf
-141	ophys2	76	OC2-b2zstd6-bitshuf
-142	ophys2	151	OC4-b2zstd2-shuf
-143	ecephys3	125	EC4-gzip9
-144	ophys2	181	OC5-b2lz41-bitshuf
-145	ecephys3	133	EC4-zstd11
-146	ecephys2	127	EC4-lzf
-147	ophys2	52	OC2-lz4-shuf
-148	ecephys1	157	EC5-none
-149	ophys1	96	OC3-zstd22
-150	ophys2	90	OC3-lz4
-151	ophys1	185	OC5-b2lz4hc1-bitshuf
-152	ecephys1	20	EC1-b2blosclz1-shuf
-153	ecephys2	197	EChdmf-gzip4
-154	ophys2	184	OC5-b2lz4hc1-shuf
-155	ecephys1	88	EC3-lzf
-156	ecephys2	169	EC5-lz4-shuf
-157	ecephys3	116	EC3-b2zstd9-shuf
-158	ecephys2	120	EC4-gzip1-shuf
-159	ophys3	128	OC4-lzf-shuf
-160	ecephys2	13	EC1-lz4-shuf
-161	ecephys1	130	EC4-lz4-shuf
-162	ecephys1	64	EC2-b2lz41-bitshuf
-163	ophys1	58	OC2-zstd22-shuf
-164	ecephys2	34	EC1-b2zstd2-shuf
-165	ophys2	126	OC4-gzip9-shuf
-166	ecephys1	85	EC3-gzip6-shuf
-167	ophys1	5	OC1-gzip4-shuf
-168	ophys2	42	OC2-gzip1-shuf
-169	ecephys3	48	EC2-gzip9-shuf
-170	ophys2	145	OC4-b2lz4hc1-shuf
-171	ecephys3	30	EC1-b2lz4hc5-shuf
-172	ecephys3	64	EC2-b2lz41-bitshuf
-173	ophys1	19	OC1-zstd22-shuf
-174	ophys3	7	OC1-gzip6-shuf
-175	ophys3	79	OC3-none
-176	ophys2	15	OC1-zstd3-shuf
-177	ecephys1	169	EC5-lz4-shuf
-178	ecephys1	13	EC1-lz4-shuf
-179	ecephys1	135	EC4-zstd22
-180	ecephys2	76	EC2-b2zstd6-bitshuf
-181	ophys1	91	OC3-lz4-shuf
-182	ophys3	35	OC1-b2zstd2-bitshuf
-183	ecephys3	180	EC5-b2lz41-shuf
-184	ecephys1	77	EC2-b2zstd9-shuf
-185	ophys2	8	OC1-gzip9
-186	ophys3	29	OC1-b2lz4hc1-bitshuf
-187	ecephys2	144	EC4-b2lz49-bitshuf
-188	ecephys2	92	EC3-zstd3
-189	ecephys1	33	EC1-b2lz4hc9-bitshuf
-190	ophys3	119	OC4-gzip1
-191	ecephys3	189	EC5-b2lz4hc9-bitshuf
-192	ecephys2	142	EC4-b2lz41-bitshuf
-193	ecephys1	143	EC4-b2lz49-shuf
-194	ophys3	52	OC2-lz4-shuf
-195	ecephys2	108	EC3-b2lz4hc5-shuf
-196	ophys2	157	OC5-none
-197	ecephys3	156	EC4-b2zstd9-bitshuf
-198	ecephys2	31	EC1-b2lz4hc5-bitshuf
-199	ecephys2	189	EC5-b2lz4hc9-bitshuf
-200	ophys1	116	OC3-b2zstd9-shuf
-201	ecephys2	57	EC2-zstd22
-202	ecephys3	91	EC3-lz4-shuf
-203	ecephys1	162	EC5-gzip6
-204	ecephys2	138	EC4-b2blosclz1-bitshuf
-205	ecephys2	59	EC2-b2blosclz1-shuf
-206	ophys2	101	OC3-b2blosclz9-bitshuf
-207	ophys2	20	OC1-b2blosclz1-shuf
-208	ecephys3	117	EC3-b2zstd9-bitshuf
-209	ophys3	88	OC3-lzf
-210	ophys1	171	OC5-zstd3-shuf
-211	ophys2	135	OC4-zstd22
-212	ophys1	134	OC4-zstd11-shuf
-213	ophys1	164	OC5-gzip9
-214	ophys1	106	OC3-b2lz4hc1-shuf
-215	ecephys2	-	unchunked
-216	ecephys3	26	EC1-b2lz49-shuf
-217	ophys1	44	OC2-gzip4-shuf
-218	ecephys1	5	EC1-gzip4-shuf
-219	ophys2	45	OC2-gzip6
-220	ecephys2	67	EC2-b2lz4hc1-shuf
-221	ophys1	176	OC5-b2blosclz1-shuf
-222	ecephys3	53	EC2-zstd3
-223	ecephys3	118	EC4-none
-224	ecephys2	181	EC5-b2lz41-bitshuf
-225	ecephys2	86	EC3-gzip9
-226	ophys3	71	OC2-b2lz4hc9-shuf
-227	ophys2	111	OC3-b2lz4hc9-bitshuf
-228	ophys2	175	OC5-zstd22-shuf
-229	ophys3	26	OC1-b2lz49-shuf
-230	ophys3	30	OC1-b2lz4hc5-shuf
-231	ecephys1	70	EC2-b2lz4hc5-bitshuf
-232	ecephys3	22	EC1-b2blosclz9-shuf
-233	ecephys2	180	EC5-b2lz41-shuf
-234	ecephys2	173	EC5-zstd11-shuf
-235	ophys3	94	OC3-zstd11
-236	ecephys3	46	EC2-gzip6-shuf
-237	ecephys1	196	ECh5py-gzip4
-238	ophys2	171	OC5-zstd3-shuf
-239	ecephys1	160	EC5-gzip4
-240	ecephys3	79	EC3-none
-241	ecephys2	143	EC4-b2lz49-shuf
-242	ecephys1	120	EC4-gzip1-shuf
-243	ophys2	109	OC3-b2lz4hc5-bitshuf
-244	ophys2	119	OC4-gzip1
-245	ophys3	183	OC5-b2lz49-bitshuf
-246	ophys2	120	OC4-gzip1-shuf
-247	ecephys1	15	EC1-zstd3-shuf
-248	ophys1	14	OC1-zstd3
-249	ecephys1	38	EC1-b2zstd9-shuf
-250	ecephys2	38	EC1-b2zstd9-shuf
-251	ecephys1	19	EC1-zstd22-shuf
-252	ophys3	78	OC2-b2zstd9-bitshuf
-253	ophys1	29	OC1-b2lz4hc1-bitshuf
-254	ecephys3	167	EC5-lzf-shuf
-255	ophys2	154	OC4-b2zstd6-bitshuf
-256	ecephys1	83	EC3-gzip4-shuf
-257	ecephys2	177	EC5-b2blosclz1-bitshuf
-258	ophys3	103	OC3-b2lz41-bitshuf
-259	ophys1	28	OC1-b2lz4hc1-shuf
-260	ophys2	59	OC2-b2blosclz1-shuf
-261	ecephys3	127	EC4-lzf
-262	ophys3	43	OC2-gzip4
-263	ecephys1	16	EC1-zstd11
-264	ophys3	127	OC4-lzf
-265	ophys3	195	OC5-b2zstd9-bitshuf
-266	ecephys2	186	EC5-b2lz4hc5-shuf
-267	ophys3	68	OC2-b2lz4hc1-bitshuf
-268	ecephys1	76	EC2-b2zstd6-bitshuf
-269	ophys3	82	OC3-gzip4
-270	ecephys3	174	EC5-zstd22
-271	ecephys3	176	EC5-b2blosclz1-shuf
-272	ecephys1	50	EC2-lzf-shuf
-273	ophys3	118	OC4-none
-274	ophys2	160	OC5-gzip4
-275	ophys3	159	OC5-gzip1-shuf
-276	ecephys3	195	EC5-b2zstd9-bitshuf
-277	ophys2	2	OC1-gzip1
-278	ecephys1	126	EC4-gzip9-shuf
-279	ophys3	174	OC5-zstd22
-280	ecephys2	155	EC4-b2zstd9-shuf
-281	ecephys2	72	EC2-b2lz4hc9-bitshuf
-282	ecephys2	9	EC1-gzip9-shuf
-283	ecephys2	168	EC5-lz4
-284	ecephys2	179	EC5-b2blosclz9-bitshuf
-285	ophys1	46	OC2-gzip6-shuf
-286	ecephys3	129	EC4-lz4
-287	ecephys2	33	EC1-b2lz4hc9-bitshuf
-288	ecephys2	4	EC1-gzip4
-289	ecephys2	49	EC2-lzf
-290	ophys3	57	OC2-zstd22
-291	ecephys1	89	EC3-lzf-shuf
-292	ecephys1	59	EC2-b2blosclz1-shuf
-293	ophys3	177	OC5-b2blosclz1-bitshuf
-294	ophys3	155	OC4-b2zstd9-shuf
-295	ophys2	55	OC2-zstd11
-296	ecephys1	186	EC5-b2lz4hc5-shuf
-297	ecephys3	114	EC3-b2zstd6-shuf
-298	ophys1	152	OC4-b2zstd2-bitshuf
-299	ophys1	136	OC4-zstd22-shuf
-300	ophys3	24	OC1-b2lz41-shuf
-301	ecephys3	193	EC5-b2zstd6-bitshuf
-302	ecephys3	101	EC3-b2blosclz9-bitshuf
-303	ophys3	12	OC1-lz4
-304	ophys2	53	OC2-zstd3
-305	ophys3	28	OC1-b2lz4hc1-shuf
-306	ophys2	178	OC5-b2blosclz9-shuf
-307	ecephys1	171	EC5-zstd3-shuf
-308	ophys3	162	OC5-gzip6
-309	ophys3	25	OC1-b2lz41-bitshuf
-310	ophys2	58	OC2-zstd22-shuf
-311	ecephys2	192	EC5-b2zstd6-shuf
-312	ophys2	28	OC1-b2lz4hc1-shuf
-313	ophys2	121	OC4-gzip4
-314	ecephys2	46	EC2-gzip6-shuf
-315	ophys2	80	OC3-gzip1
-316	ophys3	169	OC5-lz4-shuf
-317	ophys2	67	OC2-b2lz4hc1-shuf
-318	ophys2	128	OC4-lzf-shuf
-319	ophys2	116	OC3-b2zstd9-shuf
-320	ophys1	-	unchunked
-321	ophys3	198	OCneuroconv-gzip4
-322	ophys3	77	OC2-b2zstd9-shuf
-323	ecephys2	154	EC4-b2zstd6-bitshuf
-324	ophys2	130	OC4-lz4-shuf
-325	ophys3	166	OC5-lzf
-326	ophys3	188	OC5-b2lz4hc9-shuf
-327	ecephys3	137	EC4-b2blosclz1-shuf
-328	ecephys3	37	EC1-b2zstd6-bitshuf
-329	ophys3	20	OC1-b2blosclz1-shuf
-330	ecephys3	50	EC2-lzf-shuf
-331	ophys3	84	OC3-gzip6
-332	ecephys2	163	EC5-gzip6-shuf
-333	ecephys1	184	EC5-b2lz4hc1-shuf
-334	ophys2	166	OC5-lzf
-335	ecephys3	106	EC3-b2lz4hc1-shuf
-336	ophys2	22	OC1-b2blosclz9-shuf
-337	ecephys1	90	EC3-lz4
-338	ecephys2	81	EC3-gzip1-shuf
-339	ecephys2	146	EC4-b2lz4hc1-bitshuf
-340	ophys3	133	OC4-zstd11
-341	ophys3	193	OC5-b2zstd6-bitshuf
-342	ophys3	113	OC3-b2zstd2-bitshuf
-343	ophys1	16	OC1-zstd11
-344	ophys2	83	OC3-gzip4-shuf
-345	ecephys3	134	EC4-zstd11-shuf
-346	ophys3	14	OC1-zstd3
-347	ophys3	102	OC3-b2lz41-shuf
-348	ecephys2	136	EC4-zstd22-shuf
-349	ophys1	162	OC5-gzip6
-350	ecephys1	41	EC2-gzip1
-351	ecephys1	134	EC4-zstd11-shuf
-352	ophys2	82	OC3-gzip4
-353	ophys2	51	OC2-lz4
-354	ecephys2	133	EC4-zstd11
-355	ecephys2	87	EC3-gzip9-shuf
-356	ecephys2	151	EC4-b2zstd2-shuf
-357	ophys3	146	OC4-b2lz4hc1-bitshuf
-358	ecephys2	75	EC2-b2zstd6-shuf
-359	ecephys3	144	EC4-b2lz49-bitshuf
-360	ophys1	32	OC1-b2lz4hc9-shuf
-361	ophys1	75	OC2-b2zstd6-shuf
-362	ophys3	17	OC1-zstd11-shuf
-363	ecephys3	72	EC2-b2lz4hc9-bitshuf
-364	ophys3	152	OC4-b2zstd2-bitshuf
-365	ophys2	57	OC2-zstd22
-366	ophys3	2	OC1-gzip1
-367	ophys3	161	OC5-gzip4-shuf
-368	ophys3	89	OC3-lzf-shuf
-369	ophys2	179	OC5-b2blosclz9-bitshuf
-370	ophys1	172	OC5-zstd11
-371	ecephys1	32	EC1-b2lz4hc9-shuf
-372	ecephys3	160	EC5-gzip4
-373	ophys1	9	OC1-gzip9-shuf
-374	ecephys3	132	EC4-zstd3-shuf
-375	ophys2	75	OC2-b2zstd6-shuf
-376	ophys2	118	OC4-none
-377	ecephys3	98	EC3-b2blosclz1-shuf
-378	ecephys3	70	EC2-b2lz4hc5-bitshuf
-379	ophys2	192	OC5-b2zstd6-shuf
-380	ecephys3	179	EC5-b2blosclz9-bitshuf
-381	ophys1	167	OC5-lzf-shuf
-382	ecephys2	73	EC2-b2zstd2-shuf
-383	ophys3	36	OC1-b2zstd6-shuf
-384	ophys3	179	OC5-b2blosclz9-bitshuf
-385	ecephys1	14	EC1-zstd3
-386	ecephys1	133	EC4-zstd11
-387	ophys1	102	OC3-b2lz41-shuf
-388	ecephys1	7	EC1-gzip6-shuf
-389	ecephys1	124	EC4-gzip6-shuf
-390	ecephys2	52	EC2-lz4-shuf
-391	ecephys3	92	EC3-zstd3
-392	ecephys2	8	EC1-gzip9
-393	ophys2	68	OC2-b2lz4hc1-bitshuf
-394	ophys1	114	OC3-b2zstd6-shuf
-395	ophys2	64	OC2-b2lz41-bitshuf
-396	ophys2	35	OC1-b2zstd2-bitshuf
-397	ecephys2	85	EC3-gzip6-shuf
-398	ophys1	15	OC1-zstd3-shuf
-399	ophys3	38	OC1-b2zstd9-shuf
-400	ecephys2	98	EC3-b2blosclz1-shuf
-401	ophys2	150	OC4-b2lz4hc9-bitshuf
-402	ecephys2	32	EC1-b2lz4hc9-shuf
-403	ophys1	143	OC4-b2lz49-shuf
-404	ecephys1	36	EC1-b2zstd6-shuf
-405	ophys3	42	OC2-gzip1-shuf
-406	ophys3	117	OC3-b2zstd9-bitshuf
-407	ecephys3	9	EC1-gzip9-shuf
-408	ecephys1	54	EC2-zstd3-shuf
-409	ecephys2	190	EC5-b2zstd2-shuf
-410	ecephys3	164	EC5-gzip9
-411	ophys1	61	OC2-b2blosclz9-shuf
-412	ophys3	8	OC1-gzip9
-413	ophys2	81	OC3-gzip1-shuf
-414	ecephys2	18	EC1-zstd22
-415	ophys3	9	OC1-gzip9-shuf
-416	ecephys2	50	EC2-lzf-shuf
-417	ecephys1	82	EC3-gzip4
-418	ophys3	192	OC5-b2zstd6-shuf
-419	ophys1	8	OC1-gzip9
-420	ecephys1	175	EC5-zstd22-shuf
-421	ecephys1	86	EC3-gzip9
-422	ecephys1	155	EC4-b2zstd9-shuf
-423	ecephys2	78	EC2-b2zstd9-bitshuf
-424	ecephys2	109	EC3-b2lz4hc5-bitshuf
-425	ophys1	175	OC5-zstd22-shuf
-426	ophys2	144	OC4-b2lz49-bitshuf
-427	ophys3	5	OC1-gzip4-shuf
-428	ecephys3	12	EC1-lz4
-429	ophys2	93	OC3-zstd3-shuf
-430	ophys2	49	OC2-lzf
-431	ecephys1	4	EC1-gzip4
-432	ophys1	103	OC3-b2lz41-bitshuf
-433	ecephys3	3	EC1-gzip1-shuf
-434	ophys1	40	OC2-none
-435	ecephys2	159	EC5-gzip1-shuf
-436	ophys1	186	OC5-b2lz4hc5-shuf
-437	ophys3	138	OC4-b2blosclz1-bitshuf
-438	ecephys2	152	EC4-b2zstd2-bitshuf
-439	ophys3	96	OC3-zstd22
-440	ecephys3	105	EC3-b2lz49-bitshuf
-441	ecephys2	165	EC5-gzip9-shuf
-442	ecephys3	87	EC3-gzip9-shuf
-443	ophys3	15	OC1-zstd3-shuf
-444	ophys2	168	OC5-lz4
-445	ecephys2	61	EC2-b2blosclz9-shuf
-446	ophys3	81	OC3-gzip1-shuf
-447	ophys3	64	OC2-b2lz41-bitshuf
-448	ophys1	56	OC2-zstd11-shuf
-449	ophys2	104	OC3-b2lz49-shuf
-450	ecephys2	84	EC3-gzip6
-451	ophys1	87	OC3-gzip9-shuf
-452	ophys1	24	OC1-b2lz41-shuf
-453	ecephys3	82	EC3-gzip4
-454	ophys3	32	OC1-b2lz4hc9-shuf
-455	ophys1	135	OC4-zstd22
-456	ecephys1	12	EC1-lz4
-457	ecephys2	28	EC1-b2lz4hc1-shuf
-458	ophys3	1	OC1-none
-459	ecephys1	148	EC4-b2lz4hc5-bitshuf
-460	ophys3	76	OC2-b2zstd6-bitshuf
-461	ophys1	156	OC4-b2zstd9-bitshuf
-462	ecephys2	83	EC3-gzip4-shuf
-463	ecephys2	185	EC5-b2lz4hc1-bitshuf
-464	ophys1	42	OC2-gzip1-shuf
-465	ophys2	33	OC1-b2lz4hc9-bitshuf
-466	ophys3	111	OC3-b2lz4hc9-bitshuf
-467	ecephys2	71	EC2-b2lz4hc9-shuf
-468	ecephys1	187	EC5-b2lz4hc5-bitshuf
-469	ophys3	18	OC1-zstd22
-470	ophys1	22	OC1-b2blosclz9-shuf
-471	ecephys3	99	EC3-b2blosclz1-bitshuf
-472	ophys2	34	OC1-b2zstd2-shuf
-473	ecephys1	154	EC4-b2zstd6-bitshuf
-474	ophys1	126	OC4-gzip9-shuf
-475	ophys3	90	OC3-lz4
-476	ophys2	10	OC1-lzf
-477	ecephys3	191	EC5-b2zstd2-bitshuf
-478	ecephys3	40	EC2-none
-479	ecephys1	8	EC1-gzip9
-480	ophys3	134	OC4-zstd11-shuf
-481	ecephys3	89	EC3-lzf-shuf
-482	ecephys1	141	EC4-b2lz41-shuf
-483	ophys1	121	OC4-gzip4
-484	ecephys1	194	EC5-b2zstd9-shuf
-485	ophys3	50	OC2-lzf-shuf
-486	ecephys3	149	EC4-b2lz4hc9-shuf
-487	ecephys2	99	EC3-b2blosclz1-bitshuf
-488	ecephys1	55	EC2-zstd11
-489	ecephys1	182	EC5-b2lz49-shuf
-490	ophys3	189	OC5-b2lz4hc9-bitshuf
-491	ecephys3	192	EC5-b2zstd6-shuf
-492	ecephys1	174	EC5-zstd22
-493	ophys1	18	OC1-zstd22
-494	ophys2	131	OC4-zstd3
-495	ecephys2	27	EC1-b2lz49-bitshuf
-496	ecephys3	148	EC4-b2lz4hc5-bitshuf
-497	ophys3	142	OC4-b2lz41-bitshuf
-498	ecephys1	117	EC3-b2zstd9-bitshuf
-499	ophys1	2	OC1-gzip1
-500	ecephys2	102	EC3-b2lz41-shuf
-501	ecephys3	142	EC4-b2lz41-bitshuf
-502	ecephys1	68	EC2-b2lz4hc1-bitshuf
-503	ecephys1	145	EC4-b2lz4hc1-shuf
-504	ophys1	1	OC1-none
-505	ecephys2	25	EC1-b2lz41-bitshuf
-506	ophys1	123	OC4-gzip6
-507	ecephys1	22	EC1-b2blosclz9-shuf
-508	ecephys1	193	EC5-b2zstd6-bitshuf
-509	ecephys1	111	EC3-b2lz4hc9-bitshuf
-510	ecephys2	104	EC3-b2lz49-shuf
-511	ecephys3	1	EC1-none
-512	ecephys1	139	EC4-b2blosclz9-shuf
-513	ecephys2	166	EC5-lzf
-514	ecephys3	111	EC3-b2lz4hc9-bitshuf
-515	ophys2	44	OC2-gzip4-shuf
-516	ecephys1	91	EC3-lz4-shuf
-517	ophys2	182	OC5-b2lz49-shuf
-518	ophys2	100	OC3-b2blosclz9-shuf
-519	ophys2	185	OC5-b2lz4hc1-bitshuf
-520	ecephys2	122	EC4-gzip4-shuf
-521	ecephys2	129	EC4-lz4
-522	ecephys3	58	EC2-zstd22-shuf
-523	ecephys2	178	EC5-b2blosclz9-shuf
-524	ecephys2	117	EC3-b2zstd9-bitshuf
-525	ophys2	141	OC4-b2lz41-shuf
-526	ecephys1	34	EC1-b2zstd2-shuf
-527	ophys3	55	OC2-zstd11
-528	ophys2	12	OC1-lz4
-529	ophys1	65	OC2-b2lz49-shuf
-530	ophys1	79	OC3-none
-531	ecephys3	11	EC1-lzf-shuf
-532	ophys2	180	OC5-b2lz41-shuf
-533	ecephys1	80	EC3-gzip1
-534	ophys3	104	OC3-b2lz49-shuf
-535	ecephys2	44	EC2-gzip4-shuf
-536	ophys2	106	OC3-b2lz4hc1-shuf
-537	ophys1	166	OC5-lzf
-538	ecephys3	198	ECneuroconv-gzip4
-539	ecephys3	135	EC4-zstd22
-540	ophys1	191	OC5-b2zstd2-bitshuf
-541	ophys3	59	OC2-b2blosclz1-shuf
-542	ophys1	10	OC1-lzf
-543	ophys2	87	OC3-gzip9-shuf
-544	ophys1	168	OC5-lz4
-545	ecephys2	131	EC4-zstd3
-546	ecephys1	125	EC4-gzip9
-547	ecephys1	123	EC4-gzip6
-548	ecephys1	56	EC2-zstd11-shuf
-549	ecephys2	135	EC4-zstd22
-550	ophys2	63	OC2-b2lz41-shuf
-551	ophys3	145	OC4-b2lz4hc1-shuf
-552	ecephys2	5	EC1-gzip4-shuf
-553	ophys3	184	OC5-b2lz4hc1-shuf
-554	ecephys1	60	EC2-b2blosclz1-bitshuf
-555	ophys2	79	OC3-none
-556	ecephys3	32	EC1-b2lz4hc9-shuf
-557	ecephys1	99	EC3-b2blosclz1-bitshuf
-558	ophys3	148	OC4-b2lz4hc5-bitshuf
-559	ecephys2	2	EC1-gzip1
-560	ecephys1	57	EC2-zstd22
-561	ophys3	116	OC3-b2zstd9-shuf
-562	ecephys2	198	ECneuroconv-gzip4
-563	ecephys3	16	EC1-zstd11
-564	ophys1	92	OC3-zstd3
-565	ecephys2	93	EC3-zstd3-shuf
-566	ecephys1	105	EC3-b2lz49-bitshuf
-567	ophys3	151	OC4-b2zstd2-shuf
-568	ecephys3	140	EC4-b2blosclz9-bitshuf
-569	ecephys2	74	EC2-b2zstd2-bitshuf
-570	ecephys2	140	EC4-b2blosclz9-bitshuf
-571	ophys2	161	OC5-gzip4-shuf
-572	ecephys3	169	EC5-lz4-shuf
-573	ophys3	47	OC2-gzip9
-574	ecephys2	160	EC5-gzip4
-575	ophys3	27	OC1-b2lz49-bitshuf
-576	ophys3	147	OC4-b2lz4hc5-shuf
-577	ecephys2	66	EC2-b2lz49-bitshuf
-578	ophys1	13	OC1-lz4-shuf
-579	ophys3	197	OChdmf-gzip4
-580	ecephys2	126	EC4-gzip9-shuf
-581	ecephys2	24	EC1-b2lz41-shuf
-582	ecephys2	172	EC5-zstd11
-583	ophys3	126	OC4-gzip9-shuf
-584	ecephys2	65	EC2-b2lz49-shuf
-585	ecephys3	56	EC2-zstd11-shuf
-586	ecephys3	145	EC4-b2lz4hc1-shuf
-587	ophys2	56	OC2-zstd11-shuf
-588	ecephys2	23	EC1-b2blosclz9-bitshuf
-589	ecephys1	6	EC1-gzip6
-590	ophys2	47	OC2-gzip9
-591	ophys1	144	OC4-b2lz49-bitshuf
-592	ecephys2	116	EC3-b2zstd9-shuf
-593	ophys1	100	OC3-b2blosclz9-shuf
-594	ecephys3	163	EC5-gzip6-shuf
-595	ophys2	74	OC2-b2zstd2-bitshuf
-596	ecephys1	45	EC2-gzip6
-597	ophys1	77	OC2-b2zstd9-shuf
-598	ecephys2	113	EC3-b2zstd2-bitshuf
-599	ophys3	97	OC3-zstd22-shuf
-600	ecephys3	194	EC5-b2zstd9-shuf
-601	ecephys3	151	EC4-b2zstd2-shuf
-602	ecephys3	62	EC2-b2blosclz9-bitshuf
-603	ecephys1	46	EC2-gzip6-shuf
-604	ecephys1	31	EC1-b2lz4hc5-bitshuf
-605	ophys3	34	OC1-b2zstd2-shuf
-606	ophys2	14	OC1-zstd3
-607	ecephys3	178	EC5-b2blosclz9-shuf
-608	ecephys2	182	EC5-b2lz49-shuf
-609	ecephys1	17	EC1-zstd11-shuf
-610	ecephys1	168	EC5-lz4
-611	ecephys2	112	EC3-b2zstd2-shuf
-612	ophys1	109	OC3-b2lz4hc5-bitshuf
-613	ophys2	25	OC1-b2lz41-bitshuf
-614	ecephys2	20	EC1-b2blosclz1-shuf
-615	ophys1	27	OC1-b2lz49-bitshuf
-616	ecephys1	95	EC3-zstd11-shuf
-617	ecephys1	138	EC4-b2blosclz1-bitshuf
-618	ecephys3	69	EC2-b2lz4hc5-shuf
-619	ophys3	109	OC3-b2lz4hc5-bitshuf
-620	ophys1	150	OC4-b2lz4hc9-bitshuf
-621	ecephys2	130	EC4-lz4-shuf
-622	ecephys3	94	EC3-zstd11
-623	ophys2	46	OC2-gzip6-shuf
-624	ecephys2	162	EC5-gzip6
-625	ecephys1	44	EC2-gzip4-shuf
-626	ophys1	66	OC2-b2lz49-bitshuf
-627	ecephys2	80	EC3-gzip1
-628	ecephys3	41	EC2-gzip1
-629	ophys3	180	OC5-b2lz41-shuf
-630	ecephys1	192	EC5-b2zstd6-shuf
-631	ophys1	178	OC5-b2blosclz9-shuf
-632	ophys1	101	OC3-b2blosclz9-bitshuf
-633	ophys1	195	OC5-b2zstd9-bitshuf
-634	ophys3	107	OC3-b2lz4hc1-bitshuf
-635	ophys2	193	OC5-b2zstd6-bitshuf
-636	ecephys3	130	EC4-lz4-shuf
-637	ophys1	26	OC1-b2lz49-shuf
-638	ophys3	22	OC1-b2blosclz9-shuf
-639	ophys1	182	OC5-b2lz49-shuf
-640	ecephys3	6	EC1-gzip6
-641	ophys3	181	OC5-b2lz41-bitshuf
-642	ophys1	197	OChdmf-gzip4
-643	ophys3	39	OC1-b2zstd9-bitshuf
-644	ophys3	85	OC3-gzip6-shuf
-645	ophys3	140	OC4-b2blosclz9-bitshuf
-646	ophys1	78	OC2-b2zstd9-bitshuf
-647	ecephys2	115	EC3-b2zstd6-bitshuf
-648	ophys2	18	OC1-zstd22
-649	ecephys3	65	EC2-b2lz49-shuf
-650	ophys3	101	OC3-b2blosclz9-bitshuf
-651	ophys2	137	OC4-b2blosclz1-shuf
-652	ophys3	114	OC3-b2zstd6-shuf
-653	ophys1	67	OC2-b2lz4hc1-shuf
-654	ophys1	127	OC4-lzf
-655	ecephys3	159	EC5-gzip1-shuf
-656	ecephys2	97	EC3-zstd22-shuf
-657	ecephys3	86	EC3-gzip9
-658	ecephys1	43	EC2-gzip4
-659	ecephys3	19	EC1-zstd22-shuf
-660	ophys3	176	OC5-b2blosclz1-shuf
-661	ecephys3	47	EC2-gzip9
-662	ophys2	174	OC5-zstd22
-663	ecephys2	170	EC5-zstd3
-664	ecephys3	172	EC5-zstd11
-665	ecephys3	128	EC4-lzf-shuf
-666	ophys3	158	OC5-gzip1
-667	ophys1	64	OC2-b2lz41-bitshuf
-668	ophys2	98	OC3-b2blosclz1-shuf
-669	ophys1	38	OC1-b2zstd9-shuf
-670	ecephys1	94	EC3-zstd11
-671	ophys2	162	OC5-gzip6
-672	ecephys2	114	EC3-b2zstd6-shuf
-673	ecephys3	24	EC1-b2lz41-shuf
-674	ophys2	85	OC3-gzip6-shuf
-675	ecephys3	184	EC5-b2lz4hc1-shuf
-676	ophys2	13	OC1-lz4-shuf
-677	ecephys3	196	ECh5py-gzip4
-678	ecephys2	157	EC5-none
-679	ecephys2	39	EC1-b2zstd9-bitshuf
-680	ecephys3	109	EC3-b2lz4hc5-bitshuf
-681	ecephys3	182	EC5-b2lz49-shuf
-682	ophys2	23	OC1-b2blosclz9-bitshuf
-683	ecephys2	125	EC4-gzip9
-684	ecephys3	85	EC3-gzip6-shuf
-685	ophys1	85	OC3-gzip6-shuf
-686	ecephys1	191	EC5-b2zstd2-bitshuf
-687	ophys1	189	OC5-b2lz4hc9-bitshuf
-688	ecephys3	18	EC1-zstd22
-689	ophys3	136	OC4-zstd22-shuf
-690	ophys3	124	OC4-gzip6-shuf
-691	ecephys3	78	EC2-b2zstd9-bitshuf
-692	ophys3	63	OC2-b2lz41-shuf
-693	ecephys3	181	EC5-b2lz41-bitshuf
-694	ecephys3	112	EC3-b2zstd2-shuf
-695	ecephys2	64	EC2-b2lz41-bitshuf
-696	ecephys1	26	EC1-b2lz49-shuf
-697	ophys2	170	OC5-zstd3
-698	ophys3	33	OC1-b2lz4hc9-bitshuf
-699	ecephys3	115	EC3-b2zstd6-bitshuf
-700	ophys3	130	OC4-lz4-shuf
-701	ecephys3	20	EC1-b2blosclz1-shuf
-702	ecephys1	93	EC3-zstd3-shuf
-703	ophys3	31	OC1-b2lz4hc5-bitshuf
-704	ophys2	136	OC4-zstd22-shuf
-705	ophys3	70	OC2-b2lz4hc5-bitshuf
-706	ophys2	5	OC1-gzip4-shuf
-707	ecephys2	175	EC5-zstd22-shuf
-708	ecephys3	31	EC1-b2lz4hc5-bitshuf
-709	ophys3	156	OC4-b2zstd9-bitshuf
-710	ecephys3	42	EC2-gzip1-shuf
-711	ophys3	69	OC2-b2lz4hc5-shuf
-712	ophys1	84	OC3-gzip6
-713	ophys2	155	OC4-b2zstd9-shuf
-714	ophys2	183	OC5-b2lz49-bitshuf
-715	ophys3	19	OC1-zstd22-shuf
-716	ecephys1	53	EC2-zstd3
-717	ophys3	40	OC2-none
-718	ecephys1	128	EC4-lzf-shuf
-719	ophys3	121	OC4-gzip4
-720	ecephys3	8	EC1-gzip9
-721	ecephys3	96	EC3-zstd22
-722	ophys3	187	OC5-b2lz4hc5-bitshuf
-723	ecephys2	12	EC1-lz4
-724	ecephys3	170	EC5-zstd3
-725	ophys2	138	OC4-b2blosclz1-bitshuf
-726	ophys2	139	OC4-b2blosclz9-shuf
-727	ecephys1	103	EC3-b2lz41-bitshuf
-728	ophys1	115	OC3-b2zstd6-bitshuf
-729	ecephys1	61	EC2-b2blosclz9-shuf
-730	ophys1	154	OC4-b2zstd6-bitshuf
-731	ecephys3	150	EC4-b2lz4hc9-bitshuf
-732	ecephys1	172	EC5-zstd11
-733	ophys2	169	OC5-lz4-shuf
-734	ophys1	119	OC4-gzip1
-735	ophys1	188	OC5-b2lz4hc9-shuf
-736	ophys2	92	OC3-zstd3
-737	ecephys3	66	EC2-b2lz49-bitshuf
-738	ecephys3	175	EC5-zstd22-shuf
-739	ophys3	65	OC2-b2lz49-shuf
-740	ecephys1	147	EC4-b2lz4hc5-shuf
-741	ophys2	41	OC2-gzip1
-742	ophys1	49	OC2-lzf
-743	ophys1	80	OC3-gzip1
-744	ophys2	94	OC3-zstd11
-745	ecephys3	28	EC1-b2lz4hc1-shuf
-746	ophys1	88	OC3-lzf
-747	ophys2	61	OC2-b2blosclz9-shuf
-748	ecephys1	1	EC1-none
-749	ecephys1	121	EC4-gzip4
-750	ophys3	72	OC2-b2lz4hc9-bitshuf
-751	ophys1	161	OC5-gzip4-shuf
-752	ophys1	110	OC3-b2lz4hc9-shuf
-753	ecephys1	149	EC4-b2lz4hc9-shuf
-754	ecephys2	58	EC2-zstd22-shuf
-755	ophys1	149	OC4-b2lz4hc9-shuf
-756	ophys3	92	OC3-zstd3
-757	ecephys2	68	EC2-b2lz4hc1-bitshuf
-758	ecephys3	76	EC2-b2zstd6-bitshuf
-759	ecephys1	179	EC5-b2blosclz9-bitshuf
-760	ophys2	124	OC4-gzip6-shuf
-761	ophys1	93	OC3-zstd3-shuf
-762	ecephys1	113	EC3-b2zstd2-bitshuf
-763	ecephys3	158	EC5-gzip1
-764	ecephys1	3	EC1-gzip1-shuf
-765	ecephys1	161	EC5-gzip4-shuf
-766	ophys1	180	OC5-b2lz41-shuf
-767	ophys3	139	OC4-b2blosclz9-shuf
-768	ecephys1	92	EC3-zstd3
-769	ecephys2	176	EC5-b2blosclz1-shuf
-770	ecephys1	131	EC4-zstd3
-771	ecephys3	34	EC1-b2zstd2-shuf
-772	ecephys1	189	EC5-b2lz4hc9-bitshuf
-773	ecephys2	40	EC2-none
-774	ecephys1	119	EC4-gzip1
-775	ophys1	54	OC2-zstd3-shuf
-776	ecephys2	62	EC2-b2blosclz9-bitshuf
-777	ophys3	100	OC3-b2blosclz9-shuf
-778	ecephys3	123	EC4-gzip6
-779	ecephys3	187	EC5-b2lz4hc5-bitshuf
-780	ecephys3	-	unchunked
-781	ophys2	197	OChdmf-gzip4
-782	ophys1	72	OC2-b2lz4hc9-bitshuf
-783	ophys3	163	OC5-gzip6-shuf
-784	ophys1	120	OC4-gzip1-shuf
-785	ophys3	175	OC5-zstd22-shuf
-786	ophys3	48	OC2-gzip9-shuf
-787	ophys1	95	OC3-zstd11-shuf
-788	ophys1	82	OC3-gzip4
-789	ecephys3	77	EC2-b2zstd9-shuf
-790	ophys1	11	OC1-lzf-shuf
-791	ophys2	176	OC5-b2blosclz1-shuf
-792	ecephys1	185	EC5-b2lz4hc1-bitshuf
-793	ophys3	178	OC5-b2blosclz9-shuf
-794	ecephys3	161	EC5-gzip4-shuf
-795	ophys1	25	OC1-b2lz41-bitshuf
-796	ophys3	170	OC5-zstd3
-797	ecephys3	139	EC4-b2blosclz9-shuf
-798	ecephys2	22	EC1-b2blosclz9-shuf
-799	ophys3	51	OC2-lz4
-800	ophys3	75	OC2-b2zstd6-shuf
-801	ophys1	157	OC5-none
-802	ecephys2	88	EC3-lzf
-803	ecephys2	195	EC5-b2zstd9-bitshuf
-804	ecephys2	119	EC4-gzip1
-805	ophys2	123	OC4-gzip6
-806	ophys3	23	OC1-b2blosclz9-bitshuf
-807	ophys2	6	OC1-gzip6
-808	ophys1	138	OC4-b2blosclz1-bitshuf
-809	ophys1	158	OC5-gzip1
-810	ecephys3	147	EC4-b2lz4hc5-shuf
-811	ophys2	70	OC2-b2lz4hc5-bitshuf
-812	ecephys2	26	EC1-b2lz49-shuf
-813	ophys2	112	OC3-b2zstd2-shuf
-814	ecephys3	33	EC1-b2lz4hc9-bitshuf
-815	ecephys3	14	EC1-zstd3
-816	ecephys3	155	EC4-b2zstd9-shuf
-817	ecephys2	107	EC3-b2lz4hc1-bitshuf
-818	ecephys2	11	EC1-lzf-shuf
-819	ophys3	129	OC4-lz4
-820	ecephys1	11	EC1-lzf-shuf
-821	ecephys3	25	EC1-b2lz41-bitshuf
-822	ophys3	160	OC5-gzip4
-823	ecephys3	15	EC1-zstd3-shuf
-824	ecephys1	65	EC2-b2lz49-shuf
-825	ecephys3	120	EC4-gzip1-shuf
-826	ecephys3	73	EC2-b2zstd2-shuf
-827	ophys3	137	OC4-b2blosclz1-shuf
-828	ecephys2	53	EC2-zstd3
-829	ecephys1	158	EC5-gzip1
-830	ophys1	190	OC5-b2zstd2-shuf
-831	ophys3	157	OC5-none
-832	ecephys1	177	EC5-b2blosclz1-bitshuf
-833	ophys2	73	OC2-b2zstd2-shuf
-834	ecephys3	36	EC1-b2zstd6-shuf
-835	ophys3	186	OC5-b2lz4hc5-shuf
-836	ophys2	37	OC1-b2zstd6-bitshuf
-837	ophys1	117	OC3-b2zstd9-bitshuf
-838	ecephys2	36	EC1-b2zstd6-shuf
-839	ophys2	36	OC1-b2zstd6-shuf
-840	ecephys3	110	EC3-b2lz4hc9-shuf
-841	ophys2	152	OC4-b2zstd2-bitshuf
-842	ecephys2	96	EC3-zstd22
-843	ecephys3	44	EC2-gzip4-shuf
-844	ecephys2	158	EC5-gzip1
-845	ophys1	69	OC2-b2lz4hc5-shuf
-846	ophys3	172	OC5-zstd11
-847	ecephys2	30	EC1-b2lz4hc5-shuf
-848	ophys3	194	OC5-b2zstd9-shuf
-849	ecephys1	165	EC5-gzip9-shuf
-850	ophys2	148	OC4-b2lz4hc5-bitshuf
-851	ecephys2	60	EC2-b2blosclz1-bitshuf
-852	ophys3	154	OC4-b2zstd6-bitshuf
-853	ecephys3	165	EC5-gzip9-shuf
-854	ophys1	52	OC2-lz4-shuf
-855	ophys2	191	OC5-b2zstd2-bitshuf
-856	ophys2	48	OC2-gzip9-shuf
-857	ophys2	-	unchunked
-858	ecephys3	103	EC3-b2lz41-bitshuf
-859	ophys1	86	OC3-gzip9
-860	ecephys2	17	EC1-zstd11-shuf
-861	ecephys1	198	ECneuroconv-gzip4
-862	ecephys2	101	EC3-b2blosclz9-bitshuf
-863	ecephys2	51	EC2-lz4
-864	ecephys2	147	EC4-b2lz4hc5-shuf
-865	ophys3	196	OCh5py-gzip4
-866	ecephys1	183	EC5-b2lz49-bitshuf
-867	ophys1	71	OC2-b2lz4hc9-shuf
-868	ophys2	31	OC1-b2lz4hc5-bitshuf
-869	ecephys2	35	EC1-b2zstd2-bitshuf
-870	ecephys1	66	EC2-b2lz49-bitshuf
-871	ophys1	23	OC1-b2blosclz9-bitshuf
-872	ophys3	91	OC3-lz4-shuf
-873	ecephys2	171	EC5-zstd3-shuf
-874	ophys3	46	OC2-gzip6-shuf
-875	ophys2	143	OC4-b2lz49-shuf
-876	ecephys3	95	EC3-zstd11-shuf
-877	ophys3	95	OC3-zstd11-shuf
-878	ecephys1	63	EC2-b2lz41-shuf
-879	ophys2	39	OC1-b2zstd9-bitshuf
-880	ophys1	63	OC2-b2lz41-shuf
-881	ophys2	114	OC3-b2zstd6-shuf
-882	ophys2	11	OC1-lzf-shuf
-883	ophys3	44	OC2-gzip4-shuf
-884	ecephys2	106	EC3-b2lz4hc1-shuf
-885	ophys2	86	OC3-gzip9
-886	ophys3	74	OC2-b2zstd2-bitshuf
-887	ecephys2	10	EC1-lzf
-888	ecephys2	188	EC5-b2lz4hc9-shuf
-889	ophys2	1	OC1-none
-890	ecephys2	137	EC4-b2blosclz1-shuf
-891	ophys1	37	OC1-b2zstd6-bitshuf
-892	ecephys1	181	EC5-b2lz41-bitshuf
-893	ecephys2	19	EC1-zstd22-shuf
-894	ophys1	125	OC4-gzip9
-895	ophys3	53	OC2-zstd3
-896	ecephys3	173	EC5-zstd11-shuf
-897	ophys3	21	OC1-b2blosclz1-bitshuf
-898	ecephys3	152	EC4-b2zstd2-bitshuf
-899	ophys3	62	OC2-b2blosclz9-bitshuf
-900	ecephys3	168	EC5-lz4
-901	ophys1	107	OC3-b2lz4hc1-bitshuf
-902	ecephys1	104	EC3-b2lz49-shuf
-903	ecephys1	144	EC4-b2lz49-bitshuf
-904	ecephys3	84	EC3-gzip6
-905	ophys3	185	OC5-b2lz4hc1-bitshuf
-906	ophys2	127	OC4-lzf
-907	ecephys2	79	EC3-none
-908	ophys1	89	OC3-lzf-shuf
-909	ecephys2	184	EC5-b2lz4hc1-shuf
-910	ecephys3	131	EC4-zstd3
-911	ecephys1	62	EC2-b2blosclz9-bitshuf
-912	ecephys1	69	EC2-b2lz4hc5-shuf
-913	ophys1	76	OC2-b2zstd6-bitshuf
-914	ophys2	105	OC3-b2lz49-bitshuf
-915	ecephys3	13	EC1-lz4-shuf
-916	ecephys3	27	EC1-b2lz49-bitshuf
-917	ecephys1	51	EC2-lz4
-918	ecephys2	41	EC2-gzip1
-919	ecephys1	140	EC4-b2blosclz9-bitshuf
-920	ecephys1	170	EC5-zstd3
-921	ecephys3	124	EC4-gzip6-shuf
-922	ophys2	125	OC4-gzip9
-923	ecephys3	23	EC1-b2blosclz9-bitshuf
-924	ecephys2	29	EC1-b2lz4hc1-bitshuf
-925	ophys1	59	OC2-b2blosclz1-shuf
-926	ophys2	146	OC4-b2lz4hc1-bitshuf
-927	ecephys1	10	EC1-lzf
-928	ophys3	93	OC3-zstd3-shuf
-929	ecephys1	129	EC4-lz4
-930	ecephys3	188	EC5-b2lz4hc9-shuf
-931	ecephys3	49	EC2-lzf
-932	ophys2	29	OC1-b2lz4hc1-bitshuf
-933	ophys2	54	OC2-zstd3-shuf
-934	ecephys2	174	EC5-zstd22
-935	ophys2	4	OC1-gzip4
-936	ophys1	98	OC3-b2blosclz1-shuf
-937	ophys3	6	OC1-gzip6
-938	ophys2	26	OC1-b2lz49-shuf
-939	ophys2	158	OC5-gzip1
-940	ophys3	122	OC4-gzip4-shuf
-941	ophys2	196	OCh5py-gzip4
-942	ophys1	122	OC4-gzip4-shuf
-943	ophys2	69	OC2-b2lz4hc5-shuf
-944	ophys3	10	OC1-lzf
-945	ecephys1	101	EC3-b2blosclz9-bitshuf
-946	ophys1	196	OCh5py-gzip4
-947	ecephys1	112	EC3-b2zstd2-shuf
-948	ecephys2	56	EC2-zstd11-shuf
-949	ophys1	177	OC5-b2blosclz1-bitshuf
-950	ecephys2	132	EC4-zstd3-shuf
-951	ecephys1	159	EC5-gzip1-shuf
-952	ophys1	142	OC4-b2lz41-bitshuf
-953	ophys1	7	OC1-gzip6-shuf
-954	ophys1	70	OC2-b2lz4hc5-bitshuf
-955	ophys2	91	OC3-lz4-shuf
-956	ophys1	174	OC5-zstd22
-957	ecephys1	48	EC2-gzip9-shuf
-958	ecephys3	38	EC1-b2zstd9-shuf
-959	ophys1	111	OC3-b2lz4hc9-bitshuf
-960	ecephys2	89	EC3-lzf-shuf
-961	ophys2	78	OC2-b2zstd9-bitshuf
-962	ophys3	191	OC5-b2zstd2-bitshuf
-963	ophys1	183	OC5-b2lz49-bitshuf
-964	ophys2	24	OC1-b2lz41-shuf
-965	ophys2	195	OC5-b2zstd9-bitshuf
-966	ecephys2	77	EC2-b2zstd9-shuf
-967	ecephys2	69	EC2-b2lz4hc5-shuf
-968	ophys3	73	OC2-b2zstd2-shuf
-969	ecephys1	164	EC5-gzip9
-970	ophys1	132	OC4-zstd3-shuf
-971	ophys2	19	OC1-zstd22-shuf
-972	ophys3	108	OC3-b2lz4hc5-shuf
-973	ophys2	72	OC2-b2lz4hc9-bitshuf
-974	ecephys3	35	EC1-b2zstd2-bitshuf
-975	ophys1	137	OC4-b2blosclz1-shuf
-976	ophys3	87	OC3-gzip9-shuf
-977	ophys2	147	OC4-b2lz4hc5-shuf
-978	ophys1	57	OC2-zstd22
-979	ecephys3	88	EC3-lzf
-980	ecephys2	82	EC3-gzip4
-981	ophys1	104	OC3-b2lz49-shuf
-982	ecephys1	109	EC3-b2lz4hc5-bitshuf
-983	ecephys1	150	EC4-b2lz4hc9-bitshuf
-984	ophys2	7	OC1-gzip6-shuf
-985	ecephys3	100	EC3-b2blosclz9-shuf
-986	ophys1	47	OC2-gzip9
-987	ophys1	68	OC2-b2lz4hc1-bitshuf
-988	ophys3	190	OC5-b2zstd2-shuf
-989	ophys2	156	OC4-b2zstd9-bitshuf
-990	ophys1	131	OC4-zstd3
-991	ecephys1	195	EC5-b2zstd9-bitshuf
-992	ecephys3	153	EC4-b2zstd6-shuf
-993	ophys3	61	OC2-b2blosclz9-shuf
-994	ecephys1	163	EC5-gzip6-shuf
-995	ecephys1	84	EC3-gzip6
-996	ophys1	43	OC2-gzip4
-997	ophys2	187	OC5-b2lz4hc5-bitshuf
-998	ecephys2	103	EC3-b2lz41-bitshuf
-999	ecephys1	87	EC3-gzip9-shuf
-1000	ophys2	159	OC5-gzip1-shuf
-1001	ophys3	112	OC3-b2zstd2-shuf
-1002	ophys1	36	OC1-b2zstd6-shuf
-1003	ecephys3	122	EC4-gzip4-shuf
-1004	ophys3	182	OC5-b2lz49-shuf
-1005	ecephys3	104	EC3-b2lz49-shuf
-1006	ecephys1	2	EC1-gzip1
-1007	ecephys2	55	EC2-zstd11
-1008	ecephys2	161	EC5-gzip4-shuf
-1009	ophys3	49	OC2-lzf
-1010	ophys2	84	OC3-gzip6
-1011	ecephys1	78	EC2-b2zstd9-bitshuf
-1012	ecephys2	90	EC3-lz4
-1013	ecephys3	157	EC5-none
-1014	ophys1	160	OC5-gzip4
-1015	ophys1	21	OC1-b2blosclz1-bitshuf
-1016	ophys2	62	OC2-b2blosclz9-bitshuf
-1017	ecephys1	190	EC5-b2zstd2-shuf
-1018	ecephys1	142	EC4-b2lz41-bitshuf
-1019	ecephys1	176	EC5-b2blosclz1-shuf
-1020	ecephys2	70	EC2-b2lz4hc5-bitshuf
-1021	ecephys3	107	EC3-b2lz4hc1-bitshuf
-1022	ophys3	164	OC5-gzip9
-1023	ophys2	129	OC4-lz4
-1024	ecephys3	177	EC5-b2blosclz1-bitshuf
-1025	ecephys1	153	EC4-b2zstd6-shuf
-1026	ecephys1	9	EC1-gzip9-shuf
-1027	ophys1	148	OC4-b2lz4hc5-bitshuf
-1028	ecephys3	102	EC3-b2lz41-shuf
-1029	ecephys2	16	EC1-zstd11
-1030	ophys1	50	OC2-lzf-shuf
-1031	ecephys3	63	EC2-b2lz41-shuf
-1032	ophys3	86	OC3-gzip9
-1033	ophys2	115	OC3-b2zstd6-bitshuf
-1034	ecephys1	71	EC2-b2lz4hc9-shuf
-1035	ophys1	83	OC3-gzip4-shuf
-1036	ecephys3	43	EC2-gzip4
-1037	ophys1	30	OC1-b2lz4hc5-shuf
-1038	ecephys3	29	EC1-b2lz4hc1-bitshuf
-1039	ecephys2	54	EC2-zstd3-shuf
-1040	ophys1	4	OC1-gzip4
-1041	ophys3	123	OC4-gzip6
-1042	ophys2	177	OC5-b2blosclz1-bitshuf
-1043	ecephys2	145	EC4-b2lz4hc1-shuf
-1044	ophys3	54	OC2-zstd3-shuf
-1045	ophys3	45	OC2-gzip6
-1046	ophys1	34	OC1-b2zstd2-shuf
-1047	ophys3	11	OC1-lzf-shuf
-1048	ophys2	172	OC5-zstd11
-1049	ecephys3	67	EC2-b2lz4hc1-shuf
-1050	ophys2	77	OC2-b2zstd9-shuf
-1051	ecephys3	7	EC1-gzip6-shuf
-1052	ecephys3	93	EC3-zstd3-shuf
-1053	ecephys2	7	EC1-gzip6-shuf
-1054	ecephys1	52	EC2-lz4-shuf
-1055	ecephys1	167	EC5-lzf-shuf
-1056	ecephys3	57	EC2-zstd22
-1057	ophys2	50	OC2-lzf-shuf
-1058	ophys1	53	OC2-zstd3
-1059	ecephys1	106	EC3-b2lz4hc1-shuf
-1060	ecephys2	196	ECh5py-gzip4
-1061	ophys1	41	OC2-gzip1
-1062	ophys3	105	OC3-b2lz49-bitshuf
-1063	ecephys2	193	EC5-b2zstd6-bitshuf
-1064	ecephys3	60	EC2-b2blosclz1-bitshuf
-1065	ophys2	194	OC5-b2zstd9-shuf
-1066	ophys2	102	OC3-b2lz41-shuf
-1067	ophys2	27	OC1-b2lz49-bitshuf
-1068	ophys1	155	OC4-b2zstd9-shuf
-1069	ophys3	58	OC2-zstd22-shuf
-1070	ecephys2	128	EC4-lzf-shuf
-1071	ecephys3	71	EC2-b2lz4hc9-shuf
-1072	ophys2	190	OC5-b2zstd2-shuf
-1073	ecephys1	35	EC1-b2zstd2-bitshuf
-1074	ophys2	165	OC5-gzip9-shuf
-1075	ecephys1	102	EC3-b2lz41-shuf
-1076	ecephys3	54	EC2-zstd3-shuf
-1077	ophys3	115	OC3-b2zstd6-bitshuf
-1078	ophys2	188	OC5-b2lz4hc9-shuf
-1079	ophys3	3	OC1-gzip1-shuf
-1080	ophys1	198	OCneuroconv-gzip4
-1081	ophys3	173	OC5-zstd11-shuf
-1082	ecephys2	124	EC4-gzip6-shuf
-1083	ophys2	21	OC1-b2blosclz1-bitshuf
-1084	ophys3	99	OC3-b2blosclz1-bitshuf
-1085	ecephys3	146	EC4-b2lz4hc1-bitshuf
-1086	ophys2	117	OC3-b2zstd9-bitshuf
-1087	ophys3	56	OC2-zstd11-shuf
-1088	ophys3	120	OC4-gzip1-shuf
-1089	ecephys1	132	EC4-zstd3-shuf
-1090	ophys2	3	OC1-gzip1-shuf
-1091	ophys1	194	OC5-b2zstd9-shuf
-1092	ecephys2	6	EC1-gzip6
-1093	ecephys2	187	EC5-b2lz4hc5-bitshuf
-1094	ophys2	163	OC5-gzip6-shuf
-1095	ecephys1	21	EC1-b2blosclz1-bitshuf
-1096	ecephys2	149	EC4-b2lz4hc9-shuf
-1097	ecephys2	95	EC3-zstd11-shuf
-1098	ophys3	131	OC4-zstd3
-1099	ecephys3	21	EC1-b2blosclz1-bitshuf
-1100	ophys3	165	OC5-gzip9-shuf
-1101	ecephys3	121	EC4-gzip4
-1102	ophys2	103	OC3-b2lz41-bitshuf
-1103	ecephys2	194	EC5-b2zstd9-shuf
-1104	ophys1	6	OC1-gzip6
-1105	ophys1	163	OC5-gzip6-shuf
-1106	ecephys1	47	EC2-gzip9
-1107	ecephys1	136	EC4-zstd22-shuf
-1108	ophys2	97	OC3-zstd22-shuf
-1109	ophys1	170	OC5-zstd3
-1110	ecephys3	17	EC1-zstd11-shuf
-1111	ecephys1	39	EC1-b2zstd9-bitshuf
-1112	ecephys3	75	EC2-b2zstd6-shuf
-1113	ecephys3	4	EC1-gzip4
-1114	ophys3	143	OC4-b2lz49-shuf
-1115	ecephys3	183	EC5-b2lz49-bitshuf
-1116	ecephys1	42	EC2-gzip1-shuf
-1117	ecephys3	5	EC1-gzip4-shuf
-1118	ophys1	112	OC3-b2zstd2-shuf
-1119	ophys2	142	OC4-b2lz41-bitshuf
-1120	ophys2	132	OC4-zstd3-shuf
-1121	ophys3	83	OC3-gzip4-shuf
-1122	ecephys2	134	EC4-zstd11-shuf
-1123	ecephys3	166	EC5-lzf
-1124	ecephys3	45	EC2-gzip6
-1125	ophys1	108	OC3-b2lz4hc5-shuf
-1126	ecephys2	153	EC4-b2zstd6-shuf
-1127	ecephys3	197	EChdmf-gzip4
-1128	ecephys2	183	EC5-b2lz49-bitshuf
-1129	ophys1	153	OC4-b2zstd6-shuf
-1130	ophys1	73	OC2-b2zstd2-shuf
-1131	ophys1	105	OC3-b2lz49-bitshuf
-1132	ecephys1	49	EC2-lzf
-1133	ecephys3	143	EC4-b2lz49-shuf
-1134	ophys2	17	OC1-zstd11-shuf
-1135	ophys1	60	OC2-b2blosclz1-bitshuf
-1136	ophys2	99	OC3-b2blosclz1-bitshuf
-1137	ecephys3	171	EC5-zstd3-shuf
-1138	ophys1	3	OC1-gzip1-shuf
-1139	ophys3	16	OC1-zstd11
-1140	ophys2	110	OC3-b2lz4hc9-shuf
-1141	ophys1	179	OC5-b2blosclz9-bitshuf
-1142	ecephys1	156	EC4-b2zstd9-bitshuf
-1143	ecephys1	24	EC1-b2lz41-shuf
-1144	ecephys1	137	EC4-b2blosclz1-shuf
-1145	ophys1	90	OC3-lz4
-1146	ophys1	124	OC4-gzip6-shuf
-1147	ophys1	181	OC5-b2lz41-bitshuf
-1148	ophys1	35	OC1-b2zstd2-bitshuf
-1149	ecephys2	121	EC4-gzip4
-1150	ecephys2	105	EC3-b2lz49-bitshuf
-1151	ophys2	164	OC5-gzip9
-1152	ophys2	198	OCneuroconv-gzip4
-1153	ophys1	130	OC4-lz4-shuf
-1154	ecephys1	73	EC2-b2zstd2-shuf
-1155	ophys1	140	OC4-b2blosclz9-bitshuf
-1156	ecephys3	190	EC5-b2zstd2-shuf
-1157	ecephys1	29	EC1-b2lz4hc1-bitshuf
-1158	ophys2	153	OC4-b2zstd6-shuf
-1159	ophys2	96	OC3-zstd22
-1160	ecephys3	68	EC2-b2lz4hc1-bitshuf
-1161	ecephys1	116	EC3-b2zstd9-shuf
-1162	ecephys3	80	EC3-gzip1
-1163	ecephys1	110	EC3-b2lz4hc9-shuf
-1164	ecephys3	61	EC2-b2blosclz9-shuf
-1165	ophys1	139	OC4-b2blosclz9-shuf
-1166	ecephys1	81	EC3-gzip1-shuf
-1167	ophys2	173	OC5-zstd11-shuf
-1168	ophys3	66	OC2-b2lz49-bitshuf
-1169	ecephys2	47	EC2-gzip9
-1170	ecephys1	173	EC5-zstd11-shuf
-1171	ophys2	89	OC3-lzf-shuf
-1172	ecephys2	111	EC3-b2lz4hc9-bitshuf
-1173	ecephys1	97	EC3-zstd22-shuf
-1174	ophys1	31	OC1-b2lz4hc5-bitshuf
-1175	ophys1	184	OC5-b2lz4hc1-shuf
-1176	ecephys1	166	EC5-lzf
-1177	ophys1	81	OC3-gzip1-shuf
-1178	ophys3	110	OC3-b2lz4hc9-shuf
-1179	ophys1	33	OC1-b2lz4hc9-bitshuf
-1180	ophys3	37	OC1-b2zstd6-bitshuf
-1181	ophys3	150	OC4-b2lz4hc9-bitshuf
-1182	ecephys2	45	EC2-gzip6
-1183	ophys1	151	OC4-b2zstd2-shuf
-1184	ophys3	13	OC1-lz4-shuf
-1185	ophys1	133	OC4-zstd11
-1186	ophys1	146	OC4-b2lz4hc1-bitshuf
-1187	ecephys1	122	EC4-gzip4-shuf
-1188	ecephys1	146	EC4-b2lz4hc1-bitshuf
-1189	ecephys3	186	EC5-b2lz4hc5-shuf
-1190	ecephys1	74	EC2-b2zstd2-bitshuf
-1191	ophys1	99	OC3-b2blosclz1-bitshuf
-1192	ophys1	62	OC2-b2blosclz9-bitshuf
-1193	ecephys1	114	EC3-b2zstd6-shuf
-1194	ecephys1	28	EC1-b2lz4hc1-shuf
+task	stage	label	row	config_id
+1	1	ophys1	55	OCtile32M-gzip4
+2	1	ecephys2	84	EC32M-b2lz4hc9-bitshuf
+3	1	ophys3	62	OCtile32M-lzf-shuf
+4	1	ecephys3	85	EC32M-b2zstd2-shuf
+5	1	ecephys2	31	EC384M-b2lz4hc1-bitshuf
+6	1	ophys3	10	OCframeM-gzip9
+7	1	ecephys2	61	EC32M-lzf
+8	1	ecephys3	12	EC384M-lzf
+9	1	ophys1	60	OCtile32M-gzip9-shuf
+10	1	ecephys1	75	EC32M-b2lz41-shuf
+11	1	ophys2	51	OCtile32S-gzip4
+12	1	ophys3	-	unchunked
+13	1	ophys2	15	OCframeM-lz4-shuf
+14	1	ecephys2	30	EC384M-b2lz4hc1-shuf
+15	1	ecephys2	28	EC384M-b2lz49-shuf
+16	1	ecephys1	5	EC384M-gzip1-shuf
+17	1	ecephys2	20	EC384M-zstd22
+18	1	ecephys2	27	EC384M-b2lz41-bitshuf
+19	1	ophys3	49	OCtile128L-gzip4
+20	1	ecephys1	79	EC32M-b2lz4hc1-shuf
+21	1	ophys3	92	OCtile32L-gzip4
+22	1	ecephys1	76	EC32M-b2lz41-bitshuf
+23	1	ophys3	26	OCframeM-b2lz41-shuf
+24	1	ecephys1	81	EC32M-b2lz4hc5-shuf
+25	1	ophys1	76	OCtile32M-b2lz41-bitshuf
+26	1	ophys1	32	OCframeM-b2lz4hc5-shuf
+27	1	ophys3	77	OCtile32M-b2lz49-shuf
+28	1	ecephys1	66	EC32M-zstd3-shuf
+29	1	ophys3	38	OCframeM-b2zstd6-shuf
+30	1	ecephys2	77	EC32M-b2lz49-shuf
+31	1	ophys2	8	OCframeM-gzip6
+32	1	ecephys1	58	EC32M-gzip6-shuf
+33	1	ecephys1	88	EC32M-b2zstd6-bitshuf
+34	1	ecephys3	50	EC32S-none
+35	1	ophys1	86	OCtile32M-b2zstd2-bitshuf
+36	1	ophys1	28	OCframeM-b2lz49-shuf
+37	1	ophys1	58	OCtile32M-gzip6-shuf
+38	1	ecephys1	90	EC32M-b2zstd9-bitshuf
+39	1	ophys1	19	OCframeM-zstd11-shuf
+40	1	ecephys3	4	EC384M-gzip1
+41	1	ophys3	71	OCtile32M-b2blosclz1-shuf
+42	1	ecephys3	47	EC64M-gzip4
+43	1	ecephys2	56	EC32M-gzip4-shuf
+44	1	ophys2	46	OCtile128M-none
+45	1	ecephys2	88	EC32M-b2zstd6-bitshuf
+46	1	ophys1	20	OCframeM-zstd22
+47	1	ecephys2	22	EC384M-b2blosclz1-shuf
+48	1	ophys1	92	OCtile32L-gzip4
+49	1	ophys3	69	OCtile32M-zstd22
+50	1	ecephys2	5	EC384M-gzip1-shuf
+51	1	ophys3	42	OCframeL-none
+52	1	ecephys1	68	EC32M-zstd11-shuf
+53	1	ecephys1	61	EC32M-lzf
+54	1	ophys1	5	OCframeM-gzip1-shuf
+55	1	ophys3	30	OCframeM-b2lz4hc1-shuf
+56	1	ecephys3	84	EC32M-b2lz4hc9-bitshuf
+57	1	ophys1	82	OCtile32M-b2lz4hc5-bitshuf
+58	1	ecephys3	48	EC64L-none
+59	1	ophys2	66	OCtile32M-zstd3-shuf
+60	1	ophys2	26	OCframeM-b2lz41-shuf
+61	1	ecephys3	66	EC32M-zstd3-shuf
+62	1	ophys2	44	OCtile128S-none
+63	1	ecephys3	91	EC32L-none
+64	1	ophys2	2	OCframeS-gzip4
+65	1	ecephys3	53	EC32M-gzip1
+66	1	ecephys2	3	EC384M-none
+67	1	ophys2	38	OCframeM-b2zstd6-shuf
+68	1	ophys2	28	OCframeM-b2lz49-shuf
+69	1	ecephys2	44	EC64S-none
+70	1	ecephys1	3	EC384M-none
+71	1	ecephys3	92	EC32L-gzip4
+72	1	ecephys2	48	EC64L-none
+73	1	ophys2	39	OCframeM-b2zstd6-bitshuf
+74	1	ophys1	38	OCframeM-b2zstd6-shuf
+75	1	ecephys3	29	EC384M-b2lz49-bitshuf
+76	1	ecephys1	14	EC384M-lz4
+77	1	ecephys3	60	EC32M-gzip9-shuf
+78	1	ophys2	73	OCtile32M-b2blosclz9-shuf
+79	1	ophys2	61	OCtile32M-lzf
+80	1	ophys3	37	OCframeM-b2zstd2-bitshuf
+81	1	ecephys2	25	EC384M-b2blosclz9-bitshuf
+82	1	ecephys2	75	EC32M-b2lz41-shuf
+83	1	ecephys2	29	EC384M-b2lz49-bitshuf
+84	1	ophys1	54	OCtile32M-gzip1-shuf
+85	1	ophys3	47	OCtile128M-gzip4
+86	1	ecephys3	83	EC32M-b2lz4hc9-shuf
+87	1	ecephys1	62	EC32M-lzf-shuf
+88	1	ophys2	33	OCframeM-b2lz4hc5-bitshuf
+89	1	ecephys1	18	EC384M-zstd11
+90	1	ophys2	36	OCframeM-b2zstd2-shuf
+91	1	ophys3	72	OCtile32M-b2blosclz1-bitshuf
+92	1	ecephys1	36	EC384M-b2zstd2-shuf
+93	1	ecephys2	6	EC384M-gzip4
+94	1	ecephys3	63	EC32M-lz4
+95	1	ecephys2	17	EC384M-zstd3-shuf
+96	1	ecephys2	57	EC32M-gzip6
+97	1	ecephys2	83	EC32M-b2lz4hc9-shuf
+98	1	ophys1	34	OCframeM-b2lz4hc9-shuf
+99	1	ophys3	68	OCtile32M-zstd11-shuf
+100	1	ophys3	60	OCtile32M-gzip9-shuf
+101	1	ecephys3	55	EC32M-gzip4
+102	1	ophys1	57	OCtile32M-gzip6
+103	1	ophys1	50	OCtile32S-none
+104	1	ecephys3	57	EC32M-gzip6
+105	1	ecephys3	32	EC384M-b2lz4hc5-shuf
+106	1	ecephys3	54	EC32M-gzip1-shuf
+107	1	ophys2	17	OCframeM-zstd3-shuf
+108	1	ophys3	14	OCframeM-lz4
+109	1	ecephys1	87	EC32M-b2zstd6-shuf
+110	1	ophys3	85	OCtile32M-b2zstd2-shuf
+111	1	ecephys1	26	EC384M-b2lz41-shuf
+112	1	ecephys3	10	EC384M-gzip9
+113	1	ophys3	63	OCtile32M-lz4
+114	1	ophys1	71	OCtile32M-b2blosclz1-shuf
+115	1	ecephys3	71	EC32M-b2blosclz1-shuf
+116	1	ecephys1	8	EC384M-gzip6
+117	1	ecephys1	-	unchunked
+118	1	ophys1	66	OCtile32M-zstd3-shuf
+119	1	ophys2	57	OCtile32M-gzip6
+120	1	ecephys3	88	EC32M-b2zstd6-bitshuf
+121	1	ophys2	10	OCframeM-gzip9
+122	1	ecephys3	34	EC384M-b2lz4hc9-shuf
+123	1	ophys3	22	OCframeM-b2blosclz1-shuf
+124	1	ecephys1	60	EC32M-gzip9-shuf
+125	1	ecephys2	1	EC384S-none
+126	1	ecephys2	94	EChdmf-gzip4
+127	1	ophys1	78	OCtile32M-b2lz49-bitshuf
+128	1	ophys3	53	OCtile32M-gzip1
+129	1	ophys2	84	OCtile32M-b2lz4hc9-bitshuf
+130	1	ophys2	13	OCframeM-lzf-shuf
+131	1	ophys2	80	OCtile32M-b2lz4hc1-bitshuf
+132	1	ecephys2	4	EC384M-gzip1
+133	1	ecephys2	79	EC32M-b2lz4hc1-shuf
+134	1	ecephys2	54	EC32M-gzip1-shuf
+135	1	ecephys3	77	EC32M-b2lz49-shuf
+136	1	ecephys2	2	EC384S-gzip4
+137	1	ecephys3	94	EChdmf-gzip4
+138	1	ophys2	60	OCtile32M-gzip9-shuf
+139	1	ecephys1	32	EC384M-b2lz4hc5-shuf
+140	1	ophys2	1	OCframeS-none
+141	1	ecephys3	40	EC384M-b2zstd9-shuf
+142	1	ophys2	74	OCtile32M-b2blosclz9-bitshuf
+143	1	ophys1	51	OCtile32S-gzip4
+144	1	ophys2	32	OCframeM-b2lz4hc5-shuf
+145	1	ecephys2	41	EC384M-b2zstd9-bitshuf
+146	1	ecephys1	41	EC384M-b2zstd9-bitshuf
+147	1	ecephys1	56	EC32M-gzip4-shuf
+148	1	ecephys3	90	EC32M-b2zstd9-bitshuf
+149	1	ecephys3	11	EC384M-gzip9-shuf
+150	1	ecephys2	35	EC384M-b2lz4hc9-bitshuf
+151	1	ophys3	84	OCtile32M-b2lz4hc9-bitshuf
+152	1	ophys3	21	OCframeM-zstd22-shuf
+153	1	ophys2	82	OCtile32M-b2lz4hc5-bitshuf
+154	1	ophys2	93	OCh5py-gzip4
+155	1	ecephys3	1	EC384S-none
+156	1	ophys3	9	OCframeM-gzip6-shuf
+157	1	ophys2	9	OCframeM-gzip6-shuf
+158	1	ophys1	68	OCtile32M-zstd11-shuf
+159	1	ecephys3	37	EC384M-b2zstd2-bitshuf
+160	1	ophys3	39	OCframeM-b2zstd6-bitshuf
+161	1	ophys1	67	OCtile32M-zstd11
+162	1	ophys1	47	OCtile128M-gzip4
+163	1	ophys2	11	OCframeM-gzip9-shuf
+164	1	ophys3	46	OCtile128M-none
+165	1	ecephys1	17	EC384M-zstd3-shuf
+166	1	ophys1	2	OCframeS-gzip4
+167	1	ophys2	3	OCframeM-none
+168	1	ecephys2	38	EC384M-b2zstd6-shuf
+169	1	ophys1	35	OCframeM-b2lz4hc9-bitshuf
+170	1	ophys3	2	OCframeS-gzip4
+171	1	ecephys3	13	EC384M-lzf-shuf
+172	1	ecephys3	23	EC384M-b2blosclz1-bitshuf
+173	1	ecephys1	95	ECneuroconv-gzip4
+174	1	ecephys3	28	EC384M-b2lz49-shuf
+175	1	ecephys3	21	EC384M-zstd22-shuf
+176	1	ecephys2	33	EC384M-b2lz4hc5-bitshuf
+177	1	ophys3	52	OCtile32M-none
+178	1	ophys1	77	OCtile32M-b2lz49-shuf
+179	1	ophys3	73	OCtile32M-b2blosclz9-shuf
+180	1	ecephys2	34	EC384M-b2lz4hc9-shuf
+181	1	ophys3	59	OCtile32M-gzip9
+182	1	ophys2	90	OCtile32M-b2zstd9-bitshuf
+183	1	ophys3	93	OCh5py-gzip4
+184	1	ophys1	44	OCtile128S-none
+185	1	ecephys1	37	EC384M-b2zstd2-bitshuf
+186	1	ecephys1	48	EC64L-none
+187	1	ecephys3	68	EC32M-zstd11-shuf
+188	1	ophys2	56	OCtile32M-gzip4-shuf
+189	1	ecephys3	16	EC384M-zstd3
+190	1	ecephys2	37	EC384M-b2zstd2-bitshuf
+191	1	ophys2	77	OCtile32M-b2lz49-shuf
+192	1	ophys3	45	OCtile128S-gzip4
+193	1	ophys3	88	OCtile32M-b2zstd6-bitshuf
+194	1	ecephys3	95	ECneuroconv-gzip4
+195	1	ophys2	41	OCframeM-b2zstd9-bitshuf
+196	1	ophys2	78	OCtile32M-b2lz49-bitshuf
+197	1	ophys1	59	OCtile32M-gzip9
+198	1	ecephys3	46	EC64M-none
+199	1	ecephys2	36	EC384M-b2zstd2-shuf
+200	1	ophys2	12	OCframeM-lzf
+201	1	ophys3	5	OCframeM-gzip1-shuf
+202	1	ophys2	-	unchunked
+203	1	ecephys2	87	EC32M-b2zstd6-shuf
+204	1	ecephys3	15	EC384M-lz4-shuf
+205	1	ecephys2	51	EC32S-gzip4
+206	1	ophys1	52	OCtile32M-none
+207	1	ophys2	95	OCneuroconv-gzip4
+208	1	ecephys1	72	EC32M-b2blosclz1-bitshuf
+209	1	ecephys1	30	EC384M-b2lz4hc1-shuf
+210	1	ecephys2	23	EC384M-b2blosclz1-bitshuf
+211	1	ophys1	70	OCtile32M-zstd22-shuf
+212	1	ophys2	4	OCframeM-gzip1
+213	1	ecephys3	41	EC384M-b2zstd9-bitshuf
+214	1	ophys2	23	OCframeM-b2blosclz1-bitshuf
+215	1	ophys3	75	OCtile32M-b2lz41-shuf
+216	1	ophys1	45	OCtile128S-gzip4
+217	1	ecephys1	93	ECh5py-gzip4
+218	1	ecephys2	95	ECneuroconv-gzip4
+219	1	ophys1	6	OCframeM-gzip4
+220	1	ecephys2	39	EC384M-b2zstd6-bitshuf
+221	1	ecephys3	52	EC32M-none
+222	1	ecephys2	16	EC384M-zstd3
+223	1	ophys3	20	OCframeM-zstd22
+224	1	ophys3	91	OCtile32L-none
+225	1	ophys2	49	OCtile128L-gzip4
+226	1	ecephys3	24	EC384M-b2blosclz9-shuf
+227	1	ophys3	27	OCframeM-b2lz41-bitshuf
+228	1	ophys3	54	OCtile32M-gzip1-shuf
+229	1	ophys1	84	OCtile32M-b2lz4hc9-bitshuf
+230	1	ophys3	3	OCframeM-none
+231	1	ecephys2	42	EC384L-none
+232	1	ophys1	64	OCtile32M-lz4-shuf
+233	1	ophys2	79	OCtile32M-b2lz4hc1-shuf
+234	1	ophys2	52	OCtile32M-none
+235	1	ophys3	67	OCtile32M-zstd11
+236	1	ophys1	79	OCtile32M-b2lz4hc1-shuf
+237	1	ecephys2	85	EC32M-b2zstd2-shuf
+238	1	ecephys3	56	EC32M-gzip4-shuf
+239	1	ecephys2	80	EC32M-b2lz4hc1-bitshuf
+240	1	ophys1	94	OChdmf-gzip4
+241	1	ophys3	41	OCframeM-b2zstd9-bitshuf
+242	1	ophys1	39	OCframeM-b2zstd6-bitshuf
+243	1	ophys1	37	OCframeM-b2zstd2-bitshuf
+244	1	ecephys1	21	EC384M-zstd22-shuf
+245	1	ophys1	56	OCtile32M-gzip4-shuf
+246	1	ecephys2	59	EC32M-gzip9
+247	1	ophys1	87	OCtile32M-b2zstd6-shuf
+248	1	ophys1	48	OCtile128L-none
+249	1	ecephys1	28	EC384M-b2lz49-shuf
+250	1	ecephys2	40	EC384M-b2zstd9-shuf
+251	1	ophys1	93	OCh5py-gzip4
+252	1	ecephys3	73	EC32M-b2blosclz9-shuf
+253	1	ophys3	66	OCtile32M-zstd3-shuf
+254	1	ophys1	81	OCtile32M-b2lz4hc5-shuf
+255	1	ecephys2	12	EC384M-lzf
+256	1	ecephys1	77	EC32M-b2lz49-shuf
+257	1	ecephys2	82	EC32M-b2lz4hc5-bitshuf
+258	1	ophys1	11	OCframeM-gzip9-shuf
+259	1	ophys3	78	OCtile32M-b2lz49-bitshuf
+260	1	ecephys1	51	EC32S-gzip4
+261	1	ecephys3	86	EC32M-b2zstd2-bitshuf
+262	1	ecephys3	44	EC64S-none
+263	1	ecephys1	94	EChdmf-gzip4
+264	1	ophys2	94	OChdmf-gzip4
+265	1	ophys2	55	OCtile32M-gzip4
+266	1	ecephys2	14	EC384M-lz4
+267	1	ophys1	36	OCframeM-b2zstd2-shuf
+268	1	ecephys2	13	EC384M-lzf-shuf
+269	1	ophys3	76	OCtile32M-b2lz41-bitshuf
+270	1	ecephys1	34	EC384M-b2lz4hc9-shuf
+271	1	ophys3	36	OCframeM-b2zstd2-shuf
+272	1	ophys3	58	OCtile32M-gzip6-shuf
+273	1	ophys1	75	OCtile32M-b2lz41-shuf
+274	1	ecephys2	89	EC32M-b2zstd9-shuf
+275	1	ophys1	8	OCframeM-gzip6
+276	1	ophys2	47	OCtile128M-gzip4
+277	1	ecephys2	70	EC32M-zstd22-shuf
+278	1	ecephys2	66	EC32M-zstd3-shuf
+279	1	ecephys2	86	EC32M-b2zstd2-bitshuf
+280	1	ecephys2	9	EC384M-gzip6-shuf
+281	1	ecephys2	55	EC32M-gzip4
+282	1	ecephys2	65	EC32M-zstd3
+283	1	ecephys3	18	EC384M-zstd11
+284	1	ecephys1	25	EC384M-b2blosclz9-bitshuf
+285	1	ophys1	31	OCframeM-b2lz4hc1-bitshuf
+286	1	ophys2	19	OCframeM-zstd11-shuf
+287	1	ophys3	6	OCframeM-gzip4
+288	1	ecephys2	7	EC384M-gzip4-shuf
+289	1	ecephys2	-	unchunked
+290	1	ecephys2	92	EC32L-gzip4
+291	1	ophys3	17	OCframeM-zstd3-shuf
+292	1	ophys3	56	OCtile32M-gzip4-shuf
+293	1	ophys1	12	OCframeM-lzf
+294	1	ecephys1	10	EC384M-gzip9
+295	1	ophys3	90	OCtile32M-b2zstd9-bitshuf
+296	1	ophys3	24	OCframeM-b2blosclz9-shuf
+297	1	ophys2	68	OCtile32M-zstd11-shuf
+298	1	ecephys1	44	EC64S-none
+299	1	ophys1	89	OCtile32M-b2zstd9-shuf
+300	1	ecephys2	24	EC384M-b2blosclz9-shuf
+301	1	ecephys1	57	EC32M-gzip6
+302	1	ecephys1	13	EC384M-lzf-shuf
+303	1	ophys3	79	OCtile32M-b2lz4hc1-shuf
+304	1	ecephys2	43	EC384L-gzip4
+305	1	ophys1	63	OCtile32M-lz4
+306	1	ophys1	42	OCframeL-none
+307	1	ophys2	27	OCframeM-b2lz41-bitshuf
+308	1	ecephys3	74	EC32M-b2blosclz9-bitshuf
+309	1	ecephys1	49	EC64L-gzip4
+310	1	ophys1	46	OCtile128M-none
+311	1	ophys3	28	OCframeM-b2lz49-shuf
+312	1	ecephys3	87	EC32M-b2zstd6-shuf
+313	1	ophys3	89	OCtile32M-b2zstd9-shuf
+314	1	ecephys3	30	EC384M-b2lz4hc1-shuf
+315	1	ophys1	13	OCframeM-lzf-shuf
+316	1	ecephys1	63	EC32M-lz4
+317	1	ecephys1	15	EC384M-lz4-shuf
+318	1	ecephys1	65	EC32M-zstd3
+319	1	ecephys1	69	EC32M-zstd22
+320	1	ecephys3	75	EC32M-b2lz41-shuf
+321	1	ophys2	7	OCframeM-gzip4-shuf
+322	1	ecephys1	39	EC384M-b2zstd6-bitshuf
+323	1	ophys2	72	OCtile32M-b2blosclz1-bitshuf
+324	1	ophys2	64	OCtile32M-lz4-shuf
+325	1	ecephys1	70	EC32M-zstd22-shuf
+326	1	ophys3	65	OCtile32M-zstd3
+327	1	ecephys1	45	EC64S-gzip4
+328	1	ecephys3	6	EC384M-gzip4
+329	1	ophys3	11	OCframeM-gzip9-shuf
+330	1	ophys2	67	OCtile32M-zstd11
+331	1	ecephys3	79	EC32M-b2lz4hc1-shuf
+332	1	ophys2	45	OCtile128S-gzip4
+333	1	ecephys3	78	EC32M-b2lz49-bitshuf
+334	1	ophys3	31	OCframeM-b2lz4hc1-bitshuf
+335	1	ecephys1	22	EC384M-b2blosclz1-shuf
+336	1	ecephys2	8	EC384M-gzip6
+337	1	ophys3	15	OCframeM-lz4-shuf
+338	1	ophys2	35	OCframeM-b2lz4hc9-bitshuf
+339	1	ecephys1	35	EC384M-b2lz4hc9-bitshuf
+340	1	ecephys2	73	EC32M-b2blosclz9-shuf
+341	1	ophys3	12	OCframeM-lzf
+342	1	ophys1	62	OCtile32M-lzf-shuf
+343	1	ecephys2	45	EC64S-gzip4
+344	1	ophys3	81	OCtile32M-b2lz4hc5-shuf
+345	1	ecephys3	3	EC384M-none
+346	1	ophys2	48	OCtile128L-none
+347	1	ecephys3	82	EC32M-b2lz4hc5-bitshuf
+348	1	ecephys1	64	EC32M-lz4-shuf
+349	1	ophys1	72	OCtile32M-b2blosclz1-bitshuf
+350	1	ecephys1	67	EC32M-zstd11
+351	1	ecephys2	81	EC32M-b2lz4hc5-shuf
+352	1	ophys1	83	OCtile32M-b2lz4hc9-shuf
+353	1	ecephys3	27	EC384M-b2lz41-bitshuf
+354	1	ecephys1	31	EC384M-b2lz4hc1-bitshuf
+355	1	ecephys2	18	EC384M-zstd11
+356	1	ophys1	80	OCtile32M-b2lz4hc1-bitshuf
+357	1	ecephys1	20	EC384M-zstd22
+358	1	ecephys1	9	EC384M-gzip6-shuf
+359	1	ophys3	57	OCtile32M-gzip6
+360	1	ecephys1	71	EC32M-b2blosclz1-shuf
+361	1	ecephys1	29	EC384M-b2lz49-bitshuf
+362	1	ecephys3	81	EC32M-b2lz4hc5-shuf
+363	1	ophys1	65	OCtile32M-zstd3
+364	1	ecephys2	21	EC384M-zstd22-shuf
+365	1	ecephys1	78	EC32M-b2lz49-bitshuf
+366	1	ecephys2	68	EC32M-zstd11-shuf
+367	1	ophys3	23	OCframeM-b2blosclz1-bitshuf
+368	1	ophys2	86	OCtile32M-b2zstd2-bitshuf
+369	1	ophys1	21	OCframeM-zstd22-shuf
+370	1	ophys2	5	OCframeM-gzip1-shuf
+371	1	ophys1	9	OCframeM-gzip6-shuf
+372	1	ophys2	43	OCframeL-gzip4
+373	1	ecephys2	52	EC32M-none
+374	1	ophys2	20	OCframeM-zstd22
+375	1	ophys2	85	OCtile32M-b2zstd2-shuf
+376	1	ecephys1	11	EC384M-gzip9-shuf
+377	1	ecephys3	72	EC32M-b2blosclz1-bitshuf
+378	1	ecephys1	42	EC384L-none
+379	1	ecephys3	38	EC384M-b2zstd6-shuf
+380	1	ophys3	43	OCframeL-gzip4
+381	1	ecephys2	93	ECh5py-gzip4
+382	1	ecephys3	64	EC32M-lz4-shuf
+383	1	ecephys3	70	EC32M-zstd22-shuf
+384	1	ecephys1	16	EC384M-zstd3
+385	1	ecephys3	62	EC32M-lzf-shuf
+386	1	ophys1	4	OCframeM-gzip1
+387	1	ophys3	40	OCframeM-b2zstd9-shuf
+388	1	ophys2	30	OCframeM-b2lz4hc1-shuf
+389	1	ophys3	70	OCtile32M-zstd22-shuf
+390	1	ophys3	29	OCframeM-b2lz49-bitshuf
+391	1	ophys1	27	OCframeM-b2lz41-bitshuf
+392	1	ecephys1	38	EC384M-b2zstd6-shuf
+393	1	ecephys3	26	EC384M-b2lz41-shuf
+394	1	ecephys1	91	EC32L-none
+395	1	ophys3	4	OCframeM-gzip1
+396	1	ecephys1	74	EC32M-b2blosclz9-bitshuf
+397	1	ecephys3	5	EC384M-gzip1-shuf
+398	1	ecephys3	-	unchunked
+399	1	ecephys3	25	EC384M-b2blosclz9-bitshuf
+400	1	ecephys3	9	EC384M-gzip6-shuf
+401	1	ophys2	18	OCframeM-zstd11
+402	1	ecephys2	63	EC32M-lz4
+403	1	ophys2	59	OCtile32M-gzip9
+404	1	ophys2	24	OCframeM-b2blosclz9-shuf
+405	1	ophys3	80	OCtile32M-b2lz4hc1-bitshuf
+406	1	ecephys3	20	EC384M-zstd22
+407	1	ecephys1	80	EC32M-b2lz4hc1-bitshuf
+408	1	ophys1	53	OCtile32M-gzip1
+409	1	ecephys3	45	EC64S-gzip4
+410	1	ecephys1	47	EC64M-gzip4
+411	1	ophys2	91	OCtile32L-none
+412	1	ecephys2	50	EC32S-none
+413	1	ecephys3	69	EC32M-zstd22
+414	1	ecephys1	85	EC32M-b2zstd2-shuf
+415	1	ecephys3	2	EC384S-gzip4
+416	1	ecephys1	27	EC384M-b2lz41-bitshuf
+417	1	ecephys3	31	EC384M-b2lz4hc1-bitshuf
+418	1	ecephys3	17	EC384M-zstd3-shuf
+419	1	ophys2	62	OCtile32M-lzf-shuf
+420	1	ecephys1	40	EC384M-b2zstd9-shuf
+421	1	ecephys1	86	EC32M-b2zstd2-bitshuf
+422	1	ecephys3	93	ECh5py-gzip4
+423	1	ophys2	21	OCframeM-zstd22-shuf
+424	1	ophys2	87	OCtile32M-b2zstd6-shuf
+425	1	ophys2	81	OCtile32M-b2lz4hc5-shuf
+426	1	ecephys1	52	EC32M-none
+427	1	ecephys2	58	EC32M-gzip6-shuf
+428	1	ophys2	50	OCtile32S-none
+429	1	ecephys3	89	EC32M-b2zstd9-shuf
+430	1	ecephys3	14	EC384M-lz4
+431	1	ecephys1	54	EC32M-gzip1-shuf
+432	1	ophys3	61	OCtile32M-lzf
+433	1	ophys2	42	OCframeL-none
+434	1	ophys1	25	OCframeM-b2blosclz9-bitshuf
+435	1	ecephys2	10	EC384M-gzip9
+436	1	ophys2	25	OCframeM-b2blosclz9-bitshuf
+437	1	ophys3	94	OChdmf-gzip4
+438	1	ophys3	25	OCframeM-b2blosclz9-bitshuf
+439	1	ophys1	24	OCframeM-b2blosclz9-shuf
+440	1	ecephys3	8	EC384M-gzip6
+441	1	ecephys1	53	EC32M-gzip1
+442	1	ophys2	65	OCtile32M-zstd3
+443	1	ecephys1	82	EC32M-b2lz4hc5-bitshuf
+444	1	ecephys2	78	EC32M-b2lz49-bitshuf
+445	1	ecephys1	73	EC32M-b2blosclz9-shuf
+446	1	ophys2	70	OCtile32M-zstd22-shuf
+447	1	ecephys3	35	EC384M-b2lz4hc9-bitshuf
+448	1	ecephys2	71	EC32M-b2blosclz1-shuf
+449	1	ecephys2	15	EC384M-lz4-shuf
+450	1	ecephys3	67	EC32M-zstd11
+451	1	ecephys3	43	EC384L-gzip4
+452	1	ecephys2	32	EC384M-b2lz4hc5-shuf
+453	1	ophys1	17	OCframeM-zstd3-shuf
+454	1	ecephys1	33	EC384M-b2lz4hc5-bitshuf
+455	1	ecephys2	91	EC32L-none
+456	1	ophys1	85	OCtile32M-b2zstd2-shuf
+457	1	ophys1	95	OCneuroconv-gzip4
+458	1	ophys3	87	OCtile32M-b2zstd6-shuf
+459	1	ophys1	91	OCtile32L-none
+460	1	ophys2	75	OCtile32M-b2lz41-shuf
+461	1	ecephys2	11	EC384M-gzip9-shuf
+462	1	ophys3	34	OCframeM-b2lz4hc9-shuf
+463	1	ecephys1	43	EC384L-gzip4
+464	1	ecephys3	49	EC64L-gzip4
+465	1	ecephys3	76	EC32M-b2lz41-bitshuf
+466	1	ophys2	89	OCtile32M-b2zstd9-shuf
+467	1	ophys1	29	OCframeM-b2lz49-bitshuf
+468	1	ecephys2	67	EC32M-zstd11
+469	1	ecephys3	36	EC384M-b2zstd2-shuf
+470	1	ecephys1	59	EC32M-gzip9
+471	1	ophys1	3	OCframeM-none
+472	1	ecephys2	74	EC32M-b2blosclz9-bitshuf
+473	1	ophys2	83	OCtile32M-b2lz4hc9-shuf
+474	1	ophys2	88	OCtile32M-b2zstd6-bitshuf
+475	1	ecephys3	65	EC32M-zstd3
+476	1	ecephys2	53	EC32M-gzip1
+477	1	ecephys1	1	EC384S-none
+478	1	ecephys1	19	EC384M-zstd11-shuf
+479	1	ophys3	74	OCtile32M-b2blosclz9-bitshuf
+480	1	ophys1	40	OCframeM-b2zstd9-shuf
+481	1	ophys2	34	OCframeM-b2lz4hc9-shuf
+482	1	ophys3	33	OCframeM-b2lz4hc5-bitshuf
+483	1	ophys2	76	OCtile32M-b2lz41-bitshuf
+484	1	ophys3	64	OCtile32M-lz4-shuf
+485	1	ecephys3	51	EC32S-gzip4
+486	1	ophys1	1	OCframeS-none
+487	1	ophys3	51	OCtile32S-gzip4
+488	1	ecephys2	47	EC64M-gzip4
+489	1	ophys3	35	OCframeM-b2lz4hc9-bitshuf
+490	1	ophys3	95	OCneuroconv-gzip4
+491	1	ophys2	92	OCtile32L-gzip4
+492	1	ecephys1	23	EC384M-b2blosclz1-bitshuf
+493	1	ecephys1	6	EC384M-gzip4
+494	1	ecephys1	4	EC384M-gzip1
+495	1	ophys2	37	OCframeM-b2zstd2-bitshuf
+496	1	ophys3	16	OCframeM-zstd3
+497	1	ophys1	15	OCframeM-lz4-shuf
+498	1	ecephys3	22	EC384M-b2blosclz1-shuf
+499	1	ophys2	22	OCframeM-b2blosclz1-shuf
+500	1	ophys1	30	OCframeM-b2lz4hc1-shuf
+501	1	ophys1	90	OCtile32M-b2zstd9-bitshuf
+502	1	ophys3	50	OCtile32S-none
+503	1	ecephys1	83	EC32M-b2lz4hc9-shuf
+504	1	ophys1	14	OCframeM-lz4
+505	1	ophys1	33	OCframeM-b2lz4hc5-bitshuf
+506	1	ophys1	69	OCtile32M-zstd22
+507	1	ophys1	16	OCframeM-zstd3
+508	1	ophys1	-	unchunked
+509	1	ecephys3	7	EC384M-gzip4-shuf
+510	1	ecephys1	55	EC32M-gzip4
+511	1	ophys3	1	OCframeS-none
+512	1	ecephys2	60	EC32M-gzip9-shuf
+513	1	ecephys1	84	EC32M-b2lz4hc9-bitshuf
+514	1	ophys1	41	OCframeM-b2zstd9-bitshuf
+515	1	ecephys3	58	EC32M-gzip6-shuf
+516	1	ophys1	22	OCframeM-b2blosclz1-shuf
+517	1	ophys1	23	OCframeM-b2blosclz1-bitshuf
+518	1	ophys2	54	OCtile32M-gzip1-shuf
+519	1	ophys3	32	OCframeM-b2lz4hc5-shuf
+520	1	ecephys3	33	EC384M-b2lz4hc5-bitshuf
+521	1	ecephys1	50	EC32S-none
+522	1	ecephys3	42	EC384L-none
+523	1	ecephys1	7	EC384M-gzip4-shuf
+524	1	ophys3	8	OCframeM-gzip6
+525	1	ecephys3	39	EC384M-b2zstd6-bitshuf
+526	1	ophys1	7	OCframeM-gzip4-shuf
+527	1	ophys2	40	OCframeM-b2zstd9-shuf
+528	1	ecephys2	26	EC384M-b2lz41-shuf
+529	1	ophys3	86	OCtile32M-b2zstd2-bitshuf
+530	1	ophys3	44	OCtile128S-none
+531	1	ophys1	74	OCtile32M-b2blosclz9-bitshuf
+532	1	ecephys1	2	EC384S-gzip4
+533	1	ecephys1	89	EC32M-b2zstd9-shuf
+534	1	ecephys2	76	EC32M-b2lz41-bitshuf
+535	1	ophys2	14	OCframeM-lz4
+536	1	ecephys1	12	EC384M-lzf
+537	1	ophys3	19	OCframeM-zstd11-shuf
+538	1	ophys2	16	OCframeM-zstd3
+539	1	ophys3	7	OCframeM-gzip4-shuf
+540	1	ophys3	13	OCframeM-lzf-shuf
+541	1	ophys3	82	OCtile32M-b2lz4hc5-bitshuf
+542	1	ophys3	18	OCframeM-zstd11
+543	1	ophys2	31	OCframeM-b2lz4hc1-bitshuf
+544	1	ophys3	83	OCtile32M-b2lz4hc9-shuf
+545	1	ophys1	88	OCtile32M-b2zstd6-bitshuf
+546	1	ecephys1	92	EC32L-gzip4
+547	1	ophys2	29	OCframeM-b2lz49-bitshuf
+548	1	ecephys2	49	EC64L-gzip4
+549	1	ophys2	53	OCtile32M-gzip1
+550	1	ophys3	55	OCtile32M-gzip4
+551	1	ecephys2	19	EC384M-zstd11-shuf
+552	1	ecephys3	19	EC384M-zstd11-shuf
+553	1	ecephys3	80	EC32M-b2lz4hc1-bitshuf
+554	1	ecephys1	46	EC64M-none
+555	1	ecephys2	72	EC32M-b2blosclz1-bitshuf
+556	1	ecephys1	24	EC384M-b2blosclz9-shuf
+557	1	ophys2	71	OCtile32M-b2blosclz1-shuf
+558	1	ophys1	61	OCtile32M-lzf
+559	1	ophys1	49	OCtile128L-gzip4
+560	1	ophys2	63	OCtile32M-lz4
+561	1	ophys1	26	OCframeM-b2lz41-shuf
+562	1	ecephys2	64	EC32M-lz4-shuf
+563	1	ophys2	69	OCtile32M-zstd22
+564	1	ophys1	73	OCtile32M-b2blosclz9-shuf
+565	1	ecephys3	59	EC32M-gzip9
+566	1	ophys3	48	OCtile128L-none
+567	1	ecephys3	61	EC32M-lzf
+568	1	ecephys2	62	EC32M-lzf-shuf
+569	1	ophys1	18	OCframeM-zstd11
+570	1	ophys1	10	OCframeM-gzip9
+571	1	ophys2	58	OCtile32M-gzip6-shuf
+572	1	ophys1	43	OCframeL-gzip4
+573	1	ecephys2	69	EC32M-zstd22
+574	1	ecephys2	46	EC64M-none
+575	1	ophys2	6	OCframeM-gzip4
+576	1	ecephys2	90	EC32M-b2zstd9-bitshuf

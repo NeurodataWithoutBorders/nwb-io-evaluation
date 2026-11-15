@@ -29,7 +29,7 @@ cd "$REPO"
 
 TASK="$1"
 SCHEDULE="scripts/exp12_write_schedule.tsv"
-ENTRY=$(awk -F'\t' -v t="$TASK" 'NR > 1 && $1 == t {print $2, $3, $4}' "$SCHEDULE")
+ENTRY=$(awk -F'\t' -v t="$TASK" 'NR > 1 && $1 == t {print $3, $4, $5}' "$SCHEDULE")
 if [ -z "$ENTRY" ]; then
     echo "Task $TASK is not in $SCHEDULE" >&2
     exit 1

@@ -9,9 +9,9 @@
 **Configurations** (per dataset, about 15 to 20, from the existing config tables and write outputs):
 
 - The recommended configuration for each access pattern, and the runner-up.
-- The uncompressed baselines: `<label>_unchunked.nwb`, plus EC2-none and OC2-none.
+- The uncompressed baselines: `<label>_unchunked.nwb`, plus EC384M-none and OCframeM-none.
 - The library default chunk shapes: ECh5py-gzip4, EChdmf-gzip4, ECneuroconv-gzip4, OCh5py-gzip4, OChdmf-gzip4, and OCneuroconv-gzip4.
-- One configuration each where chunk shape and access pattern are mismatched, for example EC5 for E1 and OC1 for O4, as a check that the large effects reproduce.
+- One configuration each where chunk shape and access pattern are mismatched, for example EC32L for E1 and OCframeL for O4, as a check that the large effects reproduce.
 
 **Conditions** (each run with the same read scripts, recording wall time and CPU time):
 
@@ -35,7 +35,7 @@
 **Method:**
 
 - Per dataset, take 10 one-minute segments spaced evenly across the full recording from the raw files, plus the centered window.
-- Compress each segment in memory with about 5 codec settings on one frame-aligned chunk shape (EC2 and OC2): gzip 4, the recommended codecs, and one Blosc2 bitshuffle setting. Write each to an in-memory HDF5 file (`h5py.File(..., driver="core", backing_store=False)`) with `h5dataio_kwargs`, so the filter stack is the same as in the test files, and record the dataset's storage size.
+- Compress each segment in memory with about 5 codec settings on one frame-aligned chunk shape (EC384M and OCframeM): gzip 4, the recommended codecs, and one Blosc2 bitshuffle setting. Write each to an in-memory HDF5 file (`h5py.File(..., driver="core", backing_store=False)`) with `h5dataio_kwargs`, so the filter stack is the same as in the test files, and record the dataset's storage size.
 
 **Analysis:**
 
@@ -52,3 +52,4 @@
 - Update the read scripts on `exp12-read-improvements` to the config tables: config IDs in file names, the row count from the table, submission under the 100 job cap with a random order (as `scripts/exp12_submit_writes.py` does for the writes), `#SBATCH --export=NONE` with `srun --export=ALL`, and `cpu_affinity_count` and `os_cpu_count` in the recorded metadata.
 - Read Blosc2 configurations both with and without b2h5py, run each timed read in its own subprocess so a crash is recorded, check that each read path returns the same bytes as the source, and record whether b2h5py's fast path was used.
 - Decide whether the sequential patterns (E1, E2, O1, O2, O4) read the whole window or a bounded span at a random offset per repeat.
+- Set the chunk cache size explicitly for every read (`rdcc_nbytes` and `rdcc_nslots`, passing an `h5py.File` to `NWBHDF5IO` with `file=`) and record it. The default is 8 MiB per dataset in HDF5 2.x (h5py 3.16.0 wheels on PyPI bundle HDF5 2.0.0) and 1 MiB in HDF5 1.x (h5py 3.15.1 wheels bundle HDF5 1.14.6), and a chunk larger than the cache is decompressed again on every read that touches it. The S shapes and the h5py defaults fit both, the M shapes and the hdmf defaults fit 8 MiB only, and the L shapes and the NeuroConv defaults (about 10 MB) fit neither. A read that spans several chunks and continues in the next read needs all of them in the cache, so even M chunks miss when a read cuts across them (for example E1 on EC64M touches six 7.68 MB chunks). Run the patterns that touch a chunk in more than one read call with 1 MiB, 8 MiB, and a cache large enough for every chunk a read touches (for example 256 MiB), so the results separate chunk size from cache fit and hold for readers on either HDF5.
