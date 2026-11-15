@@ -9,10 +9,12 @@ same lock as the write submissions, so reads and writes together stay under it. 
 remain, the script submits as many as fit under the cap, in schedule order, then waits and checks
 the queue again. It exits once every task of the modality and stage is submitted.
 
-Each submission is appended to read_logs/exp12_read_submitted.tsv (task, job_id, submitted_utc).
-A task in that file is not submitted again, so a rerun after the script stops continues where it
-left off. --tasks submits the given tasks whether or not they were submitted before, for smoke
-tests and resubmitting failed reads; the status report uses the latest job of each task.
+Each submission is appended to read_logs/exp12_read_submitted.tsv (name, job_id, submitted_utc).
+A read in that file is not submitted again, so a rerun after the script stops continues where it
+left off. The file identifies reads by task name, so it stays valid when the schedule is
+regenerated with new configurations and its task numbers change. --tasks submits the given tasks
+whether or not they were submitted before, for smoke tests and resubmitting failed reads; the
+status report uses the latest job of each read.
 
 A read job fails (exit status 1) when a unit's child process crashed or a correctness check did
 not match, after it writes its results; the status report lists these with the other failures.
@@ -48,7 +50,7 @@ READ_SCRIPT = REPO / "scripts" / "exp12_read.sh"
 LOG_DIR = REPO / "read_logs"
 OUTPUT_DIR = REPO / "read_output"
 SUBMITTED_PATH = LOG_DIR / "exp12_read_submitted.tsv"
-SUBMITTED_COLUMNS = ("task", "job_id", "submitted_utc")
+SUBMITTED_COLUMNS = ("name", "job_id", "submitted_utc")
 
 
 def sbatch_command(task: ReadTask) -> list[str]:
@@ -61,12 +63,12 @@ def sbatch_command(task: ReadTask) -> list[str]:
     ]
 
 
-def load_submitted() -> dict[int, str]:
-    """The latest job ID of each submitted task."""
+def load_submitted() -> dict[str, str]:
+    """The latest job ID of each submitted read, by task name."""
     if not SUBMITTED_PATH.exists():
         return {}
     with open(SUBMITTED_PATH, newline="") as f:
-        return {int(row["task"]): row["job_id"] for row in csv.DictReader(f, delimiter="\t")}
+        return {row["name"]: row["job_id"] for row in csv.DictReader(f, delimiter="\t")}
 
 
 def record_submission(task: ReadTask, job_id: str) -> None:
@@ -75,7 +77,7 @@ def record_submission(task: ReadTask, job_id: str) -> None:
         writer = csv.writer(f, delimiter="\t", lineterminator="\n")
         if new_file:
             writer.writerow(SUBMITTED_COLUMNS)
-        writer.writerow([task.task, job_id, datetime.now(UTC).isoformat(timespec="seconds")])
+        writer.writerow([task.name, job_id, datetime.now(UTC).isoformat(timespec="seconds")])
 
 
 def submit(args: argparse.Namespace) -> None:
@@ -87,7 +89,7 @@ def submit(args: argparse.Namespace) -> None:
         remaining = [schedule[t] for t in args.tasks]
     else:
         submitted = load_submitted()
-        remaining = [t for t in schedule.values() if t.task not in submitted]
+        remaining = [t for t in schedule.values() if t.name not in submitted]
     print(f"{len(remaining)} stage {args.stage} {args.modality} read tasks to submit, "
           f"at most {args.max_jobs} jobs in the queue")
 
@@ -128,11 +130,11 @@ def status(args: argparse.Namespace) -> None:
     schedule = [t for t in load_schedule()
                 if args.modality in (None, t.modality) and args.stage in (None, t.stage)]
     submitted = load_submitted()
-    states = sacct_states(sorted({submitted[t.task] for t in schedule if t.task in submitted}))
+    states = sacct_states(sorted({submitted[t.name] for t in schedule if t.name in submitted}))
     counts: Counter[str] = Counter()
     problems = []
     for task in schedule:
-        job_id = submitted.get(task.task)
+        job_id = submitted.get(task.name)
         state, elapsed = states.get(job_id, ("UNKNOWN", "-")) if job_id else ("NOT_SUBMITTED", "-")
         counts[state] += 1
         if state == "COMPLETED" and not (OUTPUT_DIR / f"{task.name}.h5").exists():
