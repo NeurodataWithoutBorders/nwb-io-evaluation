@@ -21,7 +21,7 @@ PYTHON=$(which python)  # Capture the full python path
 
 ARRAYTASKID="$SLURM_ARRAY_TASK_ID"
 INPUTDIR="$SCRATCH/nwb-io-evaluation/write_output/"
-SERIESNAME="MotionCorrectedTwoPhotonSeries"
+SERIESNAME="TwoPhotonSeries"
 OUTLABEL="ophys3"
 OUTDIR="$SCRATCH/nwb-io-evaluation/read_output/"
 USECASE="${USECASE:-all}"  # submit per-pattern with e.g. --export=ALL,USECASE=o2
