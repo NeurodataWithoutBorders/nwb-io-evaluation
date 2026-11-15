@@ -165,7 +165,7 @@ The sizes are uncompressed. A chunk larger than the reader's chunk cache is deco
 The configurations run in two stages:
 
 1. Every codec setting on the codec sweep shapes, EC384M, EC32M, and EC1M for ecephys and OCframeM and OCtile16M for ophys, which ranks the codecs; no compression and gzip 4 on the other shapes (nine for ecephys, seven for ophys); and the three library default shapes. 138 configurations per ecephys dataset and 95 per ophys dataset.
-2. Codec settings chosen from the stage 1 writes and reads, by the rule documented at `STAGE2_SETTINGS` in `scripts/exp12_configs.py`, on the other shapes. Filling in `STAGE2_SETTINGS` and regenerating the tables and the write schedule adds the stage 2 configurations after the stage 1 ones, leaving every stage 1 row and task number unchanged.
+2. Codec settings chosen from the stage 1 writes and reads, by the rule documented at `STAGE2_SETTINGS` in `scripts/exp12_configs.py`, on the other shapes. Filling in `STAGE2_SETTINGS` and regenerating the tables, the write schedule, and the read schedule adds the stage 2 configurations and reads after the stage 1 ones, leaving every stage 1 row and task number unchanged.
 
 The stages run in order: stage 1 writes, stage 1 reads, stage 2 writes, stage 2 reads. The stage 2 reads also re-read the stage 1 configurations on the non-sweep shapes (no compression and gzip 4) and the library defaults, so every comparison between codec settings on one shape comes from the same read run.
 
@@ -266,28 +266,45 @@ python scripts/exp12_check_nwb_files.py write_output ophys1 ophys2 ophys3
 
 It lists files whose errors show they are corrupt, and `--delete` removes them.
 
-### Evaluating read times of ophys files
+### Reading the test files
 
-Run sbatch with `#SBATCH --array=1` before doing the full array to make sure the env and script are set up correctly. 
+Each read, one test file read with one pattern, one read path, and one chunk cache setting, is a task in `scripts/exp12_read_schedule.tsv`: 6,276 stage 1 tasks, with the stage 2 tasks after them once stage 2 is chosen, each stage in a random order with a fixed seed. `scripts/exp12_read_patterns.py` defines the patterns (E1 to E4, O1 to O4), the read paths, and the cache settings, and `scripts/exp12_read_schedule.py` documents the columns. Regenerate the schedule whenever the config tables change:
 
 ```bash
-mkdir -p read_logs read_output
-sbatch scripts/exp12_read_ophys1.sh
-sbatch scripts/exp12_read_ophys2.sh
-sbatch scripts/exp12_read_ophys3.sh
-
-./scripts/exp12_check_jobs.sh 20465176 read_logs scripts/exp12_configs_ophys1.tsv ophys1
-./scripts/exp12_check_jobs.sh 20467784 read_logs scripts/exp12_configs_ophys2.tsv ophys2
-./scripts/exp12_check_jobs.sh 20467966 read_logs scripts/exp12_configs_ophys3.tsv ophys3
+python scripts/exp12_read_schedule.py
 ```
 
-### Evaluating read times of ecephys files
+- **Read paths**: every file is read with h5py and the HDF5 filters. Blosc2 files are also read with b2h5py's fast slicing, which reads the needed blocks of each chunk itself and bypasses the HDF5 chunk cache.
+- **Chunk cache**: set explicitly when the file is opened. The h5py reads of a sequential pattern (E1, E2, O1, O2, O4) whose batches cut across chunks run with 1 MiB (the HDF5 1.x default), 8 MiB (the HDF5 2.x default), and a cache fitted to one row of chunks across the full width, so each chunk is decompressed once. Every other read runs with 8 MiB.
+- **Isolation**: each repeat or sample runs in its own child process, which evicts the file from the page cache, opens it, and times only the reads. A crashed child is recorded and the task continues.
+- **Checks**: after the timed reads, the first and last selections of the first repeat or sample are compared with the same selections of the unchunked file, and b2h5py reads of the whole window are checked against the SHA-256 the write recorded.
 
-Run sbatch with `#SBATCH --array=1` before doing the full array to make sure the env and script are set up correctly. 
+Each task runs as its own job, `scripts/exp12_read.sh <task>`, and writes `read_output/<label>_<config_id>_<pattern>_<path>_<cache>_s<stage>.h5`, whose attributes and datasets are documented in `scripts/exp12_read.py`. Logs go to `read_logs/<same name>--<job ID>-{out,err}.log`. `scripts/exp12_submit_reads.py` submits the tasks of one modality and stage in schedule order under the same 95 job cap and lock as the writes, so reads and writes running together stay under it, and records each submission in `read_logs/exp12_read_submitted.tsv`. The reads of a modality start once its writes are complete and checked.
+
+For each modality, first submit a smoke test: on ecephys1 or ophys1, the unchunked file; the longest chunks with gzip 4 at a 1 MiB cache (the most decompression per byte read) and at the fitted cache (up to 16 GiB for OCtile16L on ophys1, the most memory); for ecephys, the h5py default chunks at 1 MiB (384 chunks across); Blosc2 zstd 9 with bitshuffle through b2h5py; and for ophys, single frames of uncompressed OCframeM:
 
 ```bash
 mkdir -p read_logs read_output
-sbatch scripts/exp12_read_ecephys1.sh
-sbatch scripts/exp12_read_ecephys2.sh
-sbatch scripts/exp12_read_ecephys3.sh
+MODALITY=ecephys  # or ophys
+SMOKE='^(ecephys1_(unchunked_e1_h5py_8mib|EC32L-gzip4_e1_h5py_(1mib|fitted)|ECh5py-gzip4_e1_h5py_1mib|EC32M-b2zstd9-bitshuf_e[14]_b2h5py_8mib)|ophys1_(unchunked_o1_h5py_8mib|OCtile16L-gzip4_o1_h5py_1mib|OCtile16L-gzip4_o2_h5py_fitted|OCtile16M-b2zstd9-bitshuf_o[14]_b2h5py_8mib|OCframeM-none_o3_h5py_8mib))_s1$'
+TASKS=$(awk -F'\t' -v m="$MODALITY" -v re="$SMOKE" 'NR > 1 && $3 ~ "^" m && ($3"_"$5"_"$6"_"$7"_"$8"_s"$2) ~ re {print $1}' scripts/exp12_read_schedule.tsv | paste -sd,)
+python scripts/exp12_submit_reads.py submit $MODALITY --tasks $TASKS
+```
+
+Once those complete, check their run times against the 24 hour limit in `scripts/exp12_read.sh` and their memory use against the 32 GB request, then submit the rest of that modality's stage 1 reads:
+
+```bash
+sbatch scripts/exp12_submit_reads.sh $MODALITY
+```
+
+To report the state of every task, with the failed ones and the command that resubmits them (a failed read with an output file had a crashed repeat or sample, or a check that did not match; its attributes say which):
+
+```bash
+python scripts/exp12_submit_reads.py status --modality $MODALITY --stage 1
+```
+
+To summarize the results in one table, one row per task:
+
+```bash
+python scripts/exp12_read_results.py read_output read_summary.tsv
 ```
