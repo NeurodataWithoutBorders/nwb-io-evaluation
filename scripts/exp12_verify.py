@@ -10,6 +10,7 @@ data is the reference for checking what other read paths return.
 from collections.abc import Callable
 import hashlib
 from pathlib import Path
+from typing import Any
 
 import h5py
 import hdf5plugin  # noqa: F401 - enable HDF5 compression filters
@@ -47,15 +48,31 @@ def verify_series(
         compare_length = max(1, COMPARE_BYTES // row_bytes)
         for start in range(0, n_rows, block_length):
             stop = min(start + block_length, n_rows)
-            block = dset[start:stop]
-            for a in range(start, stop, compare_length):
-                b = min(a + compare_length, stop)
-                written = block[a - start:b - start]
-                expected = read_source(a, b)
-                if written.shape != expected.shape or not np.array_equal(written, expected):
-                    raise DataMismatchError(
-                        f"{path}:{dataset_name} rows {a}:{b} differ from the source "
-                        f"(shapes {written.shape} and {expected.shape})"
-                    )
-            digest.update(block.data)
+            _check_block(dset, start, stop, read_source, compare_length, digest)
     return digest.hexdigest()
+
+
+def _check_block(
+    dset: h5py.Dataset,
+    start: int,
+    stop: int,
+    read_source: Callable[[int, int], np.ndarray],
+    compare_length: int,
+    digest: Any,
+) -> None:
+    """Compare rows start:stop of dset with the source and add them to digest.
+
+    The block and the source pieces are locals of this function, so they are freed when it
+    returns, before the next block is read, and a check holds at most one block in memory.
+    """
+    block = dset[start:stop]
+    for a in range(start, stop, compare_length):
+        b = min(a + compare_length, stop)
+        written = block[a - start:b - start]
+        expected = read_source(a, b)
+        if written.shape != expected.shape or not np.array_equal(written, expected):
+            raise DataMismatchError(
+                f"{dset.file.filename}:{dset.name} rows {a}:{b} differ from the source "
+                f"(shapes {written.shape} and {expected.shape})"
+            )
+    digest.update(block.data)

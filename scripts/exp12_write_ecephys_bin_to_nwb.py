@@ -213,7 +213,9 @@ def main() -> None:
         start_time_write = time.perf_counter_ns()
         with pynwb.NWBHDF5IO(partial_path(output_filepath), "w", manager=io.manager) as export_io:
             export_io.export(io, nwbfile)
+        start_time_fsync = time.perf_counter_ns()
         fsync(partial_path(output_filepath))
+        net_time_fsync_s = (time.perf_counter_ns() - start_time_fsync) / 1e9
         net_time_write_s = (time.perf_counter_ns() - start_time_write) / 1e9
 
     start_time_verify = time.perf_counter_ns()
@@ -234,6 +236,7 @@ def main() -> None:
         config.config_id,
         {ECEPHYS_SERIES_NAME: measurements},
         net_time_write_s,
+        net_time_fsync_s,
         net_tot_time_s,
         run,
     )

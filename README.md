@@ -178,12 +178,6 @@ lfs getstripe -d $SCRATCH
 lfs getstripe -d write_output
 ```
 
-To list NWB files that fail to open and write outputs that are missing:
-
-```bash
-python scripts/exp12_check_nwb_files.py write_output ecephys1 ecephys2 ecephys3 ophys1 ophys2 ophys3
-```
-
 ### Ophys: Generate raw ophys files (TIFF) from the ophys NWB files
 
 Note that these do not take long to run (~20-30 min) and could have been put into a sbatch script.
@@ -199,35 +193,60 @@ python scripts/exp12_nwb_to_tiff.py data/sub-408021_ses-758519303_obj-raw_behavi
 python scripts/exp12_nwb_to_tiff.py data/sub-491604967_ses-496908818-StimB_ophys.nwb MotionCorrectedTwoPhotonSeries raw_data/ophys3
 ```
 
-### Generate unchunked NWB files from the raw ophys files
+### Ecephys: Generating binary files (BIN) from the ecephys NWB files
 
-Note that these do not take long to run (<2 hours) and are put into a sbatch script to control the environment and time the operation.
+This takes about 2 hours each, so we put it in a slurm script.
 
 Run:
 ```bash
-mkdir -p write_output
-sbatch scripts/exp12_write_ophys1_unchunked.sh
-sbatch scripts/exp12_write_ophys2_unchunked.sh
-sbatch scripts/exp12_write_ophys3_unchunked.sh
-
-h5ls -v write_output/ophys1_unchunked.nwb/acquisition/TwoPhotonSeries/data
-h5ls -v write_output/ophys2_unchunked.nwb/acquisition/TwoPhotonSeries/data
-h5ls -v write_output/ophys3_unchunked.nwb/acquisition/TwoPhotonSeries/data
+cd $SCRATCH/nwb-io-evaluation
+mkdir -p write_logs raw_data
+sbatch scripts/exp12_write_ecephys_all_binary.sh
 ```
 
-### Generate ophys files with different chunk shapes and compression settings
+### Writing the test files
 
-Run sbatch with `#SBATCH --array=1` before doing the full array to make sure the env and script are set up correctly.
+Each write, one configuration or the unchunked baseline of one dataset, is a task in `scripts/exp12_write_schedule.tsv`: 1,194 tasks (199 per dataset) in a random order with a fixed seed. The ecephys and ophys writes are separate runs, each submitted, checked, and rerun on its own, and each starts once the raw binary or TIFF files of its three datasets exist. Within a run the tasks keep the schedule's random order, so the writes running at any one time are a mix of datasets, chunk shapes, and codecs. `scripts/exp12_write_schedule.py` documents the columns; regenerate the schedule whenever the config tables change:
 
 ```bash
-sbatch scripts/exp12_write_ophys1.sh
-sbatch scripts/exp12_write_ophys2.sh
-sbatch scripts/exp12_write_ophys3.sh
-
-./scripts/exp12_check_jobs.sh 20463593 write_logs scripts/exp12_configs_ophys1.tsv ophys1
-./scripts/exp12_check_jobs.sh 20463965 write_logs scripts/exp12_configs_ophys2.tsv ophys2
-./scripts/exp12_check_jobs.sh 20463966 write_logs scripts/exp12_configs_ophys3.tsv ophys3
+python scripts/exp12_write_schedule.py
 ```
+
+Each task runs as its own job, `scripts/exp12_write.sh <task>`, with logs `write_logs/<label>_<config_id>--<job ID>-{out,err}.log`. `scripts/exp12_submit_writes.py` submits the tasks of one modality in schedule order, keeping at most 95 jobs of the user in the queue (pending and running, including jobs unrelated to the writes), and records each submission in `write_logs/exp12_write_submitted.tsv`. A task recorded there is not submitted again, so a stopped submission continues where it left off. The ecephys and ophys submissions can run at the same time and together stay under the cap.
+
+For each modality, first submit a smoke test: per dataset, the unchunked write, chunk shape 1 uncompressed, with zstd 22, and with Blosc2 zstd 9 (the slowest codecs), and the h5py default chunks (the smallest chunks, with a partly filled last chunk); and for ophys1, OC5 with gzip 4 (partly filled edge chunks, and the largest frames):
+
+```bash
+mkdir -p write_logs write_output
+MODALITY=ecephys  # or ophys
+TASKS=$(awk -F'\t' -v m="$MODALITY" '$2 ~ "^" m && ($4 ~ /^(unchunked|(EC|OC)1-(none|zstd22-shuf|b2zstd9-bitshuf)|(EC|OC)h5py-gzip4)$/ || ($2 == "ophys1" && $4 == "OC5-gzip4")) {print $1}' scripts/exp12_write_schedule.tsv | paste -sd,)
+python scripts/exp12_submit_writes.py submit $MODALITY --tasks $TASKS
+```
+
+Once those complete, check their run times against the 24 hour limit in `scripts/exp12_write.sh`, then submit the rest of that modality. The submission runs as a job because it waits on the queue for as long as the writes take:
+
+```bash
+sbatch scripts/exp12_submit_writes.sh $MODALITY
+```
+
+If the write scripts change after the smoke test, resubmit the smoke test tasks with `--tasks` so every output comes from the same code.
+
+To report the state of every task of a modality, with the failed ones and the command that resubmits them (leave out `--modality` for both):
+
+```bash
+python scripts/exp12_submit_writes.py status --modality $MODALITY
+```
+
+To list NWB files that fail to open and write outputs that are missing, on a compute node, since it opens every file:
+
+```bash
+srun --account=pc_rlyneuro --partition=lr7 --qos=lr_normal --time=2:00:00 --mem=8G --pty bash
+conda activate $HOME/envs/nwbio
+python scripts/exp12_check_nwb_files.py write_output ecephys1 ecephys2 ecephys3
+python scripts/exp12_check_nwb_files.py write_output ophys1 ophys2 ophys3
+```
+
+It lists files whose errors show they are corrupt, and `--delete` removes them.
 
 ### Evaluating read times of ophys files
 
@@ -242,41 +261,6 @@ sbatch scripts/exp12_read_ophys3.sh
 ./scripts/exp12_check_jobs.sh 20465176 read_logs scripts/exp12_configs_ophys1.tsv ophys1
 ./scripts/exp12_check_jobs.sh 20467784 read_logs scripts/exp12_configs_ophys2.tsv ophys2
 ./scripts/exp12_check_jobs.sh 20467966 read_logs scripts/exp12_configs_ophys3.tsv ophys3
-```
-
-### Ecephys: Generating binary files (BIN) from the ecephys NWB files
-
-This takes about 2 hours each, so we put it in a slurm script.
-
-Run:
-```bash
-cd $SCRATCH/nwb-io-evaluation
-mkdir -p write_logs raw_data
-sbatch scripts/exp12_write_ecephys_all_binary.sh
-```
-
-### Generate unchunked NWB files from the raw ecephys files
-
-Note that these do not take long to run (<10 min) and are put into a sbatch script to control the environment and time the operation.
-
-Run:
-```bash
-mkdir -p write_output
-sbatch scripts/exp12_write_ecephys1_unchunked.sh
-sbatch scripts/exp12_write_ecephys2_unchunked.sh
-sbatch scripts/exp12_write_ecephys3_unchunked.sh
-
-h5ls -v write_output/ecephys1_unchunked.nwb/acquisition/ElectricalSeries/data
-h5ls -v write_output/ecephys2_unchunked.nwb/acquisition/ElectricalSeries/data
-h5ls -v write_output/ecephys3_unchunked.nwb/acquisition/ElectricalSeries/data
-```
-
-### Generating ecephys files with different chunk shapes and compression settings
-
-```bash
-sbatch scripts/exp12_write_ecephys1.sh
-sbatch scripts/exp12_write_ecephys2.sh
-sbatch scripts/exp12_write_ecephys3.sh
 ```
 
 ### Evaluating read times of ecephys files

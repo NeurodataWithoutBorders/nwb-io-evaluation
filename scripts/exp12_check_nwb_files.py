@@ -3,11 +3,18 @@
 Check which NWB files in a directory can be opened with PyNWB, which write outputs are missing
 for the given datasets, and which ".partial" files incomplete writes left in the directory.
 
+NWB files that fail with an error showing the file is corrupt are listed, and with --delete they
+are removed. Opening every file reads the metadata of each, so run this on a compute node.
+
+Usage:
+    python exp12_check_nwb_files.py [--delete] <directory> <label> [<label> ...]
+
 For each dataset label, the expected outputs are <label>_<config_id>.nwb and
 stats_<label>_<config_id>.tsv for every configuration in scripts/exp12_configs_<label>.tsv,
 plus <label>_unchunked.nwb and stats_<label>_unchunked.tsv.
 """
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -17,13 +24,16 @@ from exp12_configs import config_table_path, load_configs
 
 
 def main() -> None:
-    if len(sys.argv) < 3:
-        print("Usage: python exp12_check_nwb_files.py <directory> <label> [<label> ...]")
-        print("Example: python exp12_check_nwb_files.py write_output ophys1 ophys2 ophys3")
-        sys.exit(1)
-
-    directory = Path(sys.argv[1])
-    labels = sys.argv[2:]
+    parser = argparse.ArgumentParser(
+        description="Check write outputs.",
+        epilog="Example: python exp12_check_nwb_files.py write_output ophys1 ophys2 ophys3",
+    )
+    parser.add_argument("directory", type=Path)
+    parser.add_argument("labels", nargs="+", metavar="label")
+    parser.add_argument("--delete", action="store_true", help="remove NWB files that are corrupt")
+    args = parser.parse_args()
+    directory = args.directory
+    labels = args.labels
     if not directory.is_dir():
         print(f"Error: {directory} is not a directory")
         sys.exit(1)
@@ -42,14 +52,14 @@ def main() -> None:
         print(f"No .nwb files found in {directory}")
         sys.exit(0)
 
-    # Errors that indicate a corrupted/invalid file that should be deleted
-    delete_errors = (
+    # Errors that indicate a corrupted/invalid file
+    corrupt_errors = (
         "Missing NWB version in file. The file is not a valid NWB file.",
         "bad object header version number",
     )
 
     failed_files = []
-    deleted_files = []
+    corrupt_files = []
     for filepath in nwb_files:
         try:
             with pynwb.NWBHDF5IO(filepath, "r") as io:
@@ -59,24 +69,26 @@ def main() -> None:
             failed_files.append((filepath, error_msg))
             print(f"FAILED: {filepath.name} - {e}")
 
-            # Delete files with specific corruption errors
-            if any(err in error_msg for err in delete_errors):
-                filepath.unlink()
-                deleted_files.append(filepath)
-                print(f"DELETED: {filepath.name}")
+            if any(err in error_msg for err in corrupt_errors):
+                corrupt_files.append(filepath)
+                if args.delete:
+                    filepath.unlink()
+                    print(f"DELETED: {filepath.name}")
 
     print()
     print(f"Checked {len(nwb_files)} files")
-    if deleted_files:
-        print(f"Deleted {len(deleted_files)} corrupted files:")
-        for filepath in deleted_files:
+    if corrupt_files:
+        if args.delete:
+            print(f"Deleted {len(corrupt_files)} corrupted files:")
+        else:
+            print(f"{len(corrupt_files)} corrupted files (rerun with --delete to remove them):")
+        for filepath in corrupt_files:
             print(f"  {filepath.name}")
-    if failed_files:
-        remaining_failures = [(f, e) for f, e in failed_files if f not in deleted_files]
-        if remaining_failures:
-            print(f"Failed to open {len(remaining_failures)} files (not deleted):")
-            for filepath, error in remaining_failures:
-                print(f"  {filepath.name}: {error}")
+    other_failures = [(f, e) for f, e in failed_files if f not in corrupt_files]
+    if other_failures:
+        print(f"Failed to open {len(other_failures)} other files (not deleted):")
+        for filepath, error in other_failures:
+            print(f"  {filepath.name}: {error}")
     if not failed_files:
         print("All files opened successfully")
 

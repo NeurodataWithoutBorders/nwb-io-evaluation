@@ -14,8 +14,8 @@ Each write produces a tab-separated stats file with one row per series written:
     source_series       name of the series in the source NWB file
     n_samples           samples (ecephys) or frames (ophys) written
     chunks              chunk shape of the written dataset, or "contiguous"
-    t_write_s           wall time to write the whole file, including an fsync, so the time covers
-                        writing the data through to the file system
+    t_write_s           wall time to write the whole file, including an fsync (t_fsync_s), so the
+                        time covers writing the data through to the file system
     t_series_s          part of t_write_s spent writing this series' data: from the first read of
                         the source data to the last write of the series, including the source
                         reads. It leaves out the rest of the file and the fsync. Chunks still in
@@ -28,6 +28,11 @@ Each write produces a tab-separated stats file with one row per series written:
     t_source_read_s     part of t_series_s spent reading this series from the raw binary or TIFF
                         files
     cpu_source_read_s   process CPU time over the t_source_read_s intervals
+    t_fsync_s           part of t_write_s spent in the fsync after the file is closed, flushing data
+                        still in the client's write cache to the file system. t_series_s ends when
+                        the last write returns, which can be before its data leave the cache, so
+                        t_series_s + t_fsync_s is the time to get the series data to the file
+                        system, plus the time to flush the small remainder of the file.
     t_verify_s          wall time to read the series back from the written file and compare it
                         with the source
     data_sha256         SHA-256 of the series data in C order, the same for every configuration of
@@ -75,8 +80,8 @@ RUN_COLUMNS = (
 )
 STATS_COLUMNS = (
     "config_id", "series", "source_series", "n_samples", "chunks", "t_write_s", "t_series_s",
-    "cpu_series_s", "t_source_read_s", "cpu_source_read_s", "t_verify_s", "data_sha256", "file_bytes",
-    "data_nbytes", "data_storage_bytes", "compression_ratio", "lustre_stripe", "total_s",
+    "cpu_series_s", "t_source_read_s", "cpu_source_read_s", "t_fsync_s", "t_verify_s", "data_sha256",
+    "file_bytes", "data_nbytes", "data_storage_bytes", "compression_ratio", "lustre_stripe", "total_s",
 ) + RUN_COLUMNS
 
 
@@ -182,6 +187,7 @@ def series_rows(
     config_id: str,
     series: dict[str, SeriesMeasurements],
     t_write_s: float,
+    t_fsync_s: float,
     total_s: float,
     run: dict[str, Any],
 ) -> list[dict[str, Any]]:
@@ -209,6 +215,7 @@ def series_rows(
                 "cpu_series_s": f"{m.series.cpu_s:.4f}",
                 "t_source_read_s": f"{m.source_read.wall_s:.4f}",
                 "cpu_source_read_s": f"{m.source_read.cpu_s:.4f}",
+                "t_fsync_s": f"{t_fsync_s:.4f}",
                 "t_verify_s": f"{m.verify_s:.4f}",
                 "data_sha256": m.data_sha256,
                 "file_bytes": file_bytes,

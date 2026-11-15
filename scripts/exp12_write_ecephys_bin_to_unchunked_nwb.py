@@ -149,7 +149,11 @@ def main() -> None:
                     block = np.array(binary_data[start:end])
                 dataset[start:end, :] = block
                 print(f"    Wrote {end}/{n_window} samples")
+                # Free the block before reading the next one, so the loop holds one block in memory.
+                del block
+    start_time_fsync = time.perf_counter_ns()
     fsync(partial_path(output_filepath))
+    net_time_fsync_s = (time.perf_counter_ns() - start_time_fsync) / 1e9
     net_time_write_s = (time.perf_counter_ns() - start_time_write) / 1e9
 
     start_time_verify = time.perf_counter_ns()
@@ -166,7 +170,7 @@ def main() -> None:
     net_tot_time_s = (time.perf_counter_ns() - start_tot_time) / 1e9
 
     rows = series_rows(output_filepath, "unchunked", {ECEPHYS_SERIES_NAME: measurements},
-                       net_time_write_s, net_tot_time_s, run)
+                       net_time_write_s, net_time_fsync_s, net_tot_time_s, run)
     write_stats(stats_filepath, rows)
 
     print()
