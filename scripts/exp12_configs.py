@@ -20,10 +20,10 @@ A Blosc2 level sets both the codec level and the Blosc2 block size. For blosc2-z
 runs zstd at level 2c - 1 for c < 9 and at zstd's maximum (22) for c = 9, so blosc2-zstd levels
 2, 6, and 9 run zstd at the same levels as the standalone zstd 3, 11, and 22 configurations.
 
-Chunk shapes cross three aspects with three sizes. The aspects split time from the other
-dimensions differently:
+Chunk shapes cross aspects with three sizes. The aspects split time from the other dimensions
+differently:
 
-    EC384, EC64, EC32       all 384 channels, groups of 64 channels, and groups of 32 channels
+    EC384, EC64, EC32, EC1  all 384 channels, groups of 64 and of 32 channels, and single channels
     OCframe                 whole frames
     OCtile128, OCtile16     128 x 128 and 16 x 16 pixel tiles (16 x 16 is the patch the O4 read
                             pattern reads)
@@ -63,7 +63,7 @@ hold.
 
 The configurations run in two stages:
 
-    1  every codec setting on the M size of two aspects (CODEC_SWEEP_CHUNKS), which ranks the
+    1  every codec setting on the M size of the aspects in CODEC_SWEEP_CHUNKS, which ranks the
        codecs; no compression and gzip 4 on every other shape; and the library defaults
     2  the codec settings chosen from the stage 1 results (STAGE2_SETTINGS) on every other shape
 
@@ -133,7 +133,8 @@ DEFAULT_CHUNKS_SETTING = ("gzip", 4)
 SIZE_LIMITS = {"S": 2**20, "M": 8 * 2**20, "L": 24 * 2**20}
 
 # Time extents divide the window and divide or are multiples of 30,000 samples (one second). The
-# S, M, and L shapes of an aspect are 0.96, 7.68, and 23.04 MB.
+# S, M, and L shapes are 0.96, 7.68, and 23.04 MB for EC384, EC64, and EC32, and 0.96, 7.2, and
+# 24 MB for EC1, whose time extents are the largest multiples of one second that divide the window.
 ECEPHYS_CHUNKS = {
     "EC384S": (1250, 384),
     "EC384M": (10000, 384),
@@ -144,6 +145,9 @@ ECEPHYS_CHUNKS = {
     "EC32S": (15000, 32),
     "EC32M": (120000, 32),
     "EC32L": (360000, 32),
+    "EC1S": (480000, 1),
+    "EC1M": (3600000, 1),
+    "EC1L": (12000000, 1),
 }
 
 
@@ -171,13 +175,15 @@ def ophys_chunks(width: int, height: int) -> dict[str, tuple[int, ...]]:
     return chunks
 
 
-# The M shapes of two aspects that differ most in how they split the data, on which stage 1 writes
-# every codec setting.
-CODEC_SWEEP_CHUNKS = {"EC": ("EC384M", "EC32M"), "OC": ("OCframeM", "OCtile16M")}
+# The M shapes on which stage 1 writes every codec setting: for ophys, the two aspects that differ
+# most in how they split the data; for ecephys, all channels, single channels (which the h5py
+# default chunks show compress the most), and 32 channel groups between them.
+CODEC_SWEEP_CHUNKS = {"EC": ("EC384M", "EC32M", "EC1M"), "OC": ("OCframeM", "OCtile16M")}
 
 # Codec settings (codec, level, shuffle) that stage 2 writes on every shape outside
 # CODEC_SWEEP_CHUNKS. They are chosen per modality by a fixed rule from the stage 1 writes and
-# reads of the codec sweep shapes, 2 shapes x 3 datasets = 6 cells per setting. Per cell:
+# reads of the codec sweep shapes, one cell per shape and dataset: 3 shapes x 3 datasets = 9 cells
+# per setting for ecephys and 2 x 3 = 6 for ophys. Per cell:
 #
 #     R  compression ratio (write stats)
 #     D  read CPU time of the full-width sequential pattern (E1 or O1) without b2h5py, with the
@@ -185,10 +191,10 @@ CODEC_SWEEP_CHUNKS = {"EC": ("EC384M", "EC32M"), "OC": ("OCframeM", "OCtile16M")
 #     C  write CPU time of the series, cpu_series_s - cpu_source_read_s
 #
 # Each is divided by the gzip 4 (no shuffle) value of the same cell, and the settings are compared
-# on the geometric mean over the 6 cells. The ophys cells include ophys1, whose compression ratio
-# is close to 1 for every setting, so the ophys means of R differ less than those of ophys2 and
-# ophys3 alone. Ratios within 1% of each other count as equal, and the
-# setting with the lower D ranks first among them. The picks:
+# on the geometric mean over the modality's cells. The ophys cells include ophys1, whose
+# compression ratio is close to 1 for every setting, so the ophys means of R differ less than those
+# of ophys2 and ophys3 alone. Ratios within 1% of each other count as equal, and the setting with
+# the lower D ranks first among them. The picks:
 #
 #     1  fastest to read: lowest D among settings with R >= 1
 #     2  smallest that reads and writes at an acceptable cost: highest R among settings with D <= 1

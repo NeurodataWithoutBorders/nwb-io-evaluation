@@ -13,10 +13,12 @@ then waits and checks the queue again. It exits once every task of the modality 
 ecephys and ophys submissions can run at the same time: each counts the queue and submits while
 holding a lock on write_logs/exp12_write_submit.lock, so together they stay under the cap.
 
-Each submission is appended to write_logs/exp12_write_submitted.tsv (task, job_id, submitted_utc).
-A task in that file is not submitted again, so a rerun after the script stops continues where it
-left off. --tasks submits the given tasks whether or not they were submitted before, for smoke tests
-and resubmitting failed writes; the status report uses the latest job of each task.
+Each submission is appended to write_logs/exp12_write_submitted.tsv (label, config_id, job_id,
+submitted_utc). A write in that file is not submitted again, so a rerun after the script stops
+continues where it left off. The file identifies writes by dataset and configuration, so it stays
+valid when the schedule is regenerated with new configurations and its task numbers change. --tasks
+submits the given tasks whether or not they were submitted before, for smoke tests and resubmitting
+failed writes; the status report uses the latest job of each write.
 
 Usage:
     python scripts/exp12_submit_writes.py submit {ecephys,ophys} [--tasks 3,17,250] [--max-jobs 95]
@@ -48,7 +50,7 @@ WRITE_SCRIPT = REPO / "scripts" / "exp12_write.sh"
 LOG_DIR = REPO / "write_logs"
 OUTPUT_DIR = REPO / "write_output"
 SUBMITTED_PATH = LOG_DIR / "exp12_write_submitted.tsv"
-SUBMITTED_COLUMNS = ("task", "job_id", "submitted_utc")
+SUBMITTED_COLUMNS = ("label", "config_id", "job_id", "submitted_utc")
 LOCK_PATH = LOG_DIR / "exp12_write_submit.lock"
 
 # This project allows at most 100 jobs per user in the queue, pending and running combined. The
@@ -98,13 +100,13 @@ def submit_lock() -> Iterator[None]:
             fcntl.flock(f, fcntl.LOCK_UN)
 
 
-def load_submitted() -> dict[int, str]:
-    """The latest job ID of each submitted task."""
+def load_submitted() -> dict[tuple[str, str], str]:
+    """The latest job ID of each submitted write, by (label, config_id)."""
     if not SUBMITTED_PATH.exists():
         return {}
     with open(SUBMITTED_PATH, newline="") as f:
         reader = csv.DictReader(f, delimiter="\t")
-        return {int(row["task"]): row["job_id"] for row in reader}
+        return {(row["label"], row["config_id"]): row["job_id"] for row in reader}
 
 
 def record_submission(task: Task, job_id: str) -> None:
@@ -113,7 +115,7 @@ def record_submission(task: Task, job_id: str) -> None:
         writer = csv.writer(f, delimiter="\t", lineterminator="\n")
         if new_file:
             writer.writerow(SUBMITTED_COLUMNS)
-        writer.writerow([task.task, job_id, datetime.now(UTC).isoformat(timespec="seconds")])
+        writer.writerow([task.label, task.config_id, job_id, datetime.now(UTC).isoformat(timespec="seconds")])
 
 
 def parse_tasks(text: str) -> list[int]:
@@ -129,7 +131,7 @@ def submit(args: argparse.Namespace) -> None:
         remaining = [schedule[t] for t in args.tasks]
     else:
         submitted = load_submitted()
-        remaining = [t for t in schedule.values() if t.task not in submitted]
+        remaining = [t for t in schedule.values() if (t.label, t.config_id) not in submitted]
     print(f"{len(remaining)} {args.modality} tasks to submit, at most {args.max_jobs} jobs in the queue")
 
     if args.dry_run:
@@ -184,11 +186,12 @@ def sacct_states(job_ids: list[str]) -> dict[str, tuple[str, str]]:
 def status(args: argparse.Namespace) -> None:
     schedule = [t for t in load_schedule() if args.modality in (None, t.modality)]
     submitted = load_submitted()
-    states = sacct_states(sorted({submitted[t.task] for t in schedule if t.task in submitted}))
+    job_ids = {(t.label, t.config_id): submitted.get((t.label, t.config_id)) for t in schedule}
+    states = sacct_states(sorted({j for j in job_ids.values() if j}))
     counts: Counter[str] = Counter()
     problems = []
     for task in schedule:
-        job_id = submitted.get(task.task)
+        job_id = job_ids[(task.label, task.config_id)]
         state, elapsed = states.get(job_id, ("UNKNOWN", "-")) if job_id else ("NOT_SUBMITTED", "-")
         counts[state] += 1
         stats = OUTPUT_DIR / f"stats_{task.label}_{task.config_id}.tsv"

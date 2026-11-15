@@ -47,7 +47,9 @@ from exp12_write_stats import (
 N_CHANNELS = 384
 
 # Each write buffer is the largest whole number of the configuration's chunk time extent that fits
-# in this many samples (6.9 GB for 384 channels of int16), so every chunk is written in one piece.
+# in this many samples (6.9 GB for 384 channels of int16), and at least one time extent, so every
+# chunk is written in one piece. EC1L's time extent, 12,000,000 samples, exceeds the target, so its
+# buffer is one time extent (9.2 GB).
 WRITE_BUFFER_TARGET_SAMPLES = 9_000_000
 
 
