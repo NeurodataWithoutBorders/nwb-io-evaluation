@@ -135,7 +135,7 @@ h5ls -v sub-491604967_ses-496908818-StimB_ophys.nwb/acquisition/MotionCorrectedT
 
 The raw binary and TIFF files hold each full recording. The test NWB files (unchunked and every chunking and compression configuration) hold a contiguous window from the middle of each recording, defined in `scripts/exp12_window.py`. Each test file names the series `ElectricalSeries` (ecephys) or `TwoPhotonSeries` (ophys), whatever its name in the source file, and leaves out other series of the same type and series that link to the source series (see `scripts/exp12_series.py`).
 
-- Ecephys: 108,000,000 samples, which is 60 min at 30 kHz (59.998 min for ecephys3 at 30001.065 Hz). Only the AP band is written, from `ElectricalSeries` in ecephys1, `ElectricalSeriesProbe00AP` in ecephys2, and `ElectricalSeriesAP` in ecephys3.
+- Ecephys: 36,000,000 samples, which is 20 min at 30 kHz (19.999 min for ecephys3 at 30001.065 Hz). Only the AP band is written, from `ElectricalSeries` in ecephys1, `ElectricalSeriesProbe00AP` in ecephys2, and `ElectricalSeriesAP` in ecephys3.
 - Ophys: 40,960 frames, which is 45.5 min for ophys1 at 15 Hz and 22.7 min for ophys2 and ophys3 at 30.075 Hz, from `TwoPhotonSeries` in ophys1, `motion_corrected_stack` in ophys2, and `MotionCorrectedTwoPhotonSeries` in ophys3.
 
 Each window is a whole number of chunk time extents for the chunk shapes EC1 to EC5 and OC1 to OC5. The ophys1 frames are 796 pixels wide, which is not a multiple of the 128 and 16 pixel tiles of OC3 to OC5, so those datasets have partly filled edge chunks; their uncompressed files report a compression ratio below 1.
