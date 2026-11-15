@@ -163,7 +163,20 @@ The tables record these shapes for the installed h5py and hdmf. To check that th
 python scripts/exp12_configs.py && git diff --exit-code scripts/exp12_configs_*.tsv
 ```
 
-Each write produces `write_output/<label>_<config_id>.nwb` and a stats table `write_output/stats_<label>_<config_id>.tsv`, whose columns are documented in `scripts/exp12_write_stats.py`. The unchunked writes produce `<label>_unchunked.nwb` and `stats_<label>_unchunked.tsv`. Each write first removes its earlier outputs, writes the NWB file as `<name>.nwb.partial`, and renames it when complete, so an interrupted write leaves no outputs.
+Each write produces `write_output/<label>_<config_id>.nwb` and a stats table `write_output/stats_<label>_<config_id>.tsv`, whose columns are documented in `scripts/exp12_write_stats.py`. The unchunked writes produce `<label>_unchunked.nwb` and `stats_<label>_unchunked.tsv`. Each write first removes its earlier outputs, writes the NWB file as `<name>.nwb.partial`, reads the series back and checks it against the source data (`scripts/exp12_verify.py`), and renames the file when the data match. An interrupted write, or one whose data do not match the source, leaves only the `.partial` file, which `exp12_check_nwb_files.py` lists. The stats also record the SHA-256 of the series data, which is the same for every configuration of a dataset.
+
+The test files use the scratch filesystem's default Lustre layout, a progressive file layout whose striping depends on the offset in the file:
+
+- 0 to 64 KiB: 1 stripe on the NVMe pool (`ddn_nvme2`).
+- 64 KiB to 128 MiB: 1 stripe of 1 MiB on the HDD pool (`ddn_hdd`).
+- 128 MiB to the end of the file: 8 stripes of 16 MiB on the HDD pool.
+
+The test files are 10 to 33 GB, so nearly all of their data is in the 8-stripe HDD component. For the files to inherit this default, `write_output/` must not have a layout of its own. To check both:
+
+```bash
+lfs getstripe -d $SCRATCH
+lfs getstripe -d write_output
+```
 
 To list NWB files that fail to open and write outputs that are missing:
 

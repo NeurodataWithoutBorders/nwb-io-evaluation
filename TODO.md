@@ -43,9 +43,12 @@
 - Whether the ranking of codecs by ratio changes across segments.
 - If the centered window falls outside the range of the segments, or the ranking changes, say so in the paper and consider moving the window.
 
+## Before the writes
+
+- Check that `write_output/` has no Lustre layout of its own (`lfs getstripe -d write_output`), so the test files get the scratch filesystem's default layout described in the README.
+
 ## Before the read benchmarks
 
 - Update the read scripts on `exp12-read-improvements` to the config tables: config IDs in file names, the row count from the table, `--array=1-198`, `#SBATCH --export=NONE` with `srun --export=ALL`, and `cpu_affinity_count` and `os_cpu_count` in the recorded metadata.
 - Read Blosc2 configurations both with and without b2h5py, run each timed read in its own subprocess so a crash is recorded, check that each read path returns the same bytes as the source, and record whether b2h5py's fast path was used.
 - Decide whether the sequential patterns (E1, E2, O1, O2, O4) read the whole window or a bounded span at a random offset per repeat.
-- Decide the Lustre stripe count for `write_output/` and set it with `lfs setstripe` before writing.

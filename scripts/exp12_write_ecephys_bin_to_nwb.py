@@ -10,6 +10,8 @@ named ElectricalSeries (see exp12_series.py for what else the test file leaves o
 
 Writes <output_dir>/<output_label>_<config_id>.nwb and a stats table
 <output_dir>/stats_<output_label>_<config_id>.tsv (see exp12_write_stats.py).
+The written data is checked against the source before the NWB file gets its final name
+(see exp12_verify.py).
 
 Usage:
     python exp12_write_ecephys_bin_to_nwb.py <config_table> <row> <input_nwb_filepath> \
@@ -35,8 +37,11 @@ import pynwb
 
 from exp12_configs import h5dataio_kwargs, read_config, write_buffer_length
 from exp12_series import ECEPHYS_SERIES_NAME, replace_series
+from exp12_verify import verify_series
 from exp12_window import ECEPHYS_WINDOW_SAMPLES, centered_window, windowed_timing
-from exp12_write_stats import fsync, partial_path, publish_nwb, remove_outputs, series_rows, write_stats
+from exp12_write_stats import (
+    SeriesMeasurements, fsync, partial_path, publish_nwb, remove_outputs, run_info, series_rows, write_stats,
+)
 
 
 N_CHANNELS = 384
@@ -48,7 +53,12 @@ WRITE_BUFFER_TARGET_SAMPLES = 9_000_000
 
 class BinaryDataChunkIterator(AbstractDataChunkIterator):
     """A data chunk iterator that reads n_samples samples, starting at sample_offset, from a flat
-    binary file via memmap. read_time_s accumulates the time spent reading the binary file."""
+    binary file via memmap.
+
+    measurements.series times the span from the first call to __next__ to StopIteration, and
+    measurements.source_read the reads of the binary file. hdmf writes the data of iterators after
+    the rest of the file, so that span covers writing this series alone.
+    """
 
     def __init__(
         self,
@@ -58,6 +68,7 @@ class BinaryDataChunkIterator(AbstractDataChunkIterator):
         n_channels: int,
         dtype: np.dtype,
         buffer_samples: int,
+        measurements: SeriesMeasurements,
     ) -> None:
         self.data = np.memmap(
             binary_path,
@@ -71,21 +82,24 @@ class BinaryDataChunkIterator(AbstractDataChunkIterator):
         self._dtype = np.dtype(dtype)
         self.buffer_samples = buffer_samples
         self._current_sample = 0
-        self.read_time_s = 0.0
+        self.measurements = measurements
 
     def __iter__(self):
         return self
 
     def __next__(self) -> DataChunk:
+        if self._current_sample == 0 and not self.measurements.series.running:
+            self.measurements.series.start()
         if self._current_sample >= self.n_samples:
+            if self.measurements.series.running:
+                self.measurements.series.stop()
             raise StopIteration
 
         start = self._current_sample
         end = min(start + self.buffer_samples, self.n_samples)
 
-        start_time = time.perf_counter_ns()
-        data = np.array(self.data[start:end])
-        self.read_time_s += (time.perf_counter_ns() - start_time) / 1e9
+        with self.measurements.source_read:
+            data = np.array(self.data[start:end])
         selection = np.s_[start:end, :]
 
         self._current_sample = end
@@ -128,6 +142,7 @@ def main() -> None:
     binary_path = Path(sys.argv[7])  # Raw data of that series
 
     start_tot_time = time.perf_counter_ns()
+    run = run_info()
     config = read_config(config_table, row)
     print(f"Config {row}: {config}")
     output_filepath = output_dir / f"{output_label}_{config.config_id}.nwb"
@@ -160,13 +175,16 @@ def main() -> None:
         start, stop = centered_window(n_samples, ECEPHYS_WINDOW_SAMPLES)
         print(f"{series_name}: writing samples {start}:{stop} of {n_samples} as {ECEPHYS_SERIES_NAME}")
 
+        buffer_samples = write_buffer_length(config.chunks, WRITE_BUFFER_TARGET_SAMPLES)
+        measurements = SeriesMeasurements(source_name=series_name)
         data_iterator = BinaryDataChunkIterator(
             binary_path=binary_path,
             sample_offset=start,
             n_samples=stop - start,
             n_channels=n_channels,
             dtype=dtype,
-            buffer_samples=write_buffer_length(config.chunks, WRITE_BUFFER_TARGET_SAMPLES),
+            buffer_samples=buffer_samples,
+            measurements=measurements,
         )
 
         electrodes_region = nwbfile.create_electrode_table_region(
@@ -198,15 +216,26 @@ def main() -> None:
         fsync(partial_path(output_filepath))
         net_time_write_s = (time.perf_counter_ns() - start_time_write) / 1e9
 
+    start_time_verify = time.perf_counter_ns()
+    source = np.memmap(binary_path, dtype=dtype, mode="r", shape=(n_samples, n_channels))[start:stop]
+    measurements.data_sha256 = verify_series(
+        partial_path(output_filepath),
+        f"acquisition/{ECEPHYS_SERIES_NAME}/data",
+        lambda a, b: source[a:b],
+        buffer_samples,
+    )
+    measurements.verify_s = (time.perf_counter_ns() - start_time_verify) / 1e9
+    print(f"Data matches the source; SHA-256 {measurements.data_sha256}")
+
     publish_nwb(output_filepath)
     net_tot_time_s = (time.perf_counter_ns() - start_tot_time) / 1e9
     rows = series_rows(
         output_filepath,
         config.config_id,
-        {ECEPHYS_SERIES_NAME: series_name},
+        {ECEPHYS_SERIES_NAME: measurements},
         net_time_write_s,
-        {ECEPHYS_SERIES_NAME: data_iterator.read_time_s},
         net_tot_time_s,
+        run,
     )
     write_stats(stats_filepath, rows)
     print(f"Wrote {output_filepath} in {net_time_write_s:.1f} s; stats in {stats_filepath}")

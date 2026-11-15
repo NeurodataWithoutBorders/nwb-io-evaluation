@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Check which NWB files in a directory can be opened with PyNWB, and which write outputs are
-missing for the given datasets.
+Check which NWB files in a directory can be opened with PyNWB, which write outputs are missing
+for the given datasets, and which ".partial" files incomplete writes left in the directory.
 
 For each dataset label, the expected outputs are <label>_<config_id>.nwb and
 stats_<label>_<config_id>.tsv for every configuration in scripts/exp12_configs_<label>.tsv,
@@ -27,6 +27,15 @@ def main() -> None:
     if not directory.is_dir():
         print(f"Error: {directory} is not a directory")
         sys.exit(1)
+
+    # A write that was interrupted or whose data did not match the source leaves a .partial file
+    partial_files = sorted(directory.glob("*.partial"))
+    if partial_files:
+        total_gb = sum(p.stat().st_size for p in partial_files) / 1e9
+        print(f"{len(partial_files)} .partial files from incomplete writes ({total_gb:.1f} GB):")
+        for filepath in partial_files:
+            print(f"  {filepath.name}")
+        print()
 
     nwb_files = sorted(directory.glob("*.nwb"))
     if not nwb_files:

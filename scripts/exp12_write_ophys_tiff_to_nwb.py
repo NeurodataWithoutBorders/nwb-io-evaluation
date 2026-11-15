@@ -10,6 +10,8 @@ named TwoPhotonSeries (see exp12_series.py for what else the test file leaves ou
 
 Writes <output_dir>/<output_label>_<config_id>.nwb and a stats table
 <output_dir>/stats_<output_label>_<config_id>.tsv (see exp12_write_stats.py).
+The written data is checked against the source before the NWB file gets its final name
+(see exp12_verify.py).
 
 Usage:
     python exp12_write_ophys_tiff_to_nwb.py <config_table> <row> <input_nwb_filepath> \
@@ -34,8 +36,11 @@ import pynwb
 from exp12_configs import h5dataio_kwargs, read_config, write_buffer_length
 from exp12_series import OPHYS_SERIES_NAME, replace_series
 from exp12_tiff import TiffStack
+from exp12_verify import verify_series
 from exp12_window import OPHYS_WINDOW_FRAMES, centered_window, windowed_timing
-from exp12_write_stats import fsync, partial_path, publish_nwb, remove_outputs, series_rows, write_stats
+from exp12_write_stats import (
+    SeriesMeasurements, fsync, partial_path, publish_nwb, remove_outputs, run_info, series_rows, write_stats,
+)
 
 # Each write buffer is the largest whole number of the configuration's chunk time extent that fits
 # in this many frames (10.7 GB for 512 x 512 frames, 16.7 GB for 796 x 512 frames), so every chunk
@@ -45,29 +50,37 @@ WRITE_BUFFER_TARGET_FRAMES = 20_480
 
 class TiffDataChunkIterator(AbstractDataChunkIterator):
     """A data chunk iterator that reads frames start:stop of a TiffStack, in NWB orientation.
-    read_time_s accumulates the time spent reading the TIFF files."""
 
-    def __init__(self, stack: TiffStack, start: int, stop: int, buffer_frames: int) -> None:
+    measurements.series times the span from the first call to __next__ to StopIteration, and
+    measurements.source_read the reads of the TIFF files. hdmf writes the data of iterators after
+    the rest of the file, so that span covers writing this series alone.
+    """
+
+    def __init__(self, stack: TiffStack, start: int, stop: int, buffer_frames: int,
+                 measurements: SeriesMeasurements) -> None:
         self.stack = stack
         self.start = start
         self.n_frames = stop - start
         self.buffer_frames = buffer_frames
         self._current_frame = 0
-        self.read_time_s = 0.0
+        self.measurements = measurements
 
     def __iter__(self):
         return self
 
     def __next__(self) -> DataChunk:
+        if self._current_frame == 0 and not self.measurements.series.running:
+            self.measurements.series.start()
         if self._current_frame >= self.n_frames:
+            if self.measurements.series.running:
+                self.measurements.series.stop()
             raise StopIteration
 
         start_frame = self._current_frame
         end_frame = min(start_frame + self.buffer_frames, self.n_frames)
 
-        start_time = time.perf_counter_ns()
-        data = self.stack.read(self.start + start_frame, self.start + end_frame)
-        self.read_time_s += (time.perf_counter_ns() - start_time) / 1e9
+        with self.measurements.source_read:
+            data = self.stack.read(self.start + start_frame, self.start + end_frame)
 
         selection = np.s_[start_frame:end_frame, :, :]
 
@@ -110,6 +123,7 @@ def main() -> None:
     output_dir = Path(sys.argv[7])  # Directory to save output NWB files
 
     start_tot_time = time.perf_counter_ns()
+    run = run_info()
     config = read_config(config_table, row)
     print(f"Config {row}: {config}")
     output_filepath = output_dir / f"{output_label}_{config.config_id}.nwb"
@@ -127,11 +141,14 @@ def main() -> None:
         start, stop = centered_window(stack.n_frames, OPHYS_WINDOW_FRAMES)
         print(f"{series_name}: writing frames {start}:{stop} of {stack.n_frames} as {OPHYS_SERIES_NAME}")
 
+        buffer_frames = write_buffer_length(config.chunks, WRITE_BUFFER_TARGET_FRAMES)
+        measurements = SeriesMeasurements(source_name=series_name)
         data_iterator = TiffDataChunkIterator(
             stack=stack,
             start=start,
             stop=stop,
-            buffer_frames=write_buffer_length(config.chunks, WRITE_BUFFER_TARGET_FRAMES),
+            buffer_frames=buffer_frames,
+            measurements=measurements,
         )
 
         kwargs = dict(
@@ -155,15 +172,25 @@ def main() -> None:
         fsync(partial_path(output_filepath))
         net_time_write_s = (time.perf_counter_ns() - start_time_write) / 1e9
 
+    start_time_verify = time.perf_counter_ns()
+    measurements.data_sha256 = verify_series(
+        partial_path(output_filepath),
+        f"acquisition/{OPHYS_SERIES_NAME}/data",
+        lambda a, b: stack.read(start + a, start + b),
+        buffer_frames,
+    )
+    measurements.verify_s = (time.perf_counter_ns() - start_time_verify) / 1e9
+    print(f"Data matches the source; SHA-256 {measurements.data_sha256}")
+
     publish_nwb(output_filepath)
     net_tot_time_s = (time.perf_counter_ns() - start_tot_time) / 1e9
     rows = series_rows(
         output_filepath,
         config.config_id,
-        {OPHYS_SERIES_NAME: series_name},
+        {OPHYS_SERIES_NAME: measurements},
         net_time_write_s,
-        {OPHYS_SERIES_NAME: data_iterator.read_time_s},
         net_tot_time_s,
+        run,
     )
     write_stats(stats_filepath, rows)
     print(f"Wrote {output_filepath} in {net_time_write_s:.1f} s; stats in {stats_filepath}")

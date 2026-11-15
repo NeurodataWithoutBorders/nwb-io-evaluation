@@ -9,6 +9,8 @@ else the test file leaves out).
 
 Writes the NWB file and a stats table stats_<output_stem>.tsv next to it
 (see exp12_write_stats.py).
+The written data is checked against the source before the NWB file gets its final name
+(see exp12_verify.py).
 
 Usage:
     python exp12_write_ophys_tiff_to_unchunked_nwb.py <input_nwb_filepath> <series_name> \
@@ -25,8 +27,11 @@ import pynwb
 
 from exp12_series import OPHYS_SERIES_NAME, replace_series
 from exp12_tiff import TiffStack
+from exp12_verify import verify_series
 from exp12_window import OPHYS_WINDOW_FRAMES, centered_window, windowed_timing
-from exp12_write_stats import fsync, partial_path, publish_nwb, remove_outputs, series_rows, write_stats
+from exp12_write_stats import (
+    SeriesMeasurements, fsync, partial_path, publish_nwb, remove_outputs, run_info, series_rows, write_stats,
+)
 
 WRITE_BUFFER_FRAMES = 20_480  # 10.7 GB for 512 x 512 frames, 16.7 GB for 796 x 512 frames
 
@@ -61,6 +66,7 @@ def main() -> None:
     stats_filepath = output_filepath.parent / f"stats_{output_filepath.stem}.tsv"
     remove_outputs(output_filepath, stats_filepath)
     start_tot_time = time.perf_counter_ns()
+    run = run_info()
 
     # Export the NWB file with an empty dataset placeholder
     with pynwb.NWBHDF5IO(input_filepath, "r") as io:
@@ -103,25 +109,34 @@ def main() -> None:
 
     # Now open the HDF5 file directly and fill in the data from TIFFs
     print("Filling dataset with data from TIFFs...")
-    source_read_s = 0.0
+    measurements = SeriesMeasurements(source_name=series_name)
     with h5py.File(partial_path(output_filepath), "r+") as f:
         dataset = f[f"/acquisition/{OPHYS_SERIES_NAME}/data"]
-
-        for start in range(0, n_window, WRITE_BUFFER_FRAMES):
-            end = min(start + WRITE_BUFFER_FRAMES, n_window)
-            read_start = time.perf_counter_ns()
-            block = stack.read(window_start + start, window_start + end)
-            source_read_s += (time.perf_counter_ns() - read_start) / 1e9
-            dataset[start:end, :, :] = block
-            print(f"  Wrote {end}/{n_window} frames")
+        with measurements.series:
+            for start in range(0, n_window, WRITE_BUFFER_FRAMES):
+                end = min(start + WRITE_BUFFER_FRAMES, n_window)
+                with measurements.source_read:
+                    block = stack.read(window_start + start, window_start + end)
+                dataset[start:end, :, :] = block
+                print(f"  Wrote {end}/{n_window} frames")
     fsync(partial_path(output_filepath))
-
     net_time_write_s = (time.perf_counter_ns() - start_time_write) / 1e9
+
+    start_time_verify = time.perf_counter_ns()
+    measurements.data_sha256 = verify_series(
+        partial_path(output_filepath),
+        f"acquisition/{OPHYS_SERIES_NAME}/data",
+        lambda a, b: stack.read(window_start + a, window_start + b),
+        WRITE_BUFFER_FRAMES,
+    )
+    measurements.verify_s = (time.perf_counter_ns() - start_time_verify) / 1e9
+    print(f"Data matches the source; SHA-256 {measurements.data_sha256}")
+
     publish_nwb(output_filepath)
     net_tot_time_s = (time.perf_counter_ns() - start_tot_time) / 1e9
 
-    rows = series_rows(output_filepath, "unchunked", {OPHYS_SERIES_NAME: series_name}, net_time_write_s,
-                       {OPHYS_SERIES_NAME: source_read_s}, net_tot_time_s)
+    rows = series_rows(output_filepath, "unchunked", {OPHYS_SERIES_NAME: measurements}, net_time_write_s,
+                       net_tot_time_s, run)
     write_stats(stats_filepath, rows)
 
     print()

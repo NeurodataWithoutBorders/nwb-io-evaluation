@@ -9,6 +9,8 @@ leaves out).
 
 Writes the NWB file and a stats table stats_<output_stem>.tsv next to it
 (see exp12_write_stats.py).
+The written data is checked against the source before the NWB file gets its final name
+(see exp12_verify.py).
 
 Usage:
     python exp12_write_ecephys_bin_to_unchunked_nwb.py <input_nwb_filepath> <output_nwb_filepath> \
@@ -29,8 +31,11 @@ from hdmf.backends.hdf5.h5_utils import H5DataIO
 import pynwb
 
 from exp12_series import ECEPHYS_SERIES_NAME, replace_series
+from exp12_verify import verify_series
 from exp12_window import ECEPHYS_WINDOW_SAMPLES, centered_window, windowed_timing
-from exp12_write_stats import fsync, partial_path, publish_nwb, remove_outputs, series_rows, write_stats
+from exp12_write_stats import (
+    SeriesMeasurements, fsync, partial_path, publish_nwb, remove_outputs, run_info, series_rows, write_stats,
+)
 
 
 N_CHANNELS = 384
@@ -72,6 +77,7 @@ def main() -> None:
     stats_filepath = output_filepath.parent / f"stats_{output_filepath.stem}.tsv"
     remove_outputs(output_filepath, stats_filepath)
     start_tot_time = time.perf_counter_ns()
+    run = run_info()
 
     # Export the NWB file with an empty dataset placeholder
     with pynwb.NWBHDF5IO(input_filepath, "r") as io:
@@ -130,28 +136,37 @@ def main() -> None:
 
     # Now open the HDF5 file directly and fill in the data from the binary file
     print("Filling the dataset with data from the binary file...")
-    source_read_s = 0.0
+    measurements = SeriesMeasurements(source_name=series_name)
+    binary_data = np.memmap(
+        binary_path, dtype=dtype, mode="r", shape=(n_samples, N_CHANNELS)
+    )[window_start:window_stop]
     with h5py.File(partial_path(output_filepath), "r+") as f:
         dataset = f[f"/acquisition/{ECEPHYS_SERIES_NAME}/data"]
-        binary_data = np.memmap(
-            binary_path, dtype=dtype, mode="r", shape=(n_samples, N_CHANNELS)
-        )[window_start:window_stop]
-
-        for start in range(0, n_window, WRITE_BUFFER_SAMPLES):
-            end = min(start + WRITE_BUFFER_SAMPLES, n_window)
-            read_start = time.perf_counter_ns()
-            block = np.array(binary_data[start:end])
-            source_read_s += (time.perf_counter_ns() - read_start) / 1e9
-            dataset[start:end, :] = block
-            print(f"    Wrote {end}/{n_window} samples")
+        with measurements.series:
+            for start in range(0, n_window, WRITE_BUFFER_SAMPLES):
+                end = min(start + WRITE_BUFFER_SAMPLES, n_window)
+                with measurements.source_read:
+                    block = np.array(binary_data[start:end])
+                dataset[start:end, :] = block
+                print(f"    Wrote {end}/{n_window} samples")
     fsync(partial_path(output_filepath))
-
     net_time_write_s = (time.perf_counter_ns() - start_time_write) / 1e9
+
+    start_time_verify = time.perf_counter_ns()
+    measurements.data_sha256 = verify_series(
+        partial_path(output_filepath),
+        f"acquisition/{ECEPHYS_SERIES_NAME}/data",
+        lambda a, b: binary_data[a:b],
+        WRITE_BUFFER_SAMPLES,
+    )
+    measurements.verify_s = (time.perf_counter_ns() - start_time_verify) / 1e9
+    print(f"Data matches the source; SHA-256 {measurements.data_sha256}")
+
     publish_nwb(output_filepath)
     net_tot_time_s = (time.perf_counter_ns() - start_tot_time) / 1e9
 
-    rows = series_rows(output_filepath, "unchunked", {ECEPHYS_SERIES_NAME: series_name},
-                       net_time_write_s, {ECEPHYS_SERIES_NAME: source_read_s}, net_tot_time_s)
+    rows = series_rows(output_filepath, "unchunked", {ECEPHYS_SERIES_NAME: measurements},
+                       net_time_write_s, net_tot_time_s, run)
     write_stats(stats_filepath, rows)
 
     print()
