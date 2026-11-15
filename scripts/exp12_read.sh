@@ -14,6 +14,7 @@
 #     sbatch scripts/exp12_read.sh <task>
 #
 # scripts/exp12_submit_reads.py submits the tasks and sets each job's name and log files.
+# exp12_read.py fits each task in the --time below (its TIME_LIMIT_S).
 #
 # --export=NONE starts the job from a clean login environment wherever it was submitted (an Open
 # OnDemand Jupyter session exports SLURM_EXPORT_ENV=NONE). It also makes srun default to

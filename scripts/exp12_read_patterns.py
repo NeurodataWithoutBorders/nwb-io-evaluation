@@ -19,6 +19,12 @@ Random positions come from a generator seeded with RANDOM_SEED and the pattern's
 configuration of a dataset is read at the same positions, and the positions of one pattern are
 independent of those of another.
 
+The sequential patterns (e1, e2, o1, o2, o4) read through the whole window in each unit. A task of
+one of these stops after MAX_SLOW_UNITS units each longer than SLOW_UNIT_THRESHOLD_S, and records
+that it was cut short. A unit over the threshold reads its window at under 2.7 MB/s (ecephys,
+27.6 GB in 170 minutes) or 3.6 to 5.6 MB/s (ophys, 21 to 33 GB in 100 minutes), and three such
+units fit in the job's time limit (see exp12_read.py).
+
 Read paths:
 
     h5py    h5py and the HDF5 filter pipeline (hdf5plugin), for every configuration
@@ -52,10 +58,9 @@ RANDOM_SEED = 42
 N_REPEATS = 10
 N_SAMPLES = 50
 
-# A sequential pattern stops after MAX_SLOW_REPEATS repeats each longer than this many seconds,
-# and the task records that it was cut short.
-SLOW_REPEAT_THRESHOLD_S = {"ecephys": 500 * 60, "ophys": 100 * 60}
-MAX_SLOW_REPEATS = 3
+# A sequential pattern stops after MAX_SLOW_UNITS units each longer than this many seconds.
+SLOW_UNIT_THRESHOLD_S = {"ecephys": 170 * 60, "ophys": 100 * 60}
+MAX_SLOW_UNITS = 3
 
 READ_PATHS = ("h5py", "b2h5py")
 CACHE_LABELS = ("1mib", "8mib", "32mib", "fitted")

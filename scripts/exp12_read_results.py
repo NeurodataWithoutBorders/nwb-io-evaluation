@@ -4,7 +4,8 @@ Summarize the read results (see exp12_read.py) in one tab-separated table.
     python scripts/exp12_read_results.py <read_output_dir> <summary.tsv>
 
 Each result file becomes one row: the task and configuration from its attributes, the outcome
-(units run, early stop, crashed units, checks, reads served by b2h5py's fast path), and the
+(units run, whether the task finished, early stop and its reason, crashed units, checks, reads
+served by b2h5py's fast path), and the
 median, minimum, and maximum over its completed units of the unit wall time and CPU time
 (unit_total_times and unit_total_cpu_times: a whole pass through the window for e1, e2, o1, and
 o2, and one sample for e3, e4, o3, and o4). Files that cannot be read are listed on stderr and
@@ -21,8 +22,9 @@ import numpy as np
 
 ATTR_COLUMNS = (
     "task", "stage", "label", "config_id", "chunks", "codec", "level", "shuffle", "pattern", "path", "cache",
-    "rdcc_nbytes", "rdcc_nslots", "n_units", "n_units_run", "truncated", "n_crashed", "reads", "fast_reads",
-    "check_selection", "check_sha256", "check_fast_path", "page_cache_evicted", "host", "start_utc", "end_utc",
+    "rdcc_nbytes", "rdcc_nslots", "n_units", "n_units_run", "complete", "stop_reason", "truncated", "n_crashed",
+    "reads", "fast_reads", "check_selection", "check_sha256", "check_fast_path", "page_cache_evicted", "host",
+    "start_utc", "end_utc",
 )
 STAT_COLUMNS = tuple(
     f"{name}_{stat}" for name in ("wall_s", "cpu_s") for stat in ("median", "min", "max")

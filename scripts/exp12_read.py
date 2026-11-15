@@ -2,6 +2,7 @@
 Read one test file with one pattern, read path, and chunk cache setting, and record the timings.
 
     python scripts/exp12_read.py <task> [--schedule PATH] [--input-dir DIR] [--output-dir DIR]
+        [--time-limit-s SECONDS]
 
 <task> is a task number in scripts/exp12_read_schedule.tsv (see exp12_read_schedule.py). The
 script reads <input-dir>/<label>_<config_id>.nwb (default write_output/) and writes
@@ -15,10 +16,17 @@ with pynwb, and times each read of the series data, in wall time and process CPU
 reads are timed. With one core per task, wall time minus CPU time is mostly time spent waiting on
 storage. A unit that crashes is recorded with its exit status, and the task goes on with the next
 unit, stopping after MAX_CRASHES crashed units. A sequential pattern stops early after
-MAX_SLOW_REPEATS slow repeats (see exp12_read_patterns.py).
+MAX_SLOW_UNITS slow units (see exp12_read_patterns.py).
 
 The parent process does not open the test file, so it does not bring the file into the page cache
 before a unit. Lustre's server caches cannot be flushed from user space.
+
+The task fits in the job's time limit, --time-limit-s (default TIME_LIMIT_S, the --time of
+exp12_read.sh). No unit starts once the elapsed time plus the longest unit so far would pass
+UNIT_MARGIN_S before the limit, a unit still running at that point is stopped and left out, and
+the checks are stopped CHECK_MARGIN_S before the limit. The output file is rewritten after every
+completed unit, so a job killed before it finishes keeps the units it completed, with complete
+false.
 
 After the timed units, three checks run, the first two each in a child process:
 
@@ -41,32 +49,40 @@ The output file holds these root attributes:
                         the chunk cache setting the series was read with, as the child read it
                         back from the series (from the file for unchunked, which has no chunk cache)
     n_units, n_units_run
-                        units in the pattern, and units run before any early stop
-    truncated           whether a sequential pattern stopped early on slow repeats
-    slow_repeat_threshold_s
+                        units in the pattern, and units started
+    complete            whether the task finished: it ran every unit or stopped early, and ran the
+                        checks. A file with complete false is from a job that was killed
+    stop_reason         why the task ran fewer than n_units units: slow units, time budget, or
+                        failed units (MAX_CRASHES crashed units), or empty
+    truncated           whether the task stopped early on slow units or the time budget, so its
+                        completed units are a right-censored sample
+    slow_unit_threshold_s
+                        SLOW_UNIT_THRESHOLD_S of a sequential pattern, -1 for the others
+    time_limit_s        the time limit the task was fitted in
     n_crashed           units whose child process failed
     reads, fast_reads   timed reads, and those that b2h5py's fast path served
     page_cache_evicted  whether posix_fadvise was available to evict the file's pages
     check_selection, check_sha256, check_fast_path
-                        match, mismatch, missing reference, crashed, or not run
+                        match, mismatch, missing reference, crashed, timed out, or not run
     start_utc, end_utc
     host, cpu_model, cpu_affinity_count, os_cpu_count, slurm_job_id, python, hdf5, h5py,
     hdf5plugin, hdmf, pynwb, numpy, b2h5py, blosc2, blosc2_nthreads
                         where and with what software the reads ran; blosc2_nthreads is the
                         number of threads blosc2, and so b2h5py, decompresses with
 
-and these datasets, one row per unit (NaN for a unit that did not run or crashed):
+and these datasets, one row per unit (NaN for a unit that did not complete):
 
     read_times, read_cpu_times          wall and CPU seconds of each read, units x reads
     unit_total_times, unit_total_cpu_times
                                         their sums per unit
-    unit_returncode                     exit status of each unit's child process (-1 if not run)
+    unit_returncode                     exit status of each unit's child process (NOT_RUN if not
+                                        run, STOPPED if stopped at the time budget)
     unit_fast_reads                     reads of each unit that b2h5py's fast path served
     unit_positions                      random positions of each unit (see unit_positions)
     read_lengths                        time steps of each read of a unit
 
-The script exits with status 1 if a unit crashed or a check did not match, after writing the
-output file.
+The script exits with status 1 if a unit crashed or a check did not match or did not run to its
+end, after writing the output file.
 """
 
 import argparse
@@ -93,7 +109,7 @@ import pynwb
 
 from exp12_configs import DATASETS, Config, config_table_path, read_config
 from exp12_read_patterns import (
-    CACHE_W0, MAX_SLOW_REPEATS, PATTERNS, SLOW_REPEAT_THRESHOLD_S, Pattern, cache_setting, to_index,
+    CACHE_W0, MAX_SLOW_UNITS, PATTERNS, SLOW_UNIT_THRESHOLD_S, Pattern, cache_setting, to_index,
     unit_positions, unit_selections,
 )
 from exp12_read_schedule import SCHEDULE_PATH, UNCHUNKED, ReadTask, load_schedule
@@ -109,8 +125,18 @@ WINDOWS = {"ecephys": ECEPHYS_WINDOW_SAMPLES, "ophys": OPHYS_WINDOW_FRAMES}
 CHECK_BLOCK_BYTES = 2**30
 STDERR_TAIL = 4000
 
+# The --time of exp12_read.sh. Units stop UNIT_MARGIN_S before it, leaving time for the checks,
+# which stop CHECK_MARGIN_S before it, leaving time to write the output.
+TIME_LIMIT_S = 24 * 3600
+UNIT_MARGIN_S = 2 * 3600
+CHECK_MARGIN_S = 30 * 60
+
+# unit_returncode of a unit that did not run, and of one stopped at the time budget.
+NOT_RUN = -1
+STOPPED = -2
+
 # Check results that fail the task.
-FAILED_CHECKS = ("mismatch", "crashed", "missing reference")
+FAILED_CHECKS = ("mismatch", "crashed", "missing reference", "timed out")
 
 
 # =============================================================================
@@ -251,21 +277,41 @@ def child_main(spec_path: str, result_path: str) -> None:
 # Parent process: the task
 # =============================================================================
 
-def run_child(spec: dict[str, Any], workdir: Path) -> tuple[int, dict[str, Any] | None, str]:
-    """Run one child process; return its exit status, its result, and the tail of its stderr."""
+def run_child(spec: dict[str, Any], workdir: Path,
+              timeout_s: float) -> tuple[int | None, dict[str, Any] | None, str]:
+    """Run one child process, stopping it after timeout_s seconds.
+
+    Return its exit status (None if it was stopped), its result, and the tail of its stderr.
+    """
     spec_path = workdir / "spec.json"
     result_path = workdir / "result.json"
     result_path.unlink(missing_ok=True)
     spec_path.write_text(json.dumps(spec))
-    proc = subprocess.run(
-        [sys.executable, str(Path(__file__).resolve()), "child", str(spec_path), str(result_path)],
-        stderr=subprocess.PIPE, text=True,
-    )
+    command = [sys.executable, str(Path(__file__).resolve()), "child", str(spec_path), str(result_path)]
+    try:
+        proc = subprocess.run(command, stderr=subprocess.PIPE, text=True, timeout=timeout_s)
+    except subprocess.TimeoutExpired as e:
+        # TimeoutExpired holds the captured stderr as bytes whatever the text setting.
+        stderr = e.stderr.decode(errors="replace") if isinstance(e.stderr, bytes) else (e.stderr or "")
+        sys.stderr.write(stderr)
+        sys.stderr.flush()
+        return None, None, stderr[-STDERR_TAIL:]
     if proc.stderr:
         sys.stderr.write(proc.stderr)
         sys.stderr.flush()
     result = json.loads(result_path.read_text()) if proc.returncode == 0 and result_path.exists() else None
     return proc.returncode, result, proc.stderr[-STDERR_TAIL:]
+
+
+def run_check(spec: dict[str, Any], workdir: Path, deadline_s: float, start: float) -> str:
+    """Run one check in a child process, stopping it deadline_s seconds after start."""
+    remaining = deadline_s - (time.monotonic() - start)
+    if remaining <= 0:
+        return "timed out"
+    code, result, _ = run_child(spec, workdir, remaining)
+    if code is None:
+        return "timed out"
+    return "crashed" if result is None else result["result"]
 
 
 def find_task(schedule: Path, number: int) -> ReadTask:
@@ -304,7 +350,19 @@ def run_info_with_reads() -> dict[str, Any]:
     return info
 
 
-def run_task(task: ReadTask, input_dir: Path, output_dir: Path) -> int:
+def write_results(path: Path, attrs: dict[str, Any], datasets: dict[str, np.ndarray]) -> None:
+    """Write the output file, replacing an existing one in a single rename."""
+    partial = path.with_name(path.name + ".partial")
+    with h5py.File(partial, "w") as out:
+        for key, value in attrs.items():
+            out.attrs[key] = value
+        for key, value in datasets.items():
+            out.create_dataset(key, data=value)
+    partial.replace(path)
+
+
+def run_task(task: ReadTask, input_dir: Path, output_dir: Path, time_limit_s: float) -> int:
+    start = time.monotonic()
     config = task_config(task)
     pattern: Pattern = PATTERNS[task.pattern]
     spec = DATASETS[task.label]
@@ -320,9 +378,8 @@ def run_task(task: ReadTask, input_dir: Path, output_dir: Path) -> int:
         raise SystemExit(f"Input file not found: {input_path}")
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"{task.name}.h5"
-    partial = output_path.with_name(output_path.name + ".partial")
     output_path.unlink(missing_ok=True)
-    partial.unlink(missing_ok=True)
+    output_path.with_name(output_path.name + ".partial").unlink(missing_ok=True)
 
     info = run_info_with_reads()
     print(f"Task {task.task}: {task.name}, cache {nbytes} bytes, {nslots} slots", flush=True)
@@ -330,31 +387,85 @@ def run_task(task: ReadTask, input_dir: Path, output_dir: Path) -> int:
     positions = unit_positions(pattern, shape)
     base = {"file": str(input_path), "series": series, "path": task.path, "rdcc": [nbytes, nslots, CACHE_W0]}
     n_units = pattern.n_units
-    reads_per_unit = len(unit_selections(pattern, shape, positions[0].tolist()))
+    first = unit_selections(pattern, shape, positions[0].tolist())
+    reads_per_unit = len(first)
     read_times = np.full((n_units, reads_per_unit), np.nan)
     read_cpu_times = np.full((n_units, reads_per_unit), np.nan)
-    returncodes = np.full(n_units, -1, dtype=np.int64)
+    returncodes = np.full(n_units, NOT_RUN, dtype=np.int64)
     fast_reads = np.zeros(n_units, dtype=np.int64)
     completed = np.zeros(n_units, dtype=bool)
     crashes: list[str] = []
-    slow = 0
-    truncated = False
     evicted = True
-    rdcc_in_file: list[Any] = [nbytes, nslots, CACHE_W0]
-    threshold = SLOW_REPEAT_THRESHOLD_S[modality]
+    rdcc_read: list[Any] = [nbytes, nslots, CACHE_W0]
+    threshold = SLOW_UNIT_THRESHOLD_S[modality] if pattern.sequential else -1
+    unit_deadline_s = time_limit_s - UNIT_MARGIN_S
+    check_deadline_s = time_limit_s - CHECK_MARGIN_S
+    checks = {"check_selection": "not run", "check_sha256": "not run", "check_fast_path": "not run"}
+    stop_reason = ""
+
+    def save(complete: bool) -> None:
+        attrs = {
+            "task": task.task, "stage": task.stage, "label": task.label,
+            "row": -1 if task.row is None else task.row, "config_id": task.config_id,
+            "pattern": task.pattern, "path": task.path, "cache": task.cache,
+            "chunks": "contiguous" if chunks is None else ",".join(str(c) for c in chunks),
+            "codec": "none" if config is None else config.codec,
+            "level": -1 if config is None or config.level is None else config.level,
+            "shuffle": "none" if config is None else config.shuffle,
+            "data_shape": list(shape),
+            "rdcc_nbytes": int(rdcc_read[0]), "rdcc_nslots": int(rdcc_read[1]),
+            "rdcc_w0": float(rdcc_read[2]),
+            "n_units": n_units, "n_units_run": int(np.sum(returncodes != NOT_RUN)),
+            "complete": complete, "stop_reason": stop_reason,
+            "truncated": stop_reason in ("slow units", "time budget"),
+            "slow_unit_threshold_s": threshold, "time_limit_s": time_limit_s,
+            "n_crashed": len(crashes), "crashes": "\n\n".join(crashes),
+            "reads": int(np.sum(~np.isnan(read_times))), "fast_reads": int(fast_reads.sum()),
+            "page_cache_evicted": evicted,
+            **checks,
+            "start_utc": info["start_utc"],
+            "end_utc": datetime.now(UTC).isoformat(timespec="seconds"),
+            **{k: v for k, v in info.items() if k != "start_utc"},
+        }
+        write_results(output_path, attrs, {
+            "read_times": read_times,
+            "read_cpu_times": read_cpu_times,
+            "unit_total_times": read_times.sum(axis=1),
+            "unit_total_cpu_times": read_cpu_times.sum(axis=1),
+            "unit_returncode": returncodes,
+            "unit_fast_reads": fast_reads,
+            "unit_positions": positions,
+            "read_lengths": np.array(
+                [1 if isinstance(s[0], int) else s[0][1] - s[0][0] for s in first], dtype=np.int64),
+        })
 
     with tempfile.TemporaryDirectory() as tmp:
         workdir = Path(tmp)
-        n_run = 0
+        slow = 0
+        longest = 0.0
         for unit in range(n_units):
+            elapsed = time.monotonic() - start
+            if elapsed + longest > unit_deadline_s:
+                stop_reason = "time budget"
+                print(f"  Stopping before unit {unit}: {elapsed:.0f} s elapsed, longest unit "
+                      f"{longest:.0f} s, units stop at {unit_deadline_s:.0f} s", flush=True)
+                break
             selections = unit_selections(pattern, shape, positions[unit].tolist())
-            code, result, stderr_tail = run_child({**base, "mode": "unit", "selections": selections}, workdir)
-            n_run += 1
+            unit_start = time.monotonic()
+            code, result, stderr_tail = run_child(
+                {**base, "mode": "unit", "selections": selections}, workdir, unit_deadline_s - elapsed)
+            longest = max(longest, time.monotonic() - unit_start)
+            if code is None:
+                returncodes[unit] = STOPPED
+                stop_reason = "time budget"
+                print(f"  Unit {unit} stopped at {unit_deadline_s:.0f} s", flush=True)
+                break
             returncodes[unit] = code
             if result is None:
                 crashes.append(f"unit {unit}: exit status {code}: {stderr_tail}")
                 print(f"  Unit {unit} failed with exit status {code}", flush=True)
                 if len(crashes) >= MAX_CRASHES:
+                    stop_reason = "failed units"
                     print(f"  Stopping after {len(crashes)} failed units", flush=True)
                     break
                 continue
@@ -368,83 +479,45 @@ def run_task(task: ReadTask, input_dir: Path, output_dir: Path) -> int:
             fast_reads[unit] = result["fast_reads"]
             completed[unit] = True
             evicted &= result["evicted"]
-            rdcc_in_file = result["rdcc"]
+            rdcc_read = result["rdcc"]
             total = float(np.sum(result["wall"]))
             print(f"  Unit {unit}: {total:.3f} s wall, {float(np.sum(result['cpu'])):.3f} s CPU", flush=True)
-            if pattern.kind == "sequential" and total > threshold:
+            save(complete=False)
+            if pattern.sequential and total > threshold:
                 slow += 1
-                if slow >= MAX_SLOW_REPEATS:
-                    print(f"  Stopping after {slow} repeats over {threshold} s", flush=True)
-                    truncated = True
+                if slow >= MAX_SLOW_UNITS:
+                    stop_reason = "slow units"
+                    print(f"  Stopping after {slow} units over {threshold} s", flush=True)
                     break
 
-        first = unit_selections(pattern, shape, positions[0].tolist())
         reference = input_dir / f"{task.label}_{UNCHUNKED}.nwb"
         if config is None:
-            check_selection = "not run"
+            checks["check_selection"] = "not run"
         elif not reference.exists():
-            check_selection = "missing reference"
+            checks["check_selection"] = "missing reference"
         else:
-            _, result, _ = run_child({**base, "mode": "check_selection", "reference": str(reference),
-                                      "selections": [first[0], first[-1]]}, workdir)
-            check_selection = "crashed" if result is None else result["result"]
+            checks["check_selection"] = run_check(
+                {**base, "mode": "check_selection", "reference": str(reference),
+                 "selections": [first[0], first[-1]]}, workdir, check_deadline_s, start)
 
         if task.path == "b2h5py":
             stats_path = input_dir / f"stats_{task.label}_{task.config_id}.tsv"
             sha256 = recorded_sha256(stats_path) if stats_path.exists() else ""
             if not sha256:
-                check_sha256 = "missing reference"
+                checks["check_sha256"] = "missing reference"
             else:
-                _, result, _ = run_child({**base, "mode": "check_sha256", "sha256": sha256}, workdir)
-                check_sha256 = "crashed" if result is None else result["result"]
-        else:
-            check_sha256 = "not run"
+                checks["check_sha256"] = run_check(
+                    {**base, "mode": "check_sha256", "sha256": sha256}, workdir, check_deadline_s, start)
 
     if completed.any():
         expected = reads_per_unit if task.path == "b2h5py" else 0
-        check_fast_path = "match" if np.all(fast_reads[completed] == expected) else "mismatch"
-    else:
-        check_fast_path = "not run"
+        checks["check_fast_path"] = "match" if np.all(fast_reads[completed] == expected) else "mismatch"
+    save(complete=True)
 
-    with h5py.File(partial, "w") as out:
-        attrs = {
-            "task": task.task, "stage": task.stage, "label": task.label,
-            "row": -1 if task.row is None else task.row, "config_id": task.config_id,
-            "pattern": task.pattern, "path": task.path, "cache": task.cache,
-            "chunks": "contiguous" if chunks is None else ",".join(str(c) for c in chunks),
-            "codec": "none" if config is None else config.codec,
-            "level": -1 if config is None or config.level is None else config.level,
-            "shuffle": "none" if config is None else config.shuffle,
-            "data_shape": list(shape),
-            "rdcc_nbytes": int(rdcc_in_file[0]), "rdcc_nslots": int(rdcc_in_file[1]),
-            "rdcc_w0": float(rdcc_in_file[2]),
-            "n_units": n_units, "n_units_run": n_run, "truncated": truncated,
-            "slow_repeat_threshold_s": threshold if pattern.kind == "sequential" else -1,
-            "n_crashed": len(crashes), "crashes": "\n\n".join(crashes),
-            "reads": int(np.sum(~np.isnan(read_times))), "fast_reads": int(fast_reads.sum()),
-            "page_cache_evicted": evicted,
-            "check_selection": check_selection, "check_sha256": check_sha256,
-            "check_fast_path": check_fast_path,
-            "start_utc": info["start_utc"],
-            "end_utc": datetime.now(UTC).isoformat(timespec="seconds"),
-            **{k: v for k, v in info.items() if k != "start_utc"},
-        }
-        for key, value in attrs.items():
-            out.attrs[key] = value
-        out.create_dataset("read_times", data=read_times)
-        out.create_dataset("read_cpu_times", data=read_cpu_times)
-        out.create_dataset("unit_total_times", data=read_times.sum(axis=1))
-        out.create_dataset("unit_total_cpu_times", data=read_cpu_times.sum(axis=1))
-        out.create_dataset("unit_returncode", data=returncodes)
-        out.create_dataset("unit_fast_reads", data=fast_reads)
-        out.create_dataset("unit_positions", data=positions)
-        out.create_dataset("read_lengths", data=np.array(
-            [1 if isinstance(s[0], int) else s[0][1] - s[0][0] for s in first], dtype=np.int64))
-    partial.replace(output_path)
-
-    print(f"Checks: selection {check_selection}, sha256 {check_sha256}, fast path {check_fast_path}; "
-          f"{len(crashes)} failed units; results in {output_path}", flush=True)
-    failed = crashes or any(c in FAILED_CHECKS for c in (check_selection, check_sha256, check_fast_path))
+    print(f"Checks: selection {checks['check_selection']}, sha256 {checks['check_sha256']}, "
+          f"fast path {checks['check_fast_path']}; {len(crashes)} failed units; results in {output_path}",
+          flush=True)
+    failed = crashes or any(result in FAILED_CHECKS for result in checks.values())
     return 1 if failed else 0
 
 
@@ -457,8 +530,10 @@ def main() -> None:
     parser.add_argument("--schedule", type=Path, default=SCHEDULE_PATH)
     parser.add_argument("--input-dir", type=Path, default=REPO / "write_output")
     parser.add_argument("--output-dir", type=Path, default=REPO / "read_output")
+    parser.add_argument("--time-limit-s", type=float, default=TIME_LIMIT_S,
+                        help=f"the job's time limit in seconds (default {TIME_LIMIT_S})")
     args = parser.parse_args()
-    sys.exit(run_task(find_task(args.schedule, args.task), args.input_dir, args.output_dir))
+    sys.exit(run_task(find_task(args.schedule, args.task), args.input_dir, args.output_dir, args.time_limit_s))
 
 
 if __name__ == "__main__":

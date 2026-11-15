@@ -275,28 +275,29 @@ python scripts/exp12_read_schedule.py
 
 - **Read paths**: every file is read with h5py and the HDF5 filters. Blosc2 files are also read with b2h5py's fast slicing, which reads the needed blocks of each chunk itself and bypasses the HDF5 chunk cache.
 - **Chunk cache**: set explicitly when the file is opened. The h5py reads of a sequential pattern (E1, E2, O1, O2, O4) whose batches cut across chunks run with 1 MiB and 8 MiB (what `h5py.File` gives with HDF5 1.x and 2.x), 32 MiB (what pynwb gives when it opens a file by path, since hdmf sets it), and a cache fitted to one row of chunks across the full width, so each chunk is decompressed once. Every other read runs with 32 MiB.
-- **Isolation**: each repeat or sample runs in its own child process, which evicts the file from the page cache, opens it, and times only the reads. A crashed child is recorded and the task continues.
+- **Isolation**: each repeat or sample runs in its own child process, which evicts the file from the page cache, opens it, and times only the reads. A crashed child is recorded and the task continues. The output file is rewritten after every repeat or sample, so a job killed before it finishes keeps what it completed.
+- **Time limit**: each task fits the 24 hour limit of `scripts/exp12_read.sh`. No repeat or sample starts once it would end past 22 hours at the length of the longest so far, one still running at 22 hours is stopped, and the checks stop at 23.5 hours. A sequential pattern also stops after three repeats (samples for O4) over 170 minutes for ecephys or 100 minutes for ophys. Either stop sets `truncated`, so the completed repeats are a right-censored sample.
 - **Checks**: after the timed reads, the first and last selections of the first repeat or sample are compared with the same selections of the unchunked file, b2h5py reads of the whole window are checked against the SHA-256 the write recorded, and b2h5py's fast path must have served every timed read of the b2h5py path and none of the h5py path.
 
 Each task runs as its own job, `scripts/exp12_read.sh <task>`, and writes `read_output/<label>_<config_id>_<pattern>_<path>_<cache>_s<stage>.h5`, whose attributes and datasets are documented in `scripts/exp12_read.py`. Logs go to `read_logs/<same name>--<job ID>-{out,err}.log`. `scripts/exp12_submit_reads.py` submits the tasks of one modality and stage in schedule order under the same 95 job cap and lock as the writes, so reads and writes running together stay under it, and records each submission in `read_logs/exp12_read_submitted.tsv`. The reads of a modality start once its writes are complete and checked.
 
-For each modality, first submit a smoke test: on ecephys1 or ophys1, the unchunked file; the longest chunks with gzip 4 at a 1 MiB cache (the most decompression per byte read) and at the fitted cache (up to 16 GiB for OCtile16L on ophys1, the most memory); for ecephys, the h5py default chunks at 1 MiB (384 chunks across); Blosc2 zstd 9 with bitshuffle through b2h5py; and for ophys, single frames of uncompressed OCframeM:
+For each modality, first submit a smoke test: on ecephys1 or ophys1, the unchunked file; the longest chunks with gzip 4 at a 1 MiB cache (the most decompression per byte read, which for EC1L runs until the time limit stops it) and at the fitted cache (up to 16 GiB for OCtile16L on ophys1, the most memory); for ecephys, the h5py default chunks at 1 MiB (384 chunks across); Blosc2 zstd 9 with bitshuffle through b2h5py; and for ophys, single frames of uncompressed OCframeM and O4 on OCframeL with gzip 4 (each of its 50 samples decompresses the whole window):
 
 ```bash
 mkdir -p read_logs read_output
 MODALITY=ecephys  # or ophys
-SMOKE='^(ecephys1_(unchunked_e1_h5py_32mib|EC32L-gzip4_e1_h5py_(1mib|fitted)|ECh5py-gzip4_e1_h5py_1mib|EC32M-b2zstd9-bitshuf_e[14]_b2h5py_32mib)|ophys1_(unchunked_o1_h5py_32mib|OCtile16L-gzip4_o1_h5py_1mib|OCtile16L-gzip4_o2_h5py_fitted|OCtile16M-b2zstd9-bitshuf_o[14]_b2h5py_32mib|OCframeM-none_o3_h5py_32mib))_s1$'
+SMOKE='^(ecephys1_(unchunked_e1_h5py_32mib|EC1L-gzip4_e1_h5py_(1mib|fitted)|ECh5py-gzip4_e1_h5py_1mib|EC32M-b2zstd9-bitshuf_e[14]_b2h5py_32mib)|ophys1_(unchunked_o1_h5py_32mib|OCtile16L-gzip4_o1_h5py_1mib|OCtile16L-gzip4_o2_h5py_fitted|OCtile16M-b2zstd9-bitshuf_o[14]_b2h5py_32mib|OCframeM-none_o3_h5py_32mib|OCframeL-gzip4_o4_h5py_32mib))_s1$'
 TASKS=$(awk -F'\t' -v m="$MODALITY" -v re="$SMOKE" 'NR > 1 && $3 ~ "^" m && ($3"_"$5"_"$6"_"$7"_"$8"_s"$2) ~ re {print $1}' scripts/exp12_read_schedule.tsv | paste -sd,)
 python scripts/exp12_submit_reads.py submit $MODALITY --tasks $TASKS
 ```
 
-Once those complete, check their run times against the 24 hour limit in `scripts/exp12_read.sh` and their memory use against the 32 GB request, then submit the rest of that modality's stage 1 reads:
+Once those complete, check their run times, which of them stopped early (`stop_reason`), and their memory use against the 32 GB request, then submit the rest of that modality's stage 1 reads:
 
 ```bash
 sbatch scripts/exp12_submit_reads.sh $MODALITY
 ```
 
-To report the state of every task, with the failed ones and the command that resubmits them (a failed read with an output file had a crashed repeat or sample, or a check that did not match; its attributes say which):
+To report the state of every task, with the failed ones and the command that resubmits them (a failed read with an output file had a crashed repeat or sample, or a check that did not match or ran out of time; its attributes say which):
 
 ```bash
 python scripts/exp12_submit_reads.py status --modality $MODALITY --stage 1

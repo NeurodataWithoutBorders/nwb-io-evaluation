@@ -17,7 +17,8 @@ whether or not they were submitted before, for smoke tests and resubmitting fail
 status report uses the latest job of each read.
 
 A read job fails (exit status 1) when a unit's child process crashed or a correctness check did
-not match, after it writes its results; the status report lists these with the other failures.
+not match or ran out of time, after it writes its results; the status report lists these with the
+other failures.
 
 Usage:
     python scripts/exp12_submit_reads.py submit {ecephys,ophys} [--stage 1] [--tasks 3,17,250]
@@ -150,7 +151,8 @@ def status(args: argparse.Namespace) -> None:
             print(f"{task.task:>5}  {task.name:<60} {job_id:<10} {state:<20} {elapsed}")
         print()
         print("Logs: read_logs/<name>--<job_id>-{out,err}.log. A FAILED read with an output file had a "
-              "crashed unit or a check that did not match; its output's attributes say which.")
+              "crashed unit or a check that did not match or ran out of time; its output's attributes say "
+              "which. A read killed before it finished keeps the units it completed, with complete false.")
         for modality in MODALITIES:
             for stage in (1, 2):
                 tasks = [task.task for task, *_ in problems if task.modality == modality and task.stage == stage]
