@@ -43,6 +43,14 @@
 - Whether the ranking of codecs by ratio changes across segments.
 - If the centered window falls outside the range of the segments, or the ranking changes, say so in the paper and consider moving the window.
 
+## Stage 2
+
+**When:** after the stage 1 reads finish.
+
+- Apply the selection rule at `STAGE2_SETTINGS` in `scripts/exp12_configs.py` to the stage 1 write stats and read results, per modality, and record the inputs and picks with the analysis.
+- Fill in `STAGE2_SETTINGS`, regenerate the config tables and the write schedule, and check that every stage 1 row and task number is unchanged.
+- Run the stage 2 reads together with re-reads of the stage 1 configurations on the seven non-sweep shapes (no compression and gzip 4) and the library defaults, in one randomized run.
+
 ## Before the writes
 
 - Check that `write_output/` has no Lustre layout of its own (`lfs getstripe -d write_output`), so the test files get the scratch filesystem's default layout described in the README.

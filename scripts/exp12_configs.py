@@ -25,7 +25,8 @@ dimensions differently:
 
     EC384, EC64, EC32       all 384 channels, groups of 64 channels, and groups of 32 channels
     OCframe                 whole frames
-    OCtile128, OCtile32     128 x 128 and 32 x 32 pixel tiles
+    OCtile128, OCtile16     128 x 128 and 16 x 16 pixel tiles (16 x 16 is the patch the O4 read
+                            pattern reads)
 
 and the sizes, in uncompressed bytes, are
 
@@ -38,8 +39,11 @@ and the sizes, in uncompressed bytes, are
 
 The chunk cache holds decompressed chunks no larger than itself, so a read that touches a chunk
 again, in the same read call or a later one, decompresses it again when the chunk does not fit.
-Each shape's time extent divides the window (exp12_window.py), and the ecephys time extents
-divide or are multiples of 30,000 samples, one second of data.
+Each shape's time extent divides the window (exp12_window.py) and is at most half of it, so every
+dataset has at least two chunks along time, and the ecephys time extents divide or are multiples
+of 30,000 samples, one second of data. For OCtile16 these limits hold the sizes below their
+labels: M is 5 MiB and L is 10 MiB, since 8 MiB of 16 x 16 tiles is 16,384 frames, which does not
+divide the 40,960 frame window, and 24 MiB would exceed it.
 
 Three more labels hold library default chunk shapes, computed for each full-length recording
 (the shape, dtype, and label of every recording are in DATASETS) and written with gzip 4:
@@ -144,8 +148,9 @@ ECEPHYS_CHUNKS = {
 
 
 def largest_time_extent(slice_bytes: int, limit: int, window: int) -> int:
-    """The largest divisor of window whose chunks of slice_bytes per time step fit in limit."""
-    extent = max(1, limit // slice_bytes)
+    """The largest divisor of window, at most half of it, whose chunks of slice_bytes per time step
+    fit in limit."""
+    extent = max(1, min(limit // slice_bytes, window // 2))
     while window % extent:
         extent -= 1
     return extent
@@ -154,10 +159,10 @@ def largest_time_extent(slice_bytes: int, limit: int, window: int) -> int:
 def ophys_chunks(width: int, height: int) -> dict[str, tuple[int, ...]]:
     """Chunk shapes for frames of width x height uint16 pixels, by chunk label.
 
-    Each shape holds the most frames that divide the window and keep the chunk within its size
-    limit.
+    Each shape holds the most frames that divide the window, number at most half of it, and keep
+    the chunk within its size limit.
     """
-    aspects = {"OCframe": (width, height), "OCtile128": (128, 128), "OCtile32": (32, 32)}
+    aspects = {"OCframe": (width, height), "OCtile128": (128, 128), "OCtile16": (16, 16)}
     chunks = {}
     for aspect, (w, h) in aspects.items():
         for size, limit in SIZE_LIMITS.items():
@@ -168,11 +173,32 @@ def ophys_chunks(width: int, height: int) -> dict[str, tuple[int, ...]]:
 
 # The M shapes of two aspects that differ most in how they split the data, on which stage 1 writes
 # every codec setting.
-CODEC_SWEEP_CHUNKS = {"EC": ("EC384M", "EC32M"), "OC": ("OCframeM", "OCtile32M")}
+CODEC_SWEEP_CHUNKS = {"EC": ("EC384M", "EC32M"), "OC": ("OCframeM", "OCtile16M")}
 
 # Codec settings (codec, level, shuffle) that stage 2 writes on every shape outside
-# CODEC_SWEEP_CHUNKS, chosen from the stage 1 results.
-# TODO: fill in from the stage 1 codec rankings, then regenerate the tables and the write schedule.
+# CODEC_SWEEP_CHUNKS. They are chosen per modality by a fixed rule from the stage 1 writes and
+# reads of the codec sweep shapes, 2 shapes x 3 datasets = 6 cells per setting. Per cell:
+#
+#     R  compression ratio (write stats)
+#     D  read CPU time of the full-width sequential pattern (E1 or O1) without b2h5py, median over
+#        repeats
+#     C  write CPU time of the series, cpu_series_s - cpu_source_read_s
+#
+# Each is divided by the gzip 4 (no shuffle) value of the same cell, and the settings are compared
+# on the geometric mean over the 6 cells. Ratios within 1% of each other count as equal, and the
+# setting with the lower D ranks first among them. The picks:
+#
+#     1  fastest to read: lowest D among settings with R >= 1
+#     2  smallest that reads and writes at an acceptable cost: highest R among settings with D <= 1
+#        and C no higher than gzip 9's
+#     3  smallest in the HDF5 library: the gzip setting picked by rule 2 among gzip settings only
+#     4  Blosc2, so the b2h5py read factor covers every shape: lowest D among Blosc2 settings with
+#        R >= 1. When pick 1 is a Blosc2 setting, this pick is the lowest D among lz4 and zstd
+#        settings with R >= 1, so both plugin families are covered.
+#
+# STAGE2_SETTINGS holds the distinct picks other than gzip 4, which every shape already has.
+# TODO: fill in by this rule once the stage 1 reads finish, then regenerate the tables and the
+# write schedule.
 STAGE2_SETTINGS: dict[str, list[tuple[str, int | None, str]]] = {"EC": [], "OC": []}
 
 
@@ -279,17 +305,18 @@ def build_configs(label: str) -> list[Config]:
 
 
 def check_chunks(label: str) -> None:
-    """Raise ValueError unless each EC or OC chunk shape fits its size limit and divides the window."""
+    """Raise ValueError unless each EC or OC chunk shape fits its size limit, divides the window, and
+    spans at most half of it."""
     spec = DATASETS[label]
     window = ECEPHYS_WINDOW_SAMPLES if spec["prefix"] == "EC" else OPHYS_WINDOW_FRAMES
     itemsize = np.dtype(spec["dtype"]).itemsize
     for chunk_label, chunks in spec["chunks"].items():
         nbytes = int(np.prod(chunks)) * itemsize
         limit = SIZE_LIMITS[chunk_label[-1]]
-        if nbytes > limit or window % chunks[0]:
+        if nbytes > limit or window % chunks[0] or chunks[0] > window // 2:
             raise ValueError(
-                f"{label} {chunk_label} {chunks}: {nbytes} bytes (limit {limit}), and the window of "
-                f"{window} is {'' if window % chunks[0] == 0 else 'not '}a multiple of {chunks[0]}"
+                f"{label} {chunk_label} {chunks}: {nbytes} bytes (limit {limit}), {chunks[0]} time "
+                f"steps in a window of {window}, which must be a multiple of it and at least twice it"
             )
 
 

@@ -16,7 +16,7 @@ from typing import Any
 ECEPHYS_WINDOW_SAMPLES = 36_000_000
 
 # 2^13 x 5 frames: 45.5 min for ophys1 at 15 Hz, 22.7 min for ophys2 and ophys3 at 30.075 Hz.
-# Divisible by the time extent of every ophys chunk shape (1 to 10,240 frames).
+# Divisible by the time extent of every ophys chunk shape (1 to 20,480 frames).
 OPHYS_WINDOW_FRAMES = 40_960
 
 
