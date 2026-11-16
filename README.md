@@ -61,6 +61,7 @@ Note: the `h5ls` command can take some time to get the chunking, storage, and fi
 dandi download "https://api.dandiarchive.org/api/dandisets/000053/versions/0.210819.0345/assets/?path=sub-npI3/sub-npI3_ses-20190421_behavior+ecephys.nwb"
 h5ls -v sub-npI3_ses-20190421_behavior+ecephys.nwb/acquisition/ElectricalSeries/data
 ```
+`acquisition/ElectricalSeries/data` dataset
 - Shape: 349975807, 384
 - Sampling rate: 30000 Hz (`starting_time` rate)
 - Duration: 194.4 min
@@ -74,6 +75,7 @@ h5ls -v sub-npI3_ses-20190421_behavior+ecephys.nwb/acquisition/ElectricalSeries/
 dandi download "https://api.dandiarchive.org/api/dandisets/000409/versions/0.260309.1324/assets/?path=sub-CSHL045/sub-CSHL045_ses-034e726f-b35f-41e0-8d6c-a22cc32391fb_desc-raw_ecephys.nwb"
 h5ls -v sub-CSHL045_ses-034e726f-b35f-41e0-8d6c-a22cc32391fb_desc-raw_ecephys.nwb/acquisition/ElectricalSeriesProbe00AP/data
 ```
+`acquisition/ElectricalSeriesProbe00AP/data` dataset
 - Shape: 114798408, 384
 - Sampling rate: 30000 Hz (from `timestamps`, which have a constant interval)
 - Duration: 63.8 min
@@ -86,6 +88,7 @@ h5ls -v sub-CSHL045_ses-034e726f-b35f-41e0-8d6c-a22cc32391fb_desc-raw_ecephys.nw
 dandi download "https://api.dandiarchive.org/api/dandisets/000620/versions/0.260127.2208/assets/?path=sub-Elgar/sub-Elgar_ses-2022-08-19_ecephys.nwb"
 h5ls -v sub-Elgar_ses-2022-08-19_ecephys.nwb/acquisition/ElectricalSeriesAP/data
 ```
+`acquisition/ElectricalSeriesAP/data` dataset
 - Shape: 326714943, 384
 - Sampling rate: 30001.065 Hz (`starting_time` rate)
 - Duration: 181.5 min
@@ -98,6 +101,7 @@ h5ls -v sub-Elgar_ses-2022-08-19_ecephys.nwb/acquisition/ElectricalSeriesAP/data
 dandi download "https://api.dandiarchive.org/api/dandisets/000054/versions/0.210819.1547/assets/?path=sub-R6/sub-R6_ses-20200206T210000_behavior+ophys.nwb"
 h5ls -v sub-R6_ses-20200206T210000_behavior+ophys.nwb/acquisition/TwoPhotonSeries/data
 ```
+`acquisition/TwoPhotonSeries/data` dataset
 - Shape: 41673, 796, 512
 - Sampling rate: 15.0 Hz (`starting_time` rate and `imaging_plane` `imaging_rate`)
 - Duration: 46.3 min
@@ -111,6 +115,7 @@ h5ls -v sub-R6_ses-20200206T210000_behavior+ophys.nwb/acquisition/TwoPhotonSerie
 dandi download "https://api.dandiarchive.org/api/dandisets/000037/versions/0.240209.1623/assets/?path=sub-408021/sub-408021_ses-758519303_obj-raw_behavior+image+ophys.nwb"
 h5ls -v sub-408021_ses-758519303_obj-raw_behavior+image+ophys.nwb/acquisition/motion_corrected_stack/data
 ```
+`acquisition/motion_corrected_stack/data` dataset
 - Shape: 126741, 512, 512
 - Sampling rate: 30.075 Hz (from `timestamps`, median interval 0.03325 s; the `imaging_plane` `imaging_rate` says 30.0 Hz)
 - Duration: 70.2 min
@@ -123,6 +128,7 @@ h5ls -v sub-408021_ses-758519303_obj-raw_behavior+image+ophys.nwb/acquisition/mo
 dandi download "https://api.dandiarchive.org/api/dandisets/000728/versions/0.240827.1809/assets/?path=sub-491604967/sub-491604967_ses-496908818-StimB_ophys.nwb"
 h5ls -v sub-491604967_ses-496908818-StimB_ophys.nwb/acquisition/MotionCorrectedTwoPhotonSeries/data
 ```
+`acquisition/MotionCorrectedTwoPhotonSeries/data` dataset
 - Shape: 113855, 512, 512
 - Sampling rate: 30.075 Hz (from `timestamps`, median interval 0.03325 s; the `imaging_plane` has no `imaging_rate`)
 - Duration: 63.1 min
@@ -133,12 +139,12 @@ h5ls -v sub-491604967_ses-496908818-StimB_ophys.nwb/acquisition/MotionCorrectedT
 
 ### Time windows
 
-The raw binary and TIFF files hold each full recording. The test NWB files (unchunked and every chunking and compression configuration) hold a contiguous window from the middle of each recording, defined in `scripts/exp12_window.py`. Each test file names the series `ElectricalSeries` (ecephys) or `TwoPhotonSeries` (ophys), whatever its name in the source file, and leaves out other series of the same type, in /acquisition or in a processing module (such as ecephys1's 10 GB LFP), and series that link to a left-out series (see `scripts/exp12_series.py`).
+To simulate creation of NWB files from source data, the datasets are converted into raw binary (ecephys) and multi-page TIFF files (ophys). Then, those source data are used to construct test NWB files (unchunked and every chunking and compression configuration). The test NWB files hold a contiguous window from the middle of each recording, defined in `scripts/exp12_window.py`. Each test file names the new time series `ElectricalSeries` (ecephys) or `TwoPhotonSeries` (ophys) and leaves out other series of the same type in `/acquisition` or in a processing module (such as ecephys1's 10 GB LFP), as well as series that link to a left-out series (see `scripts/exp12_series.py`).
 
 - Ecephys: 36,000,000 samples, which is 20 min at 30 kHz (19.999 min for ecephys3 at 30001.065 Hz). Only the AP band is written, from `ElectricalSeries` in ecephys1, `ElectricalSeriesProbe00AP` in ecephys2, and `ElectricalSeriesAP` in ecephys3.
 - Ophys: 40,960 frames, which is 45.5 min for ophys1 at 15 Hz and 22.7 min for ophys2 and ophys3 at 30.075 Hz, from `TwoPhotonSeries` in ophys1, `motion_corrected_stack` in ophys2, and `MotionCorrectedTwoPhotonSeries` in ophys3.
 
-Each window is a whole number of chunk time extents for the EC and OC chunk shapes. The ophys1 frames are 796 pixels wide, which is not a multiple of the 128 and 16 pixel tiles, so those datasets have partly filled edge chunks; their uncompressed files report a compression ratio below 1.
+Each window is a whole number of chunk time extents for the EC and OC chunk shapes. The ophys1 frames are 796 pixels wide, which is not a multiple of the 128 and 16 pixel tiles, so those datasets have partly filled edge chunks. As a result, their uncompressed files report a compression ratio below 1.
 
 ### Chunking and compression configurations
 
@@ -160,14 +166,14 @@ Chunk shapes cross aspects with three sizes:
 | OCtile128: 128 x 128 pixel tiles | 32 frames | 256 frames | 640 frames |
 | OCtile16: 16 x 16 pixel tiles | 2048 frames | 10240 frames (5 MiB) | 20480 frames (10 MiB) |
 
-The sizes are uncompressed. A chunk larger than the reader's chunk cache is decompressed again by every read that touches it again, and the cache depends on how the reader opens the file: `h5py.File` gives HDF5's default, 1 MiB in HDF5 1.x and 8 MiB in HDF5 2.x, and hdmf (so pynwb) opens files with 32 MiB. S fits every reader's cache, M fits HDF5 2.x's and pynwb's, and L fits pynwb's only. L is also sized for streaming: at the compression ratios measured for these data in an earlier run (about 2.2 for ecephys and 1.8 for ophys with the best codecs) and at 1.5, its chunks make byte range requests of about 8 to 15 MiB, within the 8 to 16 MB part size AWS suggests for downloading from S3. The ophys shapes hold the most frames that fit the size, divide the window, and span at most half of it (so every dataset has at least two chunks along time). The OCframe and OCtile128 L shapes are 20 MiB, and 15.5 MiB for ophys1's 796 x 512 frames. OCtile16 matches the 16 x 16 patch of the O4 read pattern, and its M and L shapes are 5 and 10 MiB: 8 MiB of 16 x 16 tiles is 16,384 frames, which does not divide the window, and 24 MiB is more than the window holds. The EC1 time extents are the largest multiples of one second that divide the window.
+The sizes are uncompressed. A chunk larger than the reader's chunk cache is decompressed every time a read touches it. The chunk cache depends on how the reader opens the file: `h5py.File` gives HDF5's default, 1 MiB in HDF5 1.x and 8 MiB in HDF5 2.x, and hdmf (so pynwb) opens files with 32 MiB. S fits every reader's cache, M fits HDF5 2.x's and pynwb's, and L fits pynwb's only. M and L are also sized for streaming - AWS and HDF5 recommend using 8-16 MiB chunks (after any compression) for download from S3. The ophys shapes hold the most frames that fit the size, divide the window, and span at most half of it (so every dataset has at least two chunks along time). The OCframe and OCtile128 L shapes are 20 MiB, and 15.5 MiB for ophys1's 796 x 512 frames. OCtile16 matches the 16 x 16 patch of the O4 read pattern, and its M and L shapes are 5 and 10 MiB: 8 MiB of 16 x 16 tiles is 16,384 frames, which does not divide the window, and 24 MiB is more than the window holds. The EC1 time extents are the largest multiples of one second that divide the window.
 
 The configurations run in two stages:
 
 1. Every codec setting on the codec sweep shapes, EC384M, EC32M, and EC1M for ecephys and OCframeM and OCtile16M for ophys, which ranks the codecs; no compression and gzip 4 on the other shapes (nine for ecephys, seven for ophys); and the three library default shapes. 138 configurations per ecephys dataset and 95 per ophys dataset.
 2. Codec settings chosen from the stage 1 writes and reads, by the rule documented at `STAGE2_SETTINGS` in `scripts/exp12_configs.py`, on the other shapes. Filling in `STAGE2_SETTINGS` and regenerating the tables, the write schedule, and the read schedule adds the stage 2 configurations and reads after the stage 1 ones, leaving every stage 1 row and task number unchanged.
 
-The stages run in order: stage 1 writes, stage 1 reads, stage 2 writes, stage 2 reads. The stage 2 reads also re-read the stage 1 configurations on the non-sweep shapes (no compression and gzip 4) and the library defaults, so every comparison between codec settings on one shape comes from the same read run.
+The stages run in order: stage 1 writes, stage 1 reads, stage 2 writes, stage 2 reads. The stage 2 reads also re-read the stage 1 configurations on the non-sweep shapes (no compression and gzip 4) and the library defaults, so every comparison between codec settings on one shape comes from the same read run to reduce variability from experiencing different loads on the shared cluster at different times.
 
 - Codec settings: uncompressed; gzip 1, 4, 6, 9, lzf, lz4, and zstd 3, 11, 22, each with and without the HDF5 shuffle filter; Blosc2 blosclz 1, 9, lz4 1, 9, lz4hc 1, 5, 9, and zstd 2, 6, 9, each with Blosc2's shuffle and with its bitshuffle. Blosc2 zstd levels 2, 6, and 9 run zstd at levels 3, 11, and 22.
 - Library defaults, both with gzip 4 and computed for the full-length recording:
