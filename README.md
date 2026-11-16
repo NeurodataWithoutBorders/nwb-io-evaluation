@@ -148,25 +148,26 @@ Each dataset has a config table, `scripts/exp12_configs_<label>.tsv`, with one c
 python scripts/exp12_configs.py
 ```
 
-Chunk shapes cross three aspects with three sizes:
+Chunk shapes cross aspects with three sizes:
 
 | Aspect | S (at most 1 MiB) | M (at most 8 MiB) | L (at most 24 MiB) |
 |---|---|---|---|
 | EC384: all channels | 1250 x 384 | 10000 x 384 | 30000 x 384 |
 | EC64: 64 channel groups | 7500 x 64 | 60000 x 64 | 180000 x 64 |
 | EC32: 32 channel groups | 15000 x 32 | 120000 x 32 | 360000 x 32 |
+| EC1: single channels | 480000 x 1 | 3600000 x 1 (7.2 MB) | 12000000 x 1 (24 MB) |
 | OCframe: whole frames, ophys2 and ophys3 (ophys1) | 2 (1) frames | 16 (10) frames | 40 (20) frames |
 | OCtile128: 128 x 128 pixel tiles | 32 frames | 256 frames | 640 frames |
 | OCtile16: 16 x 16 pixel tiles | 2048 frames | 10240 frames (5 MiB) | 20480 frames (10 MiB) |
 
-The sizes are uncompressed. A chunk larger than the reader's chunk cache is decompressed again by every read that touches it again, and the cache depends on how the reader opens the file: `h5py.File` gives HDF5's default, 1 MiB in HDF5 1.x and 8 MiB in HDF5 2.x, and hdmf (so pynwb) opens files with 32 MiB. S fits every reader's cache, M fits HDF5 2.x's and pynwb's, and L fits pynwb's only. L is also sized for streaming: at the compression ratios measured for these data in an earlier run (about 2.2 for ecephys and 1.8 for ophys with the best codecs) and at 1.5, its chunks make byte range requests of about 8 to 15 MiB, within the 8 to 16 MB part size AWS suggests for downloading from S3. The ophys shapes hold the most frames that fit the size, divide the window, and span at most half of it (so every dataset has at least two chunks along time). The OCframe and OCtile128 L shapes are 20 MiB, and 15.5 MiB for ophys1's 796 x 512 frames. OCtile16 matches the 16 x 16 patch of the O4 read pattern, and its M and L shapes are 5 and 10 MiB: 8 MiB of 16 x 16 tiles is 16,384 frames, which does not divide the window, and 24 MiB is more than the window holds.
+The sizes are uncompressed. A chunk larger than the reader's chunk cache is decompressed again by every read that touches it again, and the cache depends on how the reader opens the file: `h5py.File` gives HDF5's default, 1 MiB in HDF5 1.x and 8 MiB in HDF5 2.x, and hdmf (so pynwb) opens files with 32 MiB. S fits every reader's cache, M fits HDF5 2.x's and pynwb's, and L fits pynwb's only. L is also sized for streaming: at the compression ratios measured for these data in an earlier run (about 2.2 for ecephys and 1.8 for ophys with the best codecs) and at 1.5, its chunks make byte range requests of about 8 to 15 MiB, within the 8 to 16 MB part size AWS suggests for downloading from S3. The ophys shapes hold the most frames that fit the size, divide the window, and span at most half of it (so every dataset has at least two chunks along time). The OCframe and OCtile128 L shapes are 20 MiB, and 15.5 MiB for ophys1's 796 x 512 frames. OCtile16 matches the 16 x 16 patch of the O4 read pattern, and its M and L shapes are 5 and 10 MiB: 8 MiB of 16 x 16 tiles is 16,384 frames, which does not divide the window, and 24 MiB is more than the window holds. The EC1 time extents are the largest multiples of one second that divide the window.
 
 The configurations run in two stages:
 
-1. Every codec setting on the M shape of two aspects, EC384M and EC32M for ecephys and OCframeM and OCtile16M for ophys, which ranks the codecs; no compression and gzip 4 on the other seven shapes; and the three library default shapes. 95 configurations per dataset.
-2. Codec settings chosen from the stage 1 writes and reads, by the rule documented at `STAGE2_SETTINGS` in `scripts/exp12_configs.py`, on the other seven shapes. Filling in `STAGE2_SETTINGS` and regenerating the tables, the write schedule, and the read schedule adds the stage 2 configurations and reads after the stage 1 ones, leaving every stage 1 row and task number unchanged.
+1. Every codec setting on the codec sweep shapes, EC384M, EC32M, and EC1M for ecephys and OCframeM and OCtile16M for ophys, which ranks the codecs; no compression and gzip 4 on the other shapes (nine for ecephys, seven for ophys); and the three library default shapes. 138 configurations per ecephys dataset and 95 per ophys dataset.
+2. Codec settings chosen from the stage 1 writes and reads, by the rule documented at `STAGE2_SETTINGS` in `scripts/exp12_configs.py`, on the other shapes. Filling in `STAGE2_SETTINGS` and regenerating the tables, the write schedule, and the read schedule adds the stage 2 configurations and reads after the stage 1 ones, leaving every stage 1 row and task number unchanged.
 
-The stages run in order: stage 1 writes, stage 1 reads, stage 2 writes, stage 2 reads. The stage 2 reads also re-read the stage 1 configurations on the seven non-sweep shapes (no compression and gzip 4) and the library defaults, so every comparison between codec settings on one shape comes from the same read run.
+The stages run in order: stage 1 writes, stage 1 reads, stage 2 writes, stage 2 reads. The stage 2 reads also re-read the stage 1 configurations on the non-sweep shapes (no compression and gzip 4) and the library defaults, so every comparison between codec settings on one shape comes from the same read run.
 
 - Codec settings: uncompressed; gzip 1, 4, 6, 9, lzf, lz4, and zstd 3, 11, 22, each with and without the HDF5 shuffle filter; Blosc2 blosclz 1, 9, lz4 1, 9, lz4hc 1, 5, 9, and zstd 2, 6, 9, each with Blosc2's shuffle and with its bitshuffle. Blosc2 zstd levels 2, 6, and 9 run zstd at levels 3, 11, and 22.
 - Library defaults, both with gzip 4 and computed for the full-length recording:
@@ -223,7 +224,7 @@ sbatch scripts/exp12_write_ecephys_all_binary.sh
 
 ### Writing the test files
 
-Each write, one configuration or the unchunked baseline of one dataset, is a task in `scripts/exp12_write_schedule.tsv`: 576 stage 1 tasks (96 per dataset), with the stage 2 tasks after them once they are added, each stage in a random order with a fixed seed. The ecephys and ophys writes are separate runs, each submitted, checked, and rerun on its own, and each starts once the raw binary or TIFF files of its three datasets exist. Within a run the tasks keep the schedule's random order, so the writes running at any one time are a mix of datasets, chunk shapes, and codecs. `scripts/exp12_write_schedule.py` documents the columns; regenerate the schedule whenever the config tables change:
+Each write, one configuration or the unchunked baseline of one dataset, is a task in `scripts/exp12_write_schedule.tsv`: 705 stage 1 tasks (139 per ecephys dataset and 96 per ophys dataset), with the stage 2 tasks after them once they are added, each stage in a random order with a fixed seed. The ecephys and ophys writes are separate runs, each submitted, checked, and rerun on its own, and each starts once the raw binary or TIFF files of its three datasets exist. Within a run the tasks keep the schedule's random order, so the writes running at any one time are a mix of datasets, chunk shapes, and codecs. `scripts/exp12_write_schedule.py` documents the columns; regenerate the schedule whenever the config tables change:
 
 ```bash
 python scripts/exp12_write_schedule.py
@@ -231,12 +232,12 @@ python scripts/exp12_write_schedule.py
 
 Each task runs as its own job, `scripts/exp12_write.sh <task>`, with logs `write_logs/<label>_<config_id>--<job ID>-{out,err}.log`. `scripts/exp12_submit_writes.py` submits the tasks of one modality in schedule order, keeping at most 95 jobs of the user in the queue (pending and running, including jobs unrelated to the writes), and records each submission in `write_logs/exp12_write_submitted.tsv`. A task recorded there is not submitted again, so a stopped submission continues where it left off. The ecephys and ophys submissions can run at the same time and together stay under the cap.
 
-For each modality, first submit a smoke test: per dataset, the unchunked write; EC384M or OCframeM uncompressed, with zstd 22, and with Blosc2 zstd 9 (the slowest codecs); the h5py default chunks (the smallest chunks, with a partly filled last chunk); and EC32L or OCtile16L with gzip 4 (the longest chunks, and for ophys1 partly filled edge chunks):
+For each modality, first submit a smoke test: per dataset, the unchunked write; EC384M or OCframeM uncompressed, with zstd 22, and with Blosc2 zstd 9 (the slowest codecs); the h5py default chunks (the smallest chunks, with a partly filled last chunk); and EC1L or OCtile16L with gzip 4 (the longest chunks along time, which for EC1L need the largest write buffer, 9.2 GB, and for ophys1 partly filled edge chunks):
 
 ```bash
 mkdir -p write_logs write_output
 MODALITY=ecephys  # or ophys
-TASKS=$(awk -F'\t' -v m="$MODALITY" '$3 ~ "^" m && $5 ~ /^(unchunked|(EC384|OCframe)M-(none|zstd22-shuf|b2zstd9-bitshuf)|(EC|OC)h5py-gzip4|(EC32|OCtile16)L-gzip4)$/ {print $1}' scripts/exp12_write_schedule.tsv | paste -sd,)
+TASKS=$(awk -F'\t' -v m="$MODALITY" '$3 ~ "^" m && $5 ~ /^(unchunked|(EC384|OCframe)M-(none|zstd22-shuf|b2zstd9-bitshuf)|(EC|OC)h5py-gzip4|(EC1|OCtile16)L-gzip4)$/ {print $1}' scripts/exp12_write_schedule.tsv | paste -sd,)
 python scripts/exp12_submit_writes.py submit $MODALITY --tasks $TASKS
 ```
 
