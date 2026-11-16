@@ -46,7 +46,9 @@ Chunk cache settings, set when the file is opened:
 A chunk larger than the cache is not cached, so a read call decompresses it again. The h5py path
 of a sequential pattern (e1, e2, o1, o2, o4) on a chunked file whose chunk time extent does not
 divide the batch reads part of some chunks in one call and the rest in the next, so it runs with
-each of the four settings. Every other task runs with 32mib, the cache of a pynwb reader.
+each of the four settings (the read schedule keeps only the fitted cache for some of these reads,
+see exp12_read_schedule.FITTED_ONLY_READS). Every other task runs with 32mib, the cache of a pynwb
+reader.
 """
 
 from dataclasses import dataclass

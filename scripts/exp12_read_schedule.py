@@ -19,6 +19,11 @@ codec sweep (no compression, gzip 4, and the library defaults), so every compari
 codec settings on one shape comes from the same read run. Stage 2 has tasks only once
 exp12_configs.STAGE2_SETTINGS is filled in.
 
+On the chunk shapes and patterns in FITTED_ONLY_READS, the reads that caches_for runs with every
+cache setting (exp12_read_patterns.py) run with the fitted cache only, except for the settings in
+FULL_CACHE_SETTINGS, which stage 1 reads with every cache, and the stage 2 picks, which stage 2
+reads with the other caches.
+
 The tasks of each stage are in a random order with a fixed seed, and the stage 2 tasks follow the
 stage 1 tasks, so adding stage 2 leaves every stage 1 task number unchanged. The reads running
 at any one time are then a mix of datasets, configurations, patterns, read paths, and cache
@@ -35,13 +40,25 @@ from pathlib import Path
 
 import numpy as np
 
-from exp12_configs import CODEC_SWEEP_CHUNKS, CONFIG_DIR, DATASETS, Config, config_table_path, load_configs
+from exp12_configs import (
+    CODEC_SWEEP_CHUNKS, CONFIG_DIR, DATASETS, STAGE2_SETTINGS, Config, config_table_path, load_configs,
+)
 from exp12_read_patterns import caches_for, modality_patterns
 
 SCHEDULE_PATH = CONFIG_DIR / "exp12_read_schedule.tsv"
 COLUMNS = ("task", "stage", "label", "row", "config_id", "pattern", "path", "cache")
 UNCHUNKED = "unchunked"
 SEED = 1212
+
+# Patterns on codec sweep shapes whose reads with a cache smaller than one row of chunks cost too
+# much to run for every codec setting. On EC1M an e1 read touches 384 chunks of 7.2 MB, one per
+# channel, and a cache smaller than the row decompresses each again for every read that touches
+# it, 120 times per pass: about 3.3 TB per pass, or about 6 hours. Codec settings are compared on
+# these reads with the fitted cache, and the small caches are measured for the settings in
+# FULL_CACHE_SETTINGS and the stage 2 picks.
+FITTED_ONLY_READS = {"EC1M": ("e1",)}
+FULL_CACHE_SETTINGS = (("none", None, "none"), ("gzip", 4, "none"))
+
 
 
 @dataclass(frozen=True)
@@ -70,8 +87,14 @@ def chunk_label(config_id: str) -> str:
     return config_id.split("-")[0]
 
 
-def file_reads(label: str, row: int | None, config: Config | None) -> list[tuple]:
-    """(label, row, config_id, pattern, path, cache) of every read of one test file."""
+def file_reads(label: str, row: int | None, config: Config | None, caches: str = "all",
+               patterns: tuple[str, ...] = ()) -> list[tuple]:
+    """(label, row, config_id, pattern, path, cache) of the reads of one test file.
+
+    caches selects among the reads of the given patterns that caches_for runs with the fitted
+    cache and others: "all" keeps every read of the file, "fitted" keeps the fitted cache only for
+    those reads and every other read, and "others" keeps only the other caches of those reads.
+    """
     modality = label.rstrip("0123456789")
     chunks = None if config is None else config.chunks
     paths = ["h5py"]
@@ -81,7 +104,13 @@ def file_reads(label: str, row: int | None, config: Config | None) -> list[tuple
     reads = []
     for pattern in modality_patterns(modality):
         for path in paths:
-            for cache in caches_for(pattern, path, chunks):
+            settings = caches_for(pattern, path, chunks)
+            selected = pattern.name in patterns and "fitted" in settings
+            if caches == "fitted" and selected:
+                settings = ("fitted",)
+            elif caches == "others":
+                settings = tuple(c for c in settings if c != "fitted") if selected else ()
+            for cache in settings:
                 reads.append((label, row, config_id, pattern.name, path, cache))
     return reads
 
@@ -91,13 +120,19 @@ def build_schedule() -> list[ReadTask]:
     has_stage2 = False
     for label, spec in DATASETS.items():
         sweep = CODEC_SWEEP_CHUNKS[spec["prefix"]]
+        picks = STAGE2_SETTINGS[spec["prefix"]]
         reads[1] += file_reads(label, None, None)
         for row, config in enumerate(load_configs(config_table_path(label)), start=1):
             has_stage2 |= config.stage == 2
+            setting = (config.codec, config.level, config.shuffle)
+            restricted = () if setting in FULL_CACHE_SETTINGS else FITTED_ONLY_READS.get(
+                chunk_label(config.config_id), ())
             if config.stage == 1:
-                reads[1] += file_reads(label, row, config)
+                reads[1] += file_reads(label, row, config, "fitted", restricted)
             if config.stage == 2 or chunk_label(config.config_id) not in sweep:
                 reads[2] += file_reads(label, row, config)
+            elif restricted and setting in picks:
+                reads[2] += file_reads(label, row, config, "others", restricted)
     if not has_stage2:
         reads[2] = []
 

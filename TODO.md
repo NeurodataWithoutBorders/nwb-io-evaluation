@@ -32,7 +32,7 @@
 
 - Apply the selection rule at `STAGE2_SETTINGS` in `scripts/exp12_configs.py` to the stage 1 write stats and read results, per modality, and record the inputs and picks with the analysis.
 - Fill in `STAGE2_SETTINGS`, regenerate the config tables, the write schedule, and the read schedule, and check that every stage 1 row and task number is unchanged.
-- Submit the stage 2 writes, then the stage 2 reads (`--stage 2`). The read schedule's stage 2 holds the stage 2 configurations and re-reads of the stage 1 configurations on the non-sweep shapes (no compression and gzip 4) and the library defaults, in one random order.
+- Submit the stage 2 writes, then the stage 2 reads (`--stage 2`). The read schedule's stage 2 holds the stage 2 configurations and re-reads of the stage 1 configurations on the non-sweep shapes (no compression and gzip 4) and the library defaults, and the E1 reads of the picks on EC1M at 1, 8, and 32 MiB, in one random order.
 
 ## Before the writes
 
