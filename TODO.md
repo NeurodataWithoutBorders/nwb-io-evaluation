@@ -26,23 +26,6 @@
 - The wall time minus CPU time split per configuration under each condition.
 - For each recommendation, whether it holds under every condition, and if not, which condition changes it.
 
-### Window check
-
-**When:** any time after the raw `.bin` and TIFF files exist. It does not depend on the read results, and running it before the main writes means an unrepresentative window can be moved without rewriting the test files.
-
-**Goal:** check that the centered window (`scripts/exp12_window.py`) is representative of the whole recording for compression ratio, so the ratios and codec rankings from the main runs can be stated for the session as a whole.
-
-**Method:**
-
-- Per dataset, take 10 one-minute segments spaced evenly across the full recording from the raw files, plus the centered window.
-- Compress each segment in memory with about 5 codec settings on one frame-aligned chunk shape (EC384M and OCframeM): gzip 4, the recommended codecs, and one Blosc2 bitshuffle setting. Write each to an in-memory HDF5 file (`h5py.File(..., driver="core", backing_store=False)`) with `h5dataio_kwargs`, so the filter stack is the same as in the test files, and record the dataset's storage size.
-
-**Analysis:**
-
-- Per codec, the ratio of each segment and of the centered window, and the spread across segments.
-- Whether the ranking of codecs by ratio changes across segments.
-- If the centered window falls outside the range of the segments, or the ranking changes, say so in the paper and consider moving the window.
-
 ## Stage 2
 
 **When:** after the stage 1 reads finish.

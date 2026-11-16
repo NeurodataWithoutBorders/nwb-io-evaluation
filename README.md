@@ -222,6 +222,30 @@ mkdir -p write_logs raw_data
 sbatch scripts/exp12_write_ecephys_all_binary.sh
 ```
 
+### Checking the window
+
+`scripts/exp12_window_check.py` checks that the centered window is representative of the whole recording for compression ratio, so the ratios and codec rankings from the test files can be stated for the session as a whole. Per dataset, it takes 10 one-minute segments spaced evenly across the full recording in the raw binary or TIFF files, and the centered window in blocks of the same length, and compresses each with five codec settings (gzip 4, gzip 4 with shuffle, zstd 3 with shuffle, Blosc2 lz4 1 with bitshuffle, and Blosc2 zstd 2 with bitshuffle) on EC384M or OCframeM, in an in-memory HDF5 file with the same filter stack as the test files. Run it once the raw files exist and before the writes, so an unrepresentative window can be moved without rewriting the test files.
+
+Submit one job per dataset (each writes `window_check/<label>.tsv`):
+
+```bash
+mkdir -p write_logs window_check
+for LABEL in ecephys1 ecephys2 ecephys3 ophys1 ophys2 ophys3; do
+    sbatch --job-name=exp12_window_check_$LABEL \
+        --output=write_logs/window_check_$LABEL--%j-out.log \
+        --error=write_logs/window_check_$LABEL--%j-err.log \
+        scripts/exp12_window_check.sh $LABEL
+done
+```
+
+Then summarize, per dataset and codec setting, the window's ratio against the range of the segment ratios, and whether each segment ranks the codec settings in the same order as the window:
+
+```bash
+python scripts/exp12_window_check.py summary window_check/*.tsv
+```
+
+For every dataset and codec setting, the window's ratio falls within the range of the segment ratios. Every segment of the ecephys datasets and ophys1 ranks the codec settings in the same order as the window. In ophys2 (segments 6 to 9) and ophys3 (segments 8 and 9), zstd 3 with shuffle and Blosc2 zstd 2 with bitshuffle swap places, and in those segments their ratios differ by less than 0.5%.
+
 ### Writing the test files
 
 Each write, one configuration or the unchunked baseline of one dataset, is a task in `scripts/exp12_write_schedule.tsv`: 705 stage 1 tasks (139 per ecephys dataset and 96 per ophys dataset), with the stage 2 tasks after them once they are added, each stage in a random order with a fixed seed. The ecephys and ophys writes are separate runs, each submitted, checked, and rerun on its own, and each starts once the raw binary or TIFF files of its three datasets exist. Within a run the tasks keep the schedule's random order, so the writes running at any one time are a mix of datasets, chunk shapes, and codecs. `scripts/exp12_write_schedule.py` documents the columns; regenerate the schedule whenever the config tables change:
