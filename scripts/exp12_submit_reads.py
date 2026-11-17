@@ -7,7 +7,9 @@ read_logs/<task name>--<job ID>-{out,err}.log (see exp12_read_schedule.ReadTask.
 counts every job of the user in the queue, as in exp12_submit_writes.py, and submissions take the
 same lock as the write submissions, so reads and writes together stay under it. While tasks
 remain, the script submits as many as fit under the cap, in schedule order, then waits and checks
-the queue again. It exits once every task of the modality and stage is submitted.
+the queue again. It exits once every task of the modality and stage is submitted. --max-own-jobs
+also caps the jobs of the modality's reads in the queue, so the submissions of both modalities
+running at the same time each get a share of the cap.
 
 Each submission is appended to read_logs/exp12_read_submitted.tsv (name, job_id, submitted_utc).
 A read in that file is not submitted again, so a rerun after the script stops continues where it
@@ -22,7 +24,7 @@ other failures.
 
 Usage:
     python scripts/exp12_submit_reads.py submit {ecephys,ophys} [--stage 1] [--tasks 3,17,250]
-        [--max-jobs 95] [--dry-run]
+        [--max-jobs 95] [--max-own-jobs 60] [--dry-run]
     python scripts/exp12_submit_reads.py status [--modality {ecephys,ophys}] [--stage 1]
 
 Run the full submission of a modality as a job, so it can wait on the queue for as long as the
@@ -64,6 +66,15 @@ def sbatch_command(task: ReadTask) -> list[str]:
     ]
 
 
+def queued_read_count(user: str, modality: str) -> int:
+    """Read jobs of the modality in the user's queue, by job name."""
+    proc = subprocess.run(
+        ["squeue", "--noheader", "--array", "--user", user, "--format=%j"],
+        capture_output=True, text=True, check=True,
+    )
+    return sum(1 for name in proc.stdout.split() if name.startswith(f"exp12_read_{modality}"))
+
+
 def load_submitted() -> dict[str, str]:
     """The latest job ID of each submitted read, by task name."""
     if not SUBMITTED_PATH.exists():
@@ -92,7 +103,8 @@ def submit(args: argparse.Namespace) -> None:
         submitted = load_submitted()
         remaining = [t for t in schedule.values() if t.name not in submitted]
     print(f"{len(remaining)} stage {args.stage} {args.modality} read tasks to submit, "
-          f"at most {args.max_jobs} jobs in the queue")
+          f"at most {args.max_jobs} jobs in the queue"
+          + ("" if args.max_own_jobs is None else f" and {args.max_own_jobs} {args.modality} reads"))
 
     if args.dry_run:
         for task in remaining:
@@ -107,6 +119,8 @@ def submit(args: argparse.Namespace) -> None:
         with submit_lock():
             try:
                 free = args.max_jobs - queued_job_count(user)
+                if args.max_own_jobs is not None:
+                    free = min(free, args.max_own_jobs - queued_read_count(user, args.modality))
             except subprocess.CalledProcessError as e:
                 print(f"squeue failed, retrying later: {e.stderr.strip()}", flush=True)
                 free = 0
@@ -171,6 +185,8 @@ def main() -> None:
                           help="comma-separated task numbers to submit, whether or not submitted before")
     p_submit.add_argument("--max-jobs", type=int, default=DEFAULT_MAX_JOBS,
                           help=f"most jobs of the user in the queue (default {DEFAULT_MAX_JOBS})")
+    p_submit.add_argument("--max-own-jobs", type=int,
+                          help="most read jobs of the modality in the queue (default no separate cap)")
     p_submit.add_argument("--poll-s", type=int, default=DEFAULT_POLL_S,
                           help=f"seconds between queue checks (default {DEFAULT_POLL_S})")
     p_submit.add_argument("--dry-run", action="store_true", help="print the sbatch commands only")
