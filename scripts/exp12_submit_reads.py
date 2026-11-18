@@ -24,7 +24,7 @@ other failures.
 
 Usage:
     python scripts/exp12_submit_reads.py submit {ecephys,ophys} [--stage 1] [--tasks 3,17,250]
-        [--max-jobs 95] [--max-own-jobs 60] [--dry-run]
+        [--max-jobs 95] [--max-own-jobs 48] [--dry-run]
     python scripts/exp12_submit_reads.py status [--modality {ecephys,ophys}] [--stage 1]
 
 Run the full submission of a modality as a job, so it can wait on the queue for as long as the

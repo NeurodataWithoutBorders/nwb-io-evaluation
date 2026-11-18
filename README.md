@@ -322,11 +322,11 @@ TASKS=$(awk -F'\t' -v m="$MODALITY" -v re="$SMOKE" 'NR > 1 && $3 ~ "^" m && ($3"
 python scripts/exp12_submit_reads.py submit $MODALITY --tasks $TASKS
 ```
 
-Once those complete, check their run times, which of them stopped early (`stop_reason`), and their memory use against the 32 GB request, then submit the rest of that modality's stage 1 reads. Each submission also caps its own reads in the queue, so both modalities run at once, with the larger share for ecephys, whose reads include the longest:
+Once those complete, check their run times, which of them stopped early (`stop_reason`), and their memory use against the 32 GB request, then submit the rest of that modality's stage 1 reads. Each submission also caps its own reads in the queue, so both modalities run at once with equal shares (the stage 1 reads of the two modalities take about the same total time):
 
 ```bash
-sbatch scripts/exp12_submit_reads.sh ecephys --max-own-jobs 60
-sbatch scripts/exp12_submit_reads.sh ophys --max-own-jobs 35
+sbatch scripts/exp12_submit_reads.sh ecephys --max-own-jobs 48
+sbatch scripts/exp12_submit_reads.sh ophys --max-own-jobs 48
 ```
 
 To report the state of every task, with the failed ones and the command that resubmits them (a failed read with an output file had a crashed repeat or sample, or a check that did not match or ran out of time; its attributes say which):
